@@ -16,7 +16,6 @@ currency_display = st.sidebar.selectbox("Select Currency", currency_list)
 currency_symbol = currency_display.split(" ")[0]
 tax_div = st.sidebar.number_input("Tax Formula (Divisor)", value=1.2327, format="%.4f")
 
-# Helper function for inputs
 def get_input(label, adr_def, comm_def, maint_def, floor_def, rooms_def=1):
     with st.sidebar.expander(f"📊 {label} Settings"):
         r = st.number_input(f"{label} No. of Rooms", value=rooms_def, step=1)
@@ -26,7 +25,7 @@ def get_input(label, adr_def, comm_def, maint_def, floor_def, rooms_def=1):
         f = st.number_input(f"{label} Profit Floor", value=floor_def)
     return r, a, c, m, f
 
-# --- DATA GATHERING ---
+# --- DATA ---
 st.sidebar.subheader("Individual Segments")
 ota = get_input("OTA", 195.0, 0.18, 11.0, 105.0)
 drct = get_input("Direct", 220.0, 0.02, 10.0, 100.0)
@@ -38,8 +37,9 @@ grp_corp = get_input("Corp Group", 160.0, 0.0, 10.0, 90.0, 20)
 grp_tour = get_input("Tour/Travel", 120.0, 0.10, 12.0, 85.0, 30)
 grp_mice = get_input("MICE Group", 175.0, 0.05, 18.0, 100.0, 50)
 
-# --- THE SURGICAL ENGINE ---
+# --- ENGINE ---
 def audit(rooms, adr, comm, maint, floor):
+    # Surgical Math: Strip Tax -> Deduct Commission -> Deduct Maintenance
     net_unit = (adr / tax_div) * (1 - comm) - maint
     total_net = net_unit * rooms
     if net_unit >= (floor + 10): return net_unit, total_net, "OPTIMIZED", "green"
@@ -48,10 +48,10 @@ def audit(rooms, adr, comm, maint, floor):
 
 # --- DISPLAY ---
 st.markdown(f"<h1 style='text-align: center; color: #1E3A8A;'>{hotel_name}</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-style: italic;'>Surgical Revenue Audit</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-style: italic;'>Surgical Revenue Audit Dashboard</p>", unsafe_allow_html=True)
 
 # Row 1: Individuals
-st.subheader("Individual Segment Audit")
+st.subheader("Individual Segment Health")
 cols1 = st.columns(4)
 for i, (name, data) in enumerate({"OTA":ota, "Direct":drct, "Corporate":corp, "Wholesale":whls}.items()):
     unit, total, stat, colr = audit(*data)
@@ -63,31 +63,43 @@ for i, (name, data) in enumerate({"OTA":ota, "Direct":drct, "Corporate":corp, "W
 
 # Row 2: Groups
 st.divider()
-st.subheader("Group Segment Audit (Total Impact)")
+st.subheader("Group Volume Impact")
 cols2 = st.columns(3)
 for i, (name, data) in enumerate({"Corp Group":grp_corp, "Tour & Travel":grp_tour, "MICE":grp_mice}.items()):
     unit, total, stat, colr = audit(*data)
     with cols2[i]:
         st.metric(f"{name} Total Net", f"{currency_symbol} {total:,.2f}")
-        st.caption(f"Net ADR: {currency_symbol} {unit:.2f}")
+        st.caption(f"Per Room Net: {currency_symbol} {unit:.2f}")
         if colr == "green": st.success(f"🟢 {stat}")
         elif colr == "orange": st.warning(f"🟡 {stat}")
         else: st.error(f"🔴 {stat}")
 
 st.divider()
 
-# --- GLOSSARY ---
-st.subheader("📖 Revenue Engineering Glossary")
-g1, g2, g3 = st.columns(3)
-with g1:
-    st.write("### 🏷️ P02: Commission")
-    st.write("Acquisition Cost: The fee paid to secure the booking.")
-    st.success("**OPTIMIZED:** Wealth Builder.")
-with g2:
-    st.write("### 🧼 P01: Maintenance")
-    st.write("Asset Reset: Costs for Labor, Linen, and Amenities.")
-    st.warning("**STABLE:** Margin Warning.")
-with g3:
-    st.write("### 🎯 Profit Floor")
-    st.write("Sustainability: The minimum 'Take-Home' required per stay.")
-    st.error("**DILUTIVE:** Wealth Destroyer.")
+# --- THE SURGICAL PILLARS ---
+st.subheader("🛡️ The Three Pillars of Yield Equilibrium")
+s1, s2, s3 = st.columns(3)
+
+with s1:
+    st.write("### 🏗️ P01: Asset Protection")
+    st.info("""
+    **The Cost of Wear:** Maintenance is the price to 'reset' the asset. 
+    By accounting for labor and linen costs, you ensure the hotel is 
+    compensated for every physical interaction with the building.
+    """)
+
+with s2:
+    st.write("### 📉 P02: Channel Efficiency")
+    st.info("""
+    **The Price of Visibility:** Commission is the fee paid to secure 
+    the guest. True equilibrium is shifting your mix toward low-P02 
+    direct business to keep more wealth inside the property.
+    """)
+
+with s3:
+    st.write("### ⚖️ The Profit Floor")
+    st.info("""
+    **The Final Take-Home:** This is your net rate minus maintenance 
+    and all other variable costs. It is the absolute minimum cash 
+    the hotel must retain per room to remain financially sustainable.
+    """)

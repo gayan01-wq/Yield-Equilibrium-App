@@ -8,8 +8,8 @@ st.divider()
 
 # --- SIDEBAR: GLOBAL SETTINGS ---
 st.sidebar.header("🏨 Property Identity")
-# NEW: User can enter their own hotel name
-hotel_name = st.sidebar.text_input("Property Name", value="Your Hotel Name")
+# The name the user enters here will be the main title of the results
+hotel_name = st.sidebar.text_input("Property Name", value="Wyndham Garden Salalah Mirbat")
 
 st.sidebar.header("⚙️ Global Settings")
 currency_list = [
@@ -22,8 +22,8 @@ currency_symbol = currency_display.split(" ")[0]
 tax_div = st.sidebar.number_input("Tax Formula (Divisor)", value=1.2327, format="%.4f")
 
 def get_input(label, adr_def, comm_def, maint_def, floor_def):
-    with st.sidebar.expander(f"📊 {label}"):
-        a = st.number_input(f"{label} ADR", value=adr_def)
+    with st.sidebar.expander(f"📊 {label} Settings"):
+        a = st.number_input(f"{label} Gross ADR", value=adr_def)
         c = st.number_input(f"{label} Comm %", value=comm_def)
         m = st.number_input(f"{label} Maint", value=maint_def)
         f = st.number_input(f"{label} Floor", value=floor_def)
@@ -34,7 +34,7 @@ drct = get_input("Direct", 220.0, 0.02, 10.0, 100.0)
 corp = get_input("Corp", 180.0, 0.0, 10.0, 95.0)
 whls = get_input("Wholesale", 130.0, 0.15, 15.0, 110.0)
 
-# --- ENGINE ---
+# --- THE SURGICAL ENGINE ---
 def audit(adr, comm, maint, floor):
     net = (adr / tax_div) * (1 - comm) - maint
     if net >= (floor + 10): return net, "OPTIMIZED", "green"
@@ -42,8 +42,9 @@ def audit(adr, comm, maint, floor):
     else: return net, "DILUTIVE", "red"
 
 # --- DISPLAY ---
-# This shows the Hotel Name dynamically
-st.subheader(f"Executive Verdict for: {hotel_name}")
+# Removed 'Executive Verdict' - Property Name is now the Hero
+st.markdown(f"<h1 style='text-align: center; color: #1E3A8A;'>{hotel_name}</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-style: italic;'>Revenue Audit Results</p>", unsafe_allow_html=True)
 
 cols = st.columns(4)
 for i, (name, data) in enumerate({"OTA":ota, "Direct":drct, "Corp":corp, "Wholesale":whls}.items()):

@@ -6,7 +6,7 @@ st.title("🏨 Yield Equilibrium Auditor")
 st.markdown("Developed by **Gayan Nugawela** | *The Revenue Engineer Framework*")
 st.divider()
 
-# --- SIDEBAR: GLOBAL & DATA INPUTS ---
+# --- SIDEBAR: INPUTS & CALIBRATION ---
 st.sidebar.header("⚙️ Global Settings")
 tax_pct = st.sidebar.number_input("Tax (%)", value=0.08, step=0.01)
 
@@ -20,7 +20,6 @@ with st.sidebar.expander("3. Corporate Data"):
 with st.sidebar.expander("4. Wholesale Data"):
     whole_adr = st.number_input("Wholesale Gross ADR", value=130.0, key="whole_a")
 
-# --- SIDEBAR: CALIBRATION ---
 st.sidebar.header("🔧 Model Calibration")
 with st.sidebar.expander("Calibrate OTA"):
     ota_comm = st.number_input("OTA Comm %", value=0.18)
@@ -42,7 +41,7 @@ with st.sidebar.expander("Calibrate Wholesale"):
     whole_maint = st.number_input("Wholesale Maint (P01)", value=15.0)
     whole_floor = st.number_input("Wholesale Target Floor", value=110.0)
 
-# --- LOGIC ENGINE ---
+# --- CALCULATION ENGINE ---
 def audit_logic(adr, comm, maint, floor):
     pre_tax = adr / (1 + tax_pct)
     net_adr = pre_tax * (1 - comm)
@@ -55,7 +54,7 @@ def audit_logic(adr, comm, maint, floor):
     else:
         return adj_net, "DILUTIVE", "red"
 
-# --- DASHBOARD OUTPUT ---
+# --- DASHBOARD: RESULTS ---
 st.subheader("Executive Verdict")
 c1, c2, c3, c4 = st.columns(4)
 
@@ -76,18 +75,30 @@ for col, name, adr, comm, maint, floor in segments:
 
 st.divider()
 
-# --- THE "HOW TO USE" SECTION ---
+# --- THE "HOW TO USE" CALIBRATION GUIDE ---
 st.subheader("📖 Calibration Guide: How to Enter Data")
 col_exp1, col_exp2, col_exp3 = st.columns(3)
 
 with col_exp1:
     st.write("### 🏷️ Commission (P02)")
     st.write("""
-    **What to enter:** The percentage (decimal) paid to the booking channel.
-    * **OTA:** Typically **0.15 to 0.22** (15-22%) depending on your contract.
-    * **Direct:** Usually **0.02** to account for credit card fees or engine costs.
-    * **Corporate:** Often **0.00** if it's a net-rate contract.
+    **What to enter:** The channel cost.
+    * **OTA:** Typically **0.15 to 0.22**.
+    * **Direct:** Use **0.02** for bank fees.
+    * **Corporate:** Usually **0.00**.
     """)
 
 with col_exp2:
     st.write("### 🧼 Maintenance (P01)")
+    st.write("""
+    **What to enter:** Fixed costs per room.
+    * Includes laundry, amenities, and labor.
+    * High-wear segments (Wholesale) should have higher P01 values.
+    """)
+
+with col_exp3:
+    st.write("### 🎯 Target Floor")
+    st.write("""
+    **What to enter:** Your minimum profit.
+    * This is the 'Red Line.'
+    * If

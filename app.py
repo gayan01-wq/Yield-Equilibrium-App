@@ -6,8 +6,19 @@ st.title("🏨 Yield Equilibrium Auditor")
 st.markdown("Developed by **Gayan Nugawela** | *The Revenue Engineer Framework*")
 st.divider()
 
-# --- SIDEBAR ---
+# --- SIDEBAR: GLOBAL SETTINGS ---
+st.sidebar.header("🏨 Property Identity")
+# NEW: User can enter their own hotel name
+hotel_name = st.sidebar.text_input("Property Name", value="Your Hotel Name")
+
 st.sidebar.header("⚙️ Global Settings")
+currency_list = [
+    "$ (USD)", "€ (EUR)", "£ (GBP)", "CHF (CHF)", 
+    "OMR (OMR)", "AED (AED)", "SAR (SAR)", "KWD (KWD)", "BHD (BHD)", "QAR (QAR)", "JOD (JOD)", 
+    "THB (THB)", "SGD (SGD)", "HKD (HKD)", "JPY (JPY)", "CNY (CNY)", "MYR (MYR)", "IDR (IDR)", "INR (INR)"
+]
+currency_display = st.sidebar.selectbox("Select Currency", currency_list)
+currency_symbol = currency_display.split(" ")[0]
 tax_div = st.sidebar.number_input("Tax Formula (Divisor)", value=1.2327, format="%.4f")
 
 def get_input(label, adr_def, comm_def, maint_def, floor_def):
@@ -31,12 +42,14 @@ def audit(adr, comm, maint, floor):
     else: return net, "DILUTIVE", "red"
 
 # --- DISPLAY ---
-st.subheader("Executive Verdict")
+# This shows the Hotel Name dynamically
+st.subheader(f"Executive Verdict for: {hotel_name}")
+
 cols = st.columns(4)
 for i, (name, data) in enumerate({"OTA":ota, "Direct":drct, "Corp":corp, "Wholesale":whls}.items()):
     val, stat, colr = audit(*data)
     with cols[i]:
-        st.metric(f"{name} Net", f"${val:.2f}")
+        st.metric(f"{name} Net", f"{currency_symbol} {val:.2f}")
         if colr == "green": st.success(f"🟢 {stat}")
         elif colr == "orange": st.warning(f"🟡 {stat}")
         else: st.error(f"🔴 {stat}")

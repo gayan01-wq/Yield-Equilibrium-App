@@ -46,18 +46,13 @@ def audit_logic(adr, comm, maint, floor):
     pre_tax = adr / (1 + tax_pct)
     net_adr = pre_tax * (1 - comm)
     adj_net = net_adr - maint
-    
-    if adj_net >= (floor + 10):
-        return adj_net, "OPTIMIZED", "green"
-    elif adj_net >= floor:
-        return adj_net, "STABLE", "orange"
-    else:
-        return adj_net, "DILUTIVE", "red"
+    if adj_net >= (floor + 10): return adj_net, "OPTIMIZED", "green"
+    elif adj_net >= floor: return adj_net, "STABLE", "orange"
+    else: return adj_net, "DILUTIVE", "red"
 
 # --- DASHBOARD: RESULTS ---
 st.subheader("Executive Verdict")
 c1, c2, c3, c4 = st.columns(4)
-
 segments = [
     (c1, "OTA", ota_adr, ota_comm, ota_maint, ota_floor),
     (c2, "Direct", dir_adr, dir_comm, dir_maint, dir_floor),
@@ -70,35 +65,4 @@ for col, name, adr, comm, maint, floor in segments:
     with col:
         st.metric(f"{name} Adj. Net", f"${net:.2f}")
         if color == "green": st.success(status)
-        elif color == "orange": st.warning(status)
-        else: st.error(status)
-
-st.divider()
-
-# --- THE "HOW TO USE" CALIBRATION GUIDE ---
-st.subheader("📖 Calibration Guide: How to Enter Data")
-col_exp1, col_exp2, col_exp3 = st.columns(3)
-
-with col_exp1:
-    st.write("### 🏷️ Commission (P02)")
-    st.write("""
-    **What to enter:** The channel cost.
-    * **OTA:** Typically **0.15 to 0.22**.
-    * **Direct:** Use **0.02** for bank fees.
-    * **Corporate:** Usually **0.00**.
-    """)
-
-with col_exp2:
-    st.write("### 🧼 Maintenance (P01)")
-    st.write("""
-    **What to enter:** Fixed costs per room.
-    * Includes laundry, amenities, and labor.
-    * High-wear segments (Wholesale) should have higher P01 values.
-    """)
-
-with col_exp3:
-    st.write("### 🎯 Target Floor")
-    st.write("""
-    **What to enter:** Your minimum profit.
-    * This is the 'Red Line.'
-    * If
+        elif color ==

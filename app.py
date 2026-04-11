@@ -48,7 +48,6 @@ def audit_logic(adr, comm, maint, floor):
     net_adr = pre_tax * (1 - comm)
     adj_net = net_adr - maint
     
-    # 3-State Verdict
     if adj_net >= (floor + 10):
         return adj_net, "OPTIMIZED", "green"
     elif adj_net >= floor:
@@ -77,18 +76,18 @@ for col, name, adr, comm, maint, floor in segments:
 
 st.divider()
 
-# --- STRATEGY GUIDE ---
-st.subheader("💡 Strategy Guide: The Yield Equilibrium States")
-s1, s2, s3 = st.columns(3)
+# --- THE "HOW TO USE" SECTION ---
+st.subheader("📖 Calibration Guide: How to Enter Data")
+col_exp1, col_exp2, col_exp3 = st.columns(3)
 
-with s1:
-    st.write("### 🟢 OPTIMIZED")
-    st.info("**Asset Health:** High profitability. Covers all P01/P02 costs and builds reserves.")
+with col_exp1:
+    st.write("### 🏷️ Commission (P02)")
+    st.write("""
+    **What to enter:** The percentage (decimal) paid to the booking channel.
+    * **OTA:** Typically **0.15 to 0.22** (15-22%) depending on your contract.
+    * **Direct:** Usually **0.02** to account for credit card fees or engine costs.
+    * **Corporate:** Often **0.00** if it's a net-rate contract.
+    """)
 
-with s2:
-    st.write("### 🟡 STABLE")
-    st.warning("**Margin Warning:** Covering basic costs but failing to build significant wealth.")
-
-with s3:
-    st.write("### 🔴 DILUTIVE")
-    st.error("**Asset Erosion:** Wealth destroyer. Net revenue is too low to sustain building quality.")
+with col_exp2:
+    st.write("### 🧼 Maintenance (P01)")

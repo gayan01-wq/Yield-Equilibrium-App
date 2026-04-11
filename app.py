@@ -8,15 +8,14 @@ st.divider()
 
 # --- SIDEBAR INPUTS ---
 st.sidebar.header("⚙️ Global Settings")
-# Professional "Tax Formula" Divisor
-tax_formula = st.sidebar.number_input("Tax Formula (Divisor)", value=1.2327, format="%.4f", help="The surgical formula to reverse-calculate taxes (e.g., Gross / 1.2327).")
+tax_formula = st.sidebar.number_input("Tax Formula (Divisor)", value=1.2327, format="%.4f")
 
 def get_input(label, adr_def, comm_def, maint_def, floor_def):
-    with st.sidebar.expander(label):
-        a = st.number_input(f"{label} ADR", value=adr_def, help=f"Enter Gross ADR for {label}.")
-        c = st.number_input(f"{label} Comm %", value=comm_def, help="P02: Acquisition cost as a decimal.")
-        m = st.number_input(f"{label} Maint", value=maint_def, help="P01: Fixed asset reset costs.")
-        f = st.number_input(f"{label} Floor", value=floor_def, help="Surgical Profit Floor target.")
+    with st.sidebar.expander(f"📊 {label} Calibration"):
+        a = st.number_input(f"{label} Gross ADR", value=adr_def)
+        c = st.number_input(f"{label} Comm % (P02)", value=comm_def)
+        m = st.number_input(f"{label} Maint (P01)", value=maint_def)
+        f = st.number_input(f"{label} Profit Floor", value=floor_def)
     return a, c, m, f
 
 ota = get_input("OTA", 195.0, 0.18, 11.0, 105.0)
@@ -26,38 +25,44 @@ whls = get_input("Wholesale", 130.0, 0.15, 15.0, 110.0)
 
 # --- THE SURGICAL ENGINE ---
 def audit(adr, comm, maint, floor):
-    # Mathematical Formula: (Gross / Tax Formula) * (1 - Commission) - Maintenance
     net = (adr / tax_formula) * (1 - comm) - maint
-    
     if net >= (floor + 10): return net, "OPTIMIZED", "green"
     elif net >= floor: return net, "STABLE", "orange"
     else: return net, "DILUTIVE", "red"
 
-# --- DISPLAY ---
+# --- DISPLAY VERDICTS ---
 st.subheader("Executive Verdict")
 cols = st.columns(4)
 for i, (name, data) in enumerate({"OTA":ota, "Direct":drct, "Corp":corp, "Wholesale":whls}.items()):
     val, status, color = audit(*data)
     with cols[i]:
         st.metric(f"{name} Net", f"${val:.2f}")
-        if color == "green": st.success(status)
-        elif color == "orange": st.warning(status)
-        else: st.error(status)
+        if color == "green": st.success(f"🟢 {status}")
+        elif color == "orange": st.warning(f"🟡 {status}")
+        else: st.error(f"🔴 {status}")
 
 st.divider()
 
-# --- QUICK GUIDE ---
-st.subheader("📖 Quick Guide")
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.write("### 🏷️ Tax Formula")
-    st.write(f"Surgical Divisor used: **{tax_formula}**. This strips all inclusive fees to find the pure Base ADR.")
-    st.success("**OPTIMIZED:** Wealth builder.")
-with c2:
-    st.write("### 🧼 P01: Asset Reset")
-    st.write("Ensures you aren't selling below your physical cost (Laundry + Labor).")
-    st.warning("**STABLE:** Margin warning.")
-with c3:
-    st.write("### 🎯 Profit Floor")
-    st.write("The minimum 'Take-Home' required per room. Below this, you erode asset value.")
-    st.error("**DILUTIVE:** Wealth destroyer.")
+# --- THE FULL DEFINITION GLOSSARY ---
+st.subheader("📖 Revenue Engineering Glossary")
+g1, g2, g3 = st.columns(3)
+
+with g1:
+    st.write("### 🏷️ P02: Commission")
+    st.write("""
+    **Definition:** The Acquisition Cost. 
+    It is the fee paid to the channel (OTA) or bank (Direct) to secure the booking.
+    * *Surgical Goal:* Minimize this to increase the 'Take-Home' ratio.
+    """)
+    st.success("**🟢 OPTIMIZED**")
+    st.write("**Wealth Builder:** High margin. These bookings build owner wealth and future renovation funds.")
+
+with g2:
+    st.write("### 🧼 P01: Maintenance")
+    st.write("""
+    **Definition:** The Asset Reset Cost. 
+    Includes Laundry, Labor, and Amenities. This is what it costs the hotel just to open the door.
+    * *Surgical Goal:* Ensure ADR stays high enough to never sell below this cost.
+    """)
+    st.warning("**🟡 STABLE**")
+    st.write("**Margin Warning:** Covering basic operational costs, but failing

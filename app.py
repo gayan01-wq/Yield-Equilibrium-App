@@ -47,43 +47,4 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan_counts, trans, comm, p01, floor):
     total_fb_rev = sum(count * meal_map[plan] * pax_ratio for plan, count in plan_counts.items())
     room_wealth = total_net_rev - total_fb_rev - (trans / tax_div)
     
-    # Final profit calculation
-    total_room_profit = (room_wealth * (1.0 - comm)) - (p01 * total_r)
-    unit_net = total_room_profit / total_r
-    
-    # Verdict Logic (Optimized, Marginal, Dilutive)
-    if unit_net >= (floor + 10.0):
-        res = {"stat": "🟢 OPTIMIZED", "col": "green", "def": "High wealth retention. Exceeds profit floor targets."}
-    elif unit_net >= floor:
-        res = {"stat": "🟡 MARGINAL", "col": "orange", "def": "Meets basic floor. Low room wealth efficiency."}
-    else:
-        res = {"stat": "🔴 DILUTIVE", "col": "red", "def": "Wealth Leakage. Costs are eroding room profit."}
-    
-    res.update({"room_p": total_room_profit, "fb_p": total_fb_rev, "unit": unit_net})
-    return res
-
-# --- SEGMENT ROW FUNCTION ---
-def segment_row(icon, label, color, key_p, adr_def, floor_def, comm_rate):
-    st.markdown(f"""<div style="background-color: {color}15; border-left: 8px solid {color}; padding: 12px; border-radius: 8px; margin-top: 15px;">
-        <h3 style="margin:0; color: {color};">{icon} {label}</h3>
-        </div>""", unsafe_allow_html=True)
-    
-    c1, c2, c3, c4 = st.columns([1.5, 2, 1.5, 1.5])
-    
-    with c1:
-        s = st.number_input(f"{label} SGL", 0, key=f"{key_p}s")
-        d = st.number_input(f"{label} DBL", 0, key=f"{key_p}d")
-        t = st.number_input(f"{label} TPL", 0, key=f"{key_p}t")
-        total_rooms = s + d + t
-    
-    with c2:
-        st.caption(f"Distribute {total_rooms} Rooms across plans:")
-        p_bb = st.number_input(f"{label} Qty BB", 0, total_rooms, key=f"{key_p}pbb")
-        p_hb = st.number_input(f"{label} Qty HB", 0, total_rooms, key=f"{key_p}phb")
-        p_fb = st.number_input(f"{label} Qty FB", 0, total_rooms, key=f"{key_p}pfb")
-        counts = {"BB": p_bb, "HB": p_hb, "FB": p_fb, "RO": max(0, total_rooms - (p_bb + p_hb + p_fb)), "SAI": 0, "AI": 0}
-        
-    with c3:
-        # Minimums unlocked to 1.0 for full flexibility
-        adr = st.number_input(f"Gross ADR", min_value=1.0, max_value=5000.0, value=float(adr_def), step=1.0, key=f"{key_p}a")
-        flr = st.number_input(f"Profit Floor", min_value=1.0, max_value=2000.0, value=float(floor_
+    #

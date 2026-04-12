@@ -1,16 +1,16 @@
 import streamlit as st
 
-# --- BRANDING & CUSTOM CSS ---
+# --- BRANDING & STYLE ---
 st.set_page_config(page_title="Yield Equilibrium Master Auditor", layout="wide")
 st.markdown("""
     <style>
-    .main { background-color: #f5f7f9; }
-    .stMetric { background-color: #ffffff; padding: 10px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .main { background-color: #f8f9fa; }
+    .stMetric { border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; background-color: white; }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🏨 Yield Equilibrium: Full Property Command Center")
-st.markdown("Developed by **Gayan Nugawela** | *Director-Level Total Revenue Strategy*")
+st.title("🏨 Yield Equilibrium: Property Command Center")
+st.markdown("Developed by **Gayan Nugawela** | *Director-Level Total Revenue Command Center*")
 st.divider()
 
 # --- SIDEBAR: MASTER ALLOCATIONS ---
@@ -34,12 +34,12 @@ currency = st.sidebar.selectbox("Currency", ["OMR", "USD", "AED", "THB"])
 def run_audit(sgl, dbl, tpl, comp, adr, plan_counts, trans, comm, p01, floor):
     paid_r = sgl + dbl + tpl
     total_r = paid_r + comp
-    pax_ratio = ((sgl*1) + (dbl*2) + (tpl*3)) / paid_r if paid_r > 0 else 0
+    if paid_r == 0: 
+        return {"room_p": 0, "fb_p": 0, "unit": 0, "stat": "N/A", "col": "gray"}
     
-    if total_r == 0: 
-        return {"room_p": 0, "fb_p": 0, "unit": 0, "stat": "N/A", "col": "gray", "total_w": 0}
-    
+    pax_ratio = ((sgl*1) + (dbl*2) + (tpl*3)) / paid_r
     total_net_rev = (adr * paid_r) / tax_div
     total_fb_rev = sum(count * meal_map[plan] * pax_ratio for plan, count in plan_counts.items())
+    
     room_wealth = total_net_rev - total_fb_rev - (trans / tax_div)
-    total_room_profit = (room_wealth *
+    total_room_profit = (room_wealth * (1 - comm)) - (

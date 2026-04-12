@@ -52,4 +52,48 @@ if check_password():
         if u >= (af + 5) or mg > 55 or wc > 15 or cap > 20: lb, cl = "OPTIMIZED", "#27ae60"
         elif u >= af: lb, cl = "MARGINAL", "#f39c12"
         else: lb, cl = "DILUTIVE", "#e74c3c"
-        return {"u": u, "s": lb, "c": cl
+        return {"u": u, "s": lb, "c": cl, "tp": tp, "wc": wc, "pax": pax}
+
+    def seg(nm, cl, bg, kp, ad_d, fl_d, cp, is_group=False):
+        st.markdown(f"<div class='card' style='background:{bg};border-left-color:{cl}'>{nm}</div>", unsafe_allow_html=True)
+        c1, c2, c3, c4 = st.columns([1, 2.8, 1, 1.2])
+        ev_r, tr_c = 0, 0
+        with c1:
+            sgl, dbl, tpl = st.number_input("SGL", 0, key=kp+"s"), st.number_input("DBL", 0, key=kp+"d"), st.number_input("TPL", 0, key=kp+"t")
+            nt = st.number_input("Nights", 1, 365, key=kp+"n")
+        with c2:
+            st.write("Meal Basis")
+            ca, cb, cc = st.columns(3)
+            q = {"RO": ca.number_input("RO", 0, key=kp+"ro"), "BB": ca.number_input("BB", 0, key=kp+"b"),
+                 "HB": cb.number_input("HB", 0, key=kp+"h"), "FB": cb.number_input("FB", 0, key=kp+"f"),
+                 "SAI": cc.number_input("SAI", 0, key=kp+"sa"), "AI": cc.number_input("AI", 0, key=kp+"ai")}
+            if is_group:
+                cx, cy = st.columns(2)
+                ev_r = cx.number_input("Event Rev/Pax", 0.0, 500.0, 0.0, key=kp+"ev")
+                tr_c = cy.number_input("Total Trans Cost (Flat)", 0.0, 5000.0, 0.0, key=kp+"tr")
+        with c3:
+            ad, fl = st.number_input("Rate", 0., 5000., float(ad_d), key=kp+"a"), st.number_input("Floor", 0., 2000., float(fl_d), key=kp+"fl")
+        res = run([sgl, dbl, tpl], ad, nt, q, cp, fl, ev_r, tr_c)
+        if res:
+            with c4:
+                st.metric("Net Wealth", f"{cu} {res['u']:.2f}")
+                st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
+                st.write(f"Pax: **{res['pax']}** | Con: **{res['wc']:.1f}%**")
+                st.write(f"Stay Wealth: **{res['tp']:,.0f}**")
+        return res
+
+    st.header(f"🧳 Strategic Audit: {h_nm}")
+    r1 = seg("OTA Segment", "#2ecc71", "#e8f5e9", "ot", 60, 35, op)
+    r2 = seg("Direct/FIT", "#2980b9", "#e3f2fd", "di", 65, 40, 0.0)
+    r3 = seg("Wholesale", "#e67e22", "#fff3e0", "wh", 45, 25, 0.2)
+    r4 = seg("Corporate", "#8e44ad", "#f3e5f5", "co", 58, 32, 0.0)
+    r5 = seg("Group Tour & Travels", "#d35400", "#fbe9e7", "gt", 40, 20, 0.15, is_group=True)
+    r6 = seg("Group Corporate (MICE)", "#2c3e50", "#eceff1", "gc", 55, 30, 0.0, is_group=True)
+    
+    st.divider()
+    all_res = [x for x in [r1, r2, r3, r4, r5, r6] if x]
+    if all_res:
+        st.metric(f"Total Combined Property Wealth", f"{cu} {sum(x['tp'] for x in all_res):,.2f}")
+    if st.button("🔒 Log Out"):
+        st.session_state["auth"] = False
+        st.rerun()

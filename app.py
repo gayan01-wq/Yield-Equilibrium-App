@@ -58,14 +58,12 @@ row2 = st.columns(3)
 def segment_ui(col, icon, label, key_p, adr_def, floor_def):
     with col:
         with st.expander(f"{icon} {label}", expanded=True):
-            # Room Mix
-            s = st.number_input(f"SGL", 0, key=f"{key_p}s")
-            d = st.number_input(f"DBL", 0, key=f"{key_p}d")
-            t = st.number_input(f"TPL", 0, key=f"{key_p}t")
-            c = st.number_input(f"COMP", 0, key=f"{key_p}c")
+            s = st.number_input(f"SGL Rooms", 0, key=f"{key_p}s")
+            d = st.number_input(f"DBL Rooms", 0, key=f"{key_p}d")
+            t = st.number_input(f"TPL Rooms", 0, key=f"{key_p}t")
+            c = st.number_input(f"COMP Rooms", 0, key=f"{key_p}c")
             total = s + d + t
             
-            # Mixed Plan Counts
             st.markdown("---")
             st.caption(f"Distribute {total} Rooms across plans:")
             p_bb = st.number_input("Qty on BB", 0, total, key=f"{key_p}pbb")
@@ -87,14 +85,27 @@ g_data = segment_ui(row2[0], "🚌", "Group Tour", "tou", 140.0, 80.0)
 m_data = segment_ui(row2[1], "🏢", "MICE", "mic", 155.0, 85.0)
 o_data = segment_ui(row2[2], "📱", "OTA", "ota", 190.0, 100.0)
 
-# --- EXECUTE & DISPLAY ---
-res_list = []
+# --- EXECUTE ---
 segments = [("Direct", d_data, 0, 0), ("Corp", c_data, 0, 0), ("Whl", w_data, 0, 0.20),
             ("Tour", g_data, 0, 0.15), ("MICE", m_data, 150, 0.10), ("OTA", o_data, 0, 0.18)]
 
 st.divider()
 res_cols = st.columns(6)
+res_list = []
 
 for i, (name, data, trans, comm) in enumerate(segments):
-    # s, d, t, c, adr, counts, floor
-    res = run
+    results = run_audit(data[0], data[1], data[2], data[3], data[4], data[5], trans, comm, 10.0, data[6])
+    res_list.append(results)
+    with res_cols[i]:
+        st.markdown(f"### {name}")
+        st.metric("Surgical Net", f"{currency} {results['unit']:.2f}")
+        st.markdown(f"Status: :{results['col']}[{results['stat']}]")
+
+# --- TOTAL PROPERTY WEALTH ---
+st.divider()
+t_room = sum(r['room_p'] for r in res_list)
+t_fb = sum(r['fb_p'] for r in res_list)
+m1, m2, m3 = st.columns(3)
+m1.metric("Total Room Wealth", f"{currency} {t_room:,.2f}")
+m2.metric("Total F&B Revenue", f"{currency} {t_fb:,.2f}")
+m3.metric("Combined Property Wealth", f"{currency} {(t_room + t_fb):,.2f}")

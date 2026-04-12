@@ -5,7 +5,7 @@ st.set_page_config(page_title="Yield Auditor", layout="wide")
 st.markdown("<style>.stMetric { background-color: #ffffff; border: 2px solid #f0f2f6; padding: 10px; border-radius: 12px; } .card { padding: 10px; border-radius: 10px; margin-bottom: 8px; border-left: 10px solid; font-weight: bold; }</style>", unsafe_allow_html=True)
 
 st.title("🏨 Yield Equilibrium Center")
-st.caption("Developed by Gayan Nugawela | Wealth Efficiency Ratio Active")
+st.caption("Developed by Gayan Nugawela | Total Stay Wealth & LOS Logic")
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -15,30 +15,31 @@ with st.sidebar:
     mls = {"RO":0, "BB":b, "HB":b+d, "FB":b+l+d, "SAI":b+l+d+s, "AI":b+l+d+s+a}
     
     st.header("⚙️ Global Settings")
-    p01 = st.number_input("P01 Fee (Maint)", 0.0, 500.0, 10.0, help="Fixed operational cost per room.")
+    p01 = st.number_input("P01 Fee (Maint)", 0.0, 500.0, 6.90, help="Fixed operational cost per room.")
     tax = st.number_input("Tax Div", 1.0, 2.0, 1.2327, format="%.4f")
     ota_com = st.slider("OTA Comm %", 0, 50, 18) / 100
     cur = st.selectbox("Currency", ["OMR", "USD", "AED", "THB"])
 
 # --- ENGINE ---
-def run(rms, adr, mix, cp, flr):
+def run(rms, adr, nts, mix, cp, flr):
     tot = sum(rms)
     if tot <= 0: return None
     px = (rms[0]*1.0 + rms[1]*2.0 + rms[2]*3.0) / tot
     net = (adr * tot) / tax
     fb = sum(qty * mls[p] * px for p, qty in mix.items())
     cm = (net - fb) * cp
-    pr = (net - fb - cm) - (p01 * tot)
-    u = pr / tot
+    pr_daily = (net - fb - cm) - (p01 * tot)
     
-    # NEW: Wealth Margin Percentage (Wealth / Gross Rate)
-    margin_pct = (u / adr) * 100 if adr > 0 else 0
+    # WEALTH CALCULATION FOR TOTAL STAY
+    pr_total = pr_daily * nts
+    u = pr_daily / tot
+    pct = (u / adr) * 100 if adr > 0 else 0
     
-    if u >= (flr + 15): lbl, col, ds = "OPTIMIZED", "#27ae60", "High Efficiency Deal."
+    if u >= (flr + 5): lbl, col, ds = "OPTIMIZED", "#27ae60", "High Efficiency Stay."
     elif u >= flr: lbl, col, ds = "MARGINAL", "#f39c12", "Fair Wealth Retention."
-    else: lbl, col, ds = "DILUTIVE", "#e74c3c", "Wealth Leakage Detected!"
+    else: lbl, col, ds = "DILUTIVE", "#e74c3c", "Wealth Leakage! Check LOS."
     
-    return {"u":u, "s":lbl, "c":col, "d":ds, "cm":cm, "fb":fb, "p":pr, "pct":margin_pct}
+    return {"u":u, "s":lbl, "c":col, "d":ds, "cm":cm, "fb":fb, "p_total":pr_total, "pct":pct}
 
 # --- UI ROW ---
 def seg(name, color, bg, kp, adr_d, flr_d, cp):
@@ -47,6 +48,7 @@ def seg(name, color, bg, kp, adr_d, flr_d, cp):
     with c1:
         r = [st.number_input("SGL",0,key=kp+"s"), st.number_input("DBL",0,key=kp+"d"), st.number_input("TPL",0,key=kp+"t")]
         tot = sum(r)
+        nts = st.number_input("Nights", 1, 365, key=kp+"n")
     with c2:
         st.write("Meal Allocation")
         ca, cb = st.columns(2)
@@ -59,13 +61,13 @@ def seg(name, color, bg, kp, adr_d, flr_d, cp):
     with c3:
         adr = st.number_input("Rate", 0.0, 5000.0, float(adr_d), key=kp+"a")
         flr = st.number_input("Floor", 0.0, 2000.0, float(flr_d), key=kp+"fl")
-    res = run(r, adr, mix, cp, flr)
+    res = run(r, adr, nts, mix, cp, flr)
     with c4:
         if res:
-            st.metric("Net Wealth", f"{cur} {res['u']:.2f}")
+            st.metric("Daily Net Wealth", f"{cur} {res['u']:.2f}")
             st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
-            # Display Wealth Margin %
             st.write(f"Wealth Margin: **{res['pct']:.1f}%**")
+            st.write(f"Total Stay Wealth: **{cur} {res['p_total']:,.2f}**")
             st.caption(f"Comm({cp*100:.0f}%): {res['cm']:.2f} | FB: {res['fb']:.2f}")
     return res
 
@@ -80,8 +82,8 @@ r6 = seg("Corporate", "#8e44ad", "#f3e5f5", "co", 58, 32, 0.0)
 st.divider()
 all_r = [x for x in [r1,r2,r3,r4,r5,r6] if x]
 if all_r:
-    tp, tf = sum(x['p'] for x in all_r), sum(x['fb'] for x in all_r)
+    tp, tf = sum(x['p_total'] for x in all_r), sum(x['fb'] for x in all_r)
     m1, m2 = st.columns(2)
-    m1.metric("Total Property Wealth", f"{cur} {tp:,.2f}")
-    m2.metric("Total F&B Cost", f"{cur} {tf:,.2f}")
-st.write("✅ Wealth Efficiency Ratio calculated as (Net Wealth / Gross Rate). # DONE")
+    m1.metric("Total Property Stay Wealth", f"{cur} {tp:,.2f}")
+    m2.metric("Total F&B Stay Cost", f"{cur} {tf:,.2f}")
+st.write("✅ Multi-Night Audit Active. Protecting long-term owner wealth. # DONE")

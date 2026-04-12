@@ -37,9 +37,8 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan_counts, trans, comm, p01, floor):
     if paid_r == 0: 
         return {"room_p": 0, "fb_p": 0, "unit": 0, "stat": "N/A", "col": "gray"}
     
-    pax_ratio = ((sgl*1.0) + (dbl*2.0) + (tpl*3.0)) / paid_r
+    # Calculate pax ratio for weighted extraction
+    pax_ratio = ((sgl * 1.0) + (dbl * 2.0) + (tpl * 3.0)) / paid_r
     total_net_rev = (adr * paid_r) / tax_div
-    total_fb_rev = sum(count * meal_map[plan] * pax_ratio for plan, count in plan_counts.items())
     
-    room_wealth = total_net_rev - total_fb_rev - (trans / tax_div)
-    total_room_profit = (room_
+    # Extract F&B Wealth surgically based on the mix

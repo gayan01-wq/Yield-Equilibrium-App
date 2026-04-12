@@ -45,10 +45,9 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan_counts, trans, comm, p01, floor):
     
     # Extract F&B Wealth surgically based on the mix
     total_fb_rev = sum(count * meal_map[plan] * pax_ratio for plan, count in plan_counts.items())
-    
     room_wealth = total_net_rev - total_fb_rev - (trans / tax_div)
     
-    # Corrected and fully closed profit calculation
+    # Final profit calculation
     total_room_profit = (room_wealth * (1.0 - comm)) - (p01 * total_r)
     unit_net = total_room_profit / total_r
     
@@ -82,5 +81,9 @@ def segment_row(icon, label, color, key_p, adr_def, floor_def, comm_rate):
         p_bb = st.number_input(f"{label} Qty BB", 0, total_rooms, key=f"{key_p}pbb")
         p_hb = st.number_input(f"{label} Qty HB", 0, total_rooms, key=f"{key_p}phb")
         p_fb = st.number_input(f"{label} Qty FB", 0, total_rooms, key=f"{key_p}pfb")
-        # Remainder is automatically Room Only (RO)
-        counts = {"BB": p_bb
+        counts = {"BB": p_bb, "HB": p_hb, "FB": p_fb, "RO": max(0, total_rooms - (p_bb + p_hb + p_fb)), "SAI": 0, "AI": 0}
+        
+    with c3:
+        # Minimums unlocked to 1.0 for full flexibility
+        adr = st.number_input(f"Gross ADR", min_value=1.0, max_value=5000.0, value=float(adr_def), step=1.0, key=f"{key_p}a")
+        flr = st.number_input(f"Profit Floor", min_value=1.0, max_value=2000.0, value=float(floor_

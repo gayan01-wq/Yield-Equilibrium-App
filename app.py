@@ -40,6 +40,4 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan_counts, trans, comm, p01, floor):
         return {"room_p": 0.0, "fb_p": 0.0, "unit": 0.0, "stat": "Waiting...", "col": "gray", "def": "Enter inventory to begin audit."}
     
     # Calculate pax ratio for weighted extraction
-    pax_ratio = ((sgl * 1.0) + (dbl * 2.0) + (tpl * 3.0)) / paid_r
-    total_net_rev = (adr * paid_r) / tax_div
-    total_fb_rev = sum(count * meal_map[plan] * pax_ratio for
+    pax_ratio = ((

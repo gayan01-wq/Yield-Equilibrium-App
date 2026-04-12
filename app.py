@@ -13,7 +13,7 @@ with st.sidebar:
     p01=st.number_input("P01 Fee (Maint)",0.,100.,6.9)
     tx=st.number_input("Tax Div",1.,2.,1.2327,format="%.4f")
     op=st.slider("OTA Comm %",0,50,18)/100
-    cu=st.selectbox("Cur",["OMR","USD","AED","THB"])
+    cu=st.selectbox("Currency",["OMR","AED","SAR","QAR","KWD","BHD","THB","SGD","MYR","CNY","JPY","INR","EUR","GBP","USD"])
 
 def run(rms,adr,nts,mix,cp,fl):
     t=sum(rms)
@@ -55,7 +55,7 @@ def seg(nm,cl,bg,kp,ad_d,fl_d,cp):
             st.write(f"Stay Wealth: {res['tp']:,.0f}")
     return res
 
-st.header(f"📍 Strategic Audit: {h_nm}")
+st.header(f"🏨 Strategic Audit: {h_nm}")
 r1=seg("OTA Segment","#2ecc71","#e8f5e9","ot",60,35,op)
 r2=seg("Direct/FIT","#2980b9","#e3f2fd","di",65,40,0.0)
 r3=seg("Wholesale","#e67e22","#fff3e0","wh",45,25,0.2)
@@ -65,5 +65,5 @@ r6=seg("Group Corporate","#2c3e50","#eceff1","gc",55,30,0.0)
 st.divider()
 all_res=[x for x in [r1,r2,r3,r4,r5,r6] if x]
 if all_res:
-    st.metric(f"Total {h_nm} Wealth",f"{cu} {sum(x['tp'] for x in all_res):,.2f}")
+    st.metric(f"Total Property Stay Wealth",f"{cu} {sum(x['tp'] for x in all_res):,.2f}")
 st.write("✅ Ready.")

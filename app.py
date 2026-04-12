@@ -5,7 +5,7 @@ st.set_page_config(page_title="Yield Auditor", layout="wide")
 st.markdown("<style>.stMetric { background-color: #ffffff; border: 2px solid #f0f2f6; padding: 10px; border-radius: 12px; } .card { padding: 10px; border-radius: 10px; margin-bottom: 8px; border-left: 10px solid; font-weight: bold; }</style>", unsafe_allow_html=True)
 
 st.title("🏨 Yield Equilibrium Center")
-st.caption("Developed by Gayan Nugawela | Total Revenue Wealth Auditor")
+st.caption("Developed by Gayan Nugawela | Full RO/Meal Allocation Logic")
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -34,36 +34,34 @@ def run(rms, adr, nts, mix, cp, flr):
     u = pr_daily / tot
     pct = (u / adr) * 100 if adr > 0 else 0
     
-    # SYSTEM LOGIC: "Yield Equilibrium" Optimized Trigger
-    # A deal is Optimized if Wealth is OMR 5 above floor OR Margin is > 55%
+    # Volume-Value Logic
     adj_floor = flr * 0.75 if nts > 7 else flr
     
-    if u >= (adj_floor + 5) or pct > 55: 
-        lbl, col, ds = "OPTIMIZED", "#27ae60", "High Wealth Retention."
-    elif u >= adj_floor: 
-        lbl, col, ds = "MARGINAL", "#f39c12", "Acceptable Volume Yield."
-    else: 
-        lbl, col, ds = "DILUTIVE", "#e74c3c", "Wealth Leakage!"
+    if u >= (adj_floor + 5) or pct > 55: lbl, col = "OPTIMIZED", "#27ae60"
+    elif u >= adj_floor: lbl, col = "MARGINAL", "#f39c12"
+    else: lbl, col = "DILUTIVE", "#e74c3c"
     
-    return {"u":u, "s":lbl, "c":col, "d":ds, "cm":cm, "fb":fb, "p_total":pr_total, "pct":pct}
+    return {"u":u, "s":lbl, "c":col, "cm":cm, "fb":fb, "p_t":pr_total, "pct":pct}
 
 # --- UI ROW ---
 def seg(name, color, bg, kp, adr_d, flr_d, cp):
     st.markdown(f"<div class='card' style='background:{bg}; border-left-color:{color};'>{name}</div>", unsafe_allow_html=True)
-    c1, c2, c3, c4 = st.columns([1, 2.5, 1, 1.5])
+    c1, c2, c3, c4 = st.columns([1, 2.8, 1, 1.2])
     with c1:
         r = [st.number_input("SGL",0,key=kp+"s"), st.number_input("DBL",0,key=kp+"d"), st.number_input("TPL",0,key=kp+"t")]
         tot = sum(r)
         nts = st.number_input("Nights", 1, 365, key=kp+"n")
     with c2:
-        st.write("Meal Allocation")
-        ca, cb = st.columns(2)
+        st.write("Meal Plan Allocation")
+        ca, cb, cc = st.columns(3)
+        q_ro = ca.number_input("RO Qty", 0, tot, key=kp+"ro")
         q_bb = ca.number_input("BB Qty", 0, tot, key=kp+"b")
-        q_hb = ca.number_input("HB Qty", 0, tot, key=kp+"h")
-        q_fb = ca.number_input("FB Qty", 0, tot, key=kp+"f")
-        q_sa = cb.number_input("SAI Qty", 0, tot, key=kp+"sa")
-        q_ai = cb.number_input("AI Qty", 0, tot, key=kp+"ai")
-        mix = {"BB":q_bb, "HB":q_hb, "FB":q_fb, "SAI":q_sa, "AI":q_ai, "RO":max(0, tot-(q_bb+q_hb+q_fb+q_sa+q_ai))}
+        q_hb = cb.number_input("HB Qty", 0, tot, key=kp+"h")
+        q_fb = cb.number_input("FB Qty", 0, tot, key=kp+"f")
+        q_sa = cc.number_input("SAI Qty", 0, tot, key=kp+"sa")
+        q_ai = cc.number_input("AI Qty", 0, tot, key=kp+"ai")
+        mix = {"RO":q_ro, "BB":q_bb, "HB":q_hb, "FB":q_fb, "SAI":q_sa, "AI":q_ai}
+        if sum(mix.values()) > tot: st.warning("Allocated rooms exceed total!")
     with c3:
         adr = st.number_input("Rate", 0.0, 5000.0, float(adr_d), key=kp+"a")
         flr = st.number_input("Floor", 0.0, 2000.0, float(flr_d), key=kp+"fl")
@@ -72,8 +70,8 @@ def seg(name, color, bg, kp, adr_d, flr_d, cp):
         if res:
             st.metric("Net Wealth", f"{cur} {res['u']:.2f}")
             st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
-            st.write(f"Total Stay Wealth: **{cur} {res['p_total']:,.2f}**")
-            st.caption(f"Wealth Margin: {res['pct']:.1f}%")
+            st.write(f"Margin: **{res['pct']:.1f}%**")
+            st.caption(f"Total: {res['p_t']:,.2f}")
     return res
 
 # --- RENDER ---
@@ -87,6 +85,6 @@ r6 = seg("Corporate", "#8e44ad", "#f3e5f5", "co", 58, 32, 0.0)
 st.divider()
 all_r = [x for x in [r1,r2,r3,r4,r5,r6] if x]
 if all_r:
-    tp = sum(x['p_total'] for x in all_r)
+    tp = sum(x['p_t'] for x in all_r)
     st.metric("Total Property Stay Wealth", f"{cur} {tp:,.2f}")
-st.write("✅ Audit Finalized. Protecting Total Revenue Wealth. # DONE")
+st.write("✅ RO logic integrated. Total Revenue Command Center Active. # DONE")

@@ -44,26 +44,28 @@ if check_password():
         t_rms = sum(rms)
         if t_rms <= 0: return None
         pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
-        nt_rev, fb_cost = (adr * t_rms) / tx, sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
-        ev_w, cm = (ev_rev * pax) / tx, (adr * t_rms / tx - sum(q * m[p] * (pax / t_rms) for p, q in mix.items())) * cp
+        nt_rev = (adr * t_rms) / tx
+        fb_cost = sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
+        ev_w = (ev_rev * pax) / tx
+        cm = (nt_rev - fb_cost) * cp
         dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
         tp = (dp * t_rms * nts) - (total_tr_cost / tx)
         u = tp / (t_rms * nts)
-        mg, cap, wc = (u / adr) * 100 if adr > 0 else 0, (t_rms / h_cp) * 100, (tp / ((fl * h_cp) * nts)) * 100 if fl > 0 and nts > 0 else 0
+        
+        # LOS Hurdle Adjustment
         af = fl * 0.75 if nts > 7 else fl
         
-        # --- RE-ENGINEERED MARGINAL PRIORITY ---
+        # --- THE PERFECT STRATEGY SPECTRUM ---
+        # 1. DILUTIVE: Anything below the hurdle
         if u < af:
             lb, cl = "DILUTIVE", "#e74c3c" # Red
+        # 2. MARGINAL: At or slightly above hurdle (within 5 OMR)
         elif af <= u < (af + 5):
             lb, cl = "MARGINAL", "#f1c40f" # Yellow
+        # 3. OPTIMIZED: Significantly above hurdle
         else:
             lb, cl = "OPTIMIZED", "#27ae60" # Green
-        
-        # Velocity Overrides (Only upgrade Yellow to Green if business is significant)
-        if lb == "MARGINAL" and (cap > 20 or wc > 15 or mg > 55):
-            lb, cl = "OPTIMIZED", "#27ae60"
-        
+            
         prog = min(max(u / (af + 10) * 100 if af > 0 else 100, 5), 100)
         return {"u": u, "s": lb, "c": cl, "tp": tp, "pax": pax, "prog": prog}
 

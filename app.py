@@ -38,14 +38,12 @@ if check_password():
     def run(rms,adr,nts,mix,cp,fl,ev_rev=0):
         t_rms=sum(rms)
         if t_rms<=0:return None
-        # Calculate Pax (1 for SGL, 2 for DBL, 3 for TPL)
         pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
         nt_rev=(adr*t_rms)/tx
-        fb_cost=sum(q*m[p]*(pax/t_rms) for p,q in mix.items()) # Cost per room basis
-        # Event Profit (Revenue - Tax)
+        fb_cost=sum(q*m[p]*(pax/t_rms) for p,q in mix.items())
         ev_wealth = (ev_rev * pax) / tx
         cm=(nt_rev-fb_cost)*cp
-        dp=((nt_rev-fb_cost-cm)-(p01*t_rms)) + (ev_wealth / t_rms) # Add event wealth per room
+        dp=((nt_rev-fb_cost-cm)-(p01*t_rms)) + (ev_wealth / t_rms)
         tp,u=dp*nts,dp/t_rms
         mg,cap=(u/adr)*100 if adr>0 else 0,(t_rms/h_cp)*100
         wc=(tp/((fl*h_cp)*nts))*100 if fl>0 and nts>0 else 0
@@ -83,8 +81,23 @@ if check_password():
         return res
 
     st.header(f"🧳 Strategic Audit: {h_nm}")
+    # 1. OTA
     r1=seg("OTA Segment","#2ecc71","#e8f5e9","ot",60,35,op)
+    # 2. Direct
     r2=seg("Direct/FIT","#2980b9","#e3f2fd","di",65,40,0.0)
+    # 3. Wholesale
     r3=seg("Wholesale","#e67e22","#fff3e0","wh",45,25,0.2)
+    # 4. Corporate
     r4=seg("Corporate","#8e44ad","#f3e5f5","co",58,32,0.0)
-    # Linked Events logic
+    # 5. Group Tour & Travels (Events Enabled)
+    r5=seg("Group Tour & Travels","#d35400","#fbe9e7","gt",40,20,0.15, is_group=True)
+    # 6. Group Corporate MICE (Events Enabled)
+    r6=seg("Group Corporate (MICE)","#2c3e50","#eceff1","gc",55,30,0.0, is_group=True)
+    
+    st.divider()
+    all_res=[x for x in [r1,r2,r3,r4,r5,r6] if x]
+    if all_res:
+        st.metric(f"Total Combined {h_nm} Wealth",f"{cu} {sum(x['tp'] for x in all_res):,.2f}")
+    if st.button("🔒 Log Out"):
+        st.session_state["auth"] = False
+        st.rerun()

@@ -38,7 +38,7 @@ if check_password():
         t_rms = sum(rms)
         if t_rms <= 0: return None
         pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
-        # Gross vs Net Calculations
+        # Calculate Gross for Friction insight
         gross_total_stay = (adr * t_rms * nts) + (ev_rev * pax * nts)
         nt_rev, fb_cost = (adr * t_rms) / tx, sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
         ev_w = (ev_rev * pax) / tx
@@ -48,14 +48,14 @@ if check_password():
         u = tp / (t_rms * nts)
         af = fl * 0.75 if nts > 7 else fl
         
-        # GOPPAR Loss Calculation (Gross Revenue vs Net Wealth)
-        loss_pct = (1 - (tp / gross_total_stay)) * 100 if gross_total_stay > 0 else 0
+        # Calculate Yield Friction (The % rub-off)
+        friction = (1 - (tp / gross_total_stay)) * 100 if gross_total_stay > 0 else 0
         
         if u < af: lb, cl = "DILUTIVE", "#e74c3c"
         elif af <= u < (af + 5): lb, cl = "MARGINAL", "#f1c40f"
         else: lb, cl = "OPTIMIZED", "#27ae60"
         
-        return {"u": u, "s": lb, "c": cl, "tp": tp, "pax": pax, "loss": loss_pct}
+        return {"u": u, "s": lb, "c": cl, "tp": tp, "pax": pax, "fric": friction}
 
     def seg(nm, cl, bg, kp, ad_d, fl_d, cp, is_group=False):
         st.markdown(f"<div class='card' style='background:{bg};border-left-color:{cl}'>{nm}</div>", unsafe_allow_html=True)
@@ -80,7 +80,7 @@ if check_password():
                 st.metric("Wealth (Stay/Room)", f"{cu} {res['u']:.2f}")
                 st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
                 st.write(f"Pax: **{res['pax']}**")
-                st.write(f"Efficiency Loss: **{res['loss']:.1f}%**")
+                st.write(f"Yield Friction: **{res['fric']:.1f}%**")
                 st.write(f"Stay Wealth: **{res['tp']:,.0f}**")
         return res
 

@@ -52,13 +52,17 @@ if check_password():
         mg, cap, wc = (u / adr) * 100 if adr > 0 else 0, (t_rms / h_cp) * 100, (tp / ((fl * h_cp) * nts)) * 100 if fl > 0 and nts > 0 else 0
         af = fl * 0.75 if nts > 7 else fl
         
-        # Recalibrated Strict Status Hierarchy
-        if u < af: lb, cl = "DILUTIVE", "#e74c3c"
-        elif af <= u < (af + 5): lb, cl = "MARGINAL", "#f1c40f"
-        else: lb, cl = "OPTIMIZED", "#27ae60"
+        # --- RE-ENGINEERED MARGINAL PRIORITY ---
+        if u < af:
+            lb, cl = "DILUTIVE", "#e74c3c" # Red
+        elif af <= u < (af + 5):
+            lb, cl = "MARGINAL", "#f1c40f" # Yellow
+        else:
+            lb, cl = "OPTIMIZED", "#27ae60" # Green
         
-        # Velocity Overrides (Only if deal is not Dilutive)
-        if u >= af and (cap > 20 or wc > 15 or mg > 55): lb, cl = "OPTIMIZED", "#27ae60"
+        # Velocity Overrides (Only upgrade Yellow to Green if business is significant)
+        if lb == "MARGINAL" and (cap > 20 or wc > 15 or mg > 55):
+            lb, cl = "OPTIMIZED", "#27ae60"
         
         prog = min(max(u / (af + 10) * 100 if af > 0 else 100, 5), 100)
         return {"u": u, "s": lb, "c": cl, "tp": tp, "pax": pax, "prog": prog}
@@ -85,7 +89,7 @@ if check_password():
             with c4:
                 st.metric("Wealth (Stay/Room)", f"{cu} {res['u']:.2f}")
                 st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b><div class='w-bar-bg'><div class='w-bar-fill' style='width:{res['prog']}%;background-color:{res['c']};'></div></div>", unsafe_allow_html=True)
-                st.write(f"Pax: **{res['pax']}** | Stay Wealth (Total): **{res['tp']:,.0f}**")
+                st.write(f"Pax: **{res['pax']}** | Total Stay Wealth: **{res['tp']:,.0f}**")
         return res
 
     st.header(f"🧳 Strategic Audit: {h_nm}")

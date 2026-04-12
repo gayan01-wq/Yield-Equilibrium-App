@@ -37,12 +37,16 @@ def run_audit(s, d, t, adr, counts, comm, floor):
     if paid <= 0:
         return {"rp": 0.0, "un": 0.0, "st": "Waiting", "cl": "gray", "tfb": 0.0}
     
-    # Surgical Pax Ratio
+    # Surgical Pax Ratio (SGL=1, DBL=2, TPL=3)
     pax_ratio = ((s * 1.0) + (d * 2.0) + (t * 3.0)) / paid
     total_net_rev = (adr * paid) / tax_div
     
     # Total F&B cost across all meal plans
     fb_total = sum(qty * meal_costs[plan] * pax_ratio for plan, qty in counts.items())
     
-    # Net Wealth Calculation
-    profit = ((total_net_rev - fb_total) * (1.0 - comm
+    # Net Wealth: (Rev - F&B) * (1 - Comm) - Maintenance Fee
+    profit = ((total_net_rev - fb_total) * (1.0 - comm)) - (p01_fee * paid)
+    unit_wealth = profit / paid
+    
+    if unit_wealth >= (floor + 10.0): res = {"st": "OPTIMIZED", "cl": "green"}
+    elif unit_wealth >= floor: res = {"st": "MARGINAL", "cl": "orange"}

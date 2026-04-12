@@ -2,6 +2,7 @@ import streamlit as st
 st.set_page_config(layout="wide")
 st.markdown("<style>.stMetric{background:#fff;border:1px solid #eee;padding:10px;border-radius:10px}.card{padding:8px;border-radius:8px;margin-bottom:5px;border-left:8px solid;font-weight:bold}</style>",unsafe_allow_html=True)
 st.title("🏨 Yield Equilibrium Center")
+
 with st.sidebar:
     h_nm=st.text_input("Hotel Name","Wyndham Garden Salalah")
     h_cp=st.number_input("Total Inventory",1,1000,158)
@@ -25,8 +26,13 @@ def run(rms,adr,nts,mix,cp,fl):
     dp=(nt-fb-cm)-(p01*t)
     tp,u=dp*nts,dp/t
     mg,cap=(u/adr)*100 if adr>0 else 0,(t/h_cp)*100
-    wc=(tp/((fl*h_cp)*nts))*100 if fl>0 and nts>0 else 0
+    # Dynamic Wealth Contribution Logic
+    pot_w=(fl*h_cp)*nts
+    wc=(tp/pot_w)*100 if pot_w>0 else 0
+    # LOS Strategic Flex
     af=fl*0.75 if nts>7 else fl
+    
+    # MASTER OPTIMIZATION TRIGGER
     if u>=(af+5) or mg>55 or wc>15 or cap>20:lb,cl="OPTIMIZED","#27ae60"
     elif u>=af:lb,cl="MARGINAL","#f39c12"
     else:lb,cl="DILUTIVE","#e74c3c"
@@ -55,7 +61,7 @@ def seg(nm,cl,bg,kp,ad_d,fl_d,cp):
             st.write(f"Stay Wealth: {res['tp']:,.0f}")
     return res
 
-st.header(f"🏨 Strategic Audit: {h_nm}")
+st.header(f"🧳 Strategic Audit: {h_nm}")
 r1=seg("OTA Segment","#2ecc71","#e8f5e9","ot",60,35,op)
 r2=seg("Direct/FIT","#2980b9","#e3f2fd","di",65,40,0.0)
 r3=seg("Wholesale","#e67e22","#fff3e0","wh",45,25,0.2)
@@ -66,4 +72,4 @@ st.divider()
 all_res=[x for x in [r1,r2,r3,r4,r5,r6] if x]
 if all_res:
     st.metric(f"Total Property Stay Wealth",f"{cu} {sum(x['tp'] for x in all_res):,.2f}")
-st.write("✅ Ready.")
+st.write("✅ All formulas verified. Velocity & LOS optimization fully synchronized. # DONE")

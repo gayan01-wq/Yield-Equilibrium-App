@@ -35,20 +35,28 @@ if check_password():
         op=st.slider("OTA Comm %",0,50,18)/100
         cu=st.selectbox("Currency",["OMR","AED","SAR","THB","EUR","GBP","USD"])
 
-    def run(rms,adr,nts,mix,cp,fl,ev_rev=0, tr_cost=0):
+    def run(rms,adr,nts,mix,cp,fl,ev_rev=0, total_tr_cost=0):
         t_rms=sum(rms)
         if t_rms<=0:return None
         pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
         nt_rev=(adr*t_rms)/tx
         fb_cost=sum(q*m[p]*(pax/t_rms) for p,q in mix.items())
-        # Event Profit - Transportation Cost
-        logistics_wealth = ((ev_rev - tr_cost) * pax) / tx
+        
+        # Event Profit (Per Pax)
+        ev_wealth_daily = (ev_rev * pax) / tx
         cm=(nt_rev-fb_cost)*cp
-        dp=((nt_rev-fb_cost-cm)-(p01*t_rms)) + (logistics_wealth / t_rms)
-        tp,u=dp*nts,dp/t_rms
+        
+        # Room + Daily Event Wealth
+        dp_per_room = ((nt_rev-fb_cost-cm)-(p01*t_rms)) + (ev_wealth_daily / t_rms)
+        
+        # Stay Wealth (minus the FLAT transportation cost)
+        tp = (dp_per_room * t_rms * nts) - (total_tr_cost / tx)
+        u = tp / (t_rms * nts)
+        
         mg,cap=(u/adr)*100 if adr>0 else 0,(t_rms/h_cp)*100
         wc=(tp/((fl*h_cp)*nts))*100 if fl>0 and nts>0 else 0
         af=fl*0.75 if nts>7 else fl
+        
         if u>=(af+5) or mg>55 or wc>15 or cap>20:lb,cl="OPTIMIZED","#27ae60"
         elif u>=af:lb,cl="MARGINAL","#f39c12"
         else:lb,cl="DILUTIVE","#e74c3c"
@@ -70,7 +78,7 @@ if check_password():
             if is_group:
                 cx, cy = st.columns(2)
                 ev_r = cx.number_input("Event Rev/Pax", 0.0, 500.0, 0.0, key=kp+"ev")
-                tr_c = cy.number_input("Trans Cost/Pax", 0.0, 500.0, 0.0, key=kp+"tr")
+                tr_c = cy.number_input("Total Trans Cost (Flat)", 0.0, 5000.0, 0.0, key=kp+"tr")
         with c3:
             ad,fl=st.number_input("Rate",0.,5000.,float(ad_d),key=kp+"a"),st.number_input("Floor",0.,2000.,float(fl_d),key=kp+"fl")
         res=run([sgl,dbl,tpl],ad,nt,q,cp,fl,ev_r, tr_c)
@@ -93,7 +101,7 @@ if check_password():
     st.divider()
     all_res=[x for x in [r1,r2,r3,r4,r5,r6] if x]
     if all_res:
-        st.metric(f"Total Property Wealth",f"{cu} {sum(x['tp'] for x in all_res):,.2f}")
+        st.metric(f"Total Combined Wealth",f"{cu} {sum(x['tp'] for x in all_res):,.2f}")
     if st.button("🔒 Log Out"):
         st.session_state["auth"] = False
         st.rerun()

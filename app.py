@@ -1,29 +1,34 @@
 import streamlit as st
 
-# --- SIMPLE PASSWORD PROTECTION ---
+# --- FAST-ENTRY PASSWORD PROTECTION ---
 def check_password():
     if "auth" not in st.session_state:
         st.session_state["auth"] = False
     
     if not st.session_state["auth"]:
-        st.title("🔐 Yield Equilibrium Access")
-        pwd = st.text_input("Enter Access Key", type="password")
-        if st.button("Unlock Dashboard"):
-            if pwd == "Gayan2026": # CHANGE YOUR PASSWORD HERE
+        st.title("🏨 Yield Equilibrium Center")
+        st.subheader("Proprietary Revenue Management Suite")
+        
+        # Using on_change or just checking the value directly allows 'Enter' to work
+        pwd = st.text_input("Enter Access Key", type="password", placeholder="Type key and hit Enter")
+        
+        # This logic triggers if the button is clicked OR if Enter is pressed
+        if st.button("Unlock Dashboard") or (pwd > ""):
+            if pwd == "Gayan2026": # <--- CHANGE PASSWORD HERE
                 st.session_state["auth"] = True
                 st.rerun()
-            else:
+            elif pwd > "":
                 st.error("Unauthorized Key.")
         return False
     return True
 
 if check_password():
-    # --- YOUR FULL AUDITOR CODE START ---
+    # --- YOUR MASTER AUDITOR CODE ---
     st.set_page_config(layout="wide")
     st.markdown("<style>.stMetric{background:#fff;border:1px solid #eee;padding:10px;border-radius:10px}.card{padding:8px;border-radius:8px;margin-bottom:5px;border-left:8px solid;font-weight:bold}</style>",unsafe_allow_html=True)
-    st.title("🏨 Yield Equilibrium Center")
     
     with st.sidebar:
+        st.title("⚙️ Control Panel")
         h_nm=st.text_input("Hotel Name","Wyndham Garden Salalah")
         h_cp=st.number_input("Total Inventory",1,1000,158)
         st.header("🍽️ Meal Allocation")
@@ -34,7 +39,7 @@ if check_password():
         p01=st.number_input("P01 Fee (Maint)",0.,100.,6.9)
         tx=st.number_input("Tax Div",1.,2.,1.2327,format="%.4f")
         op=st.slider("OTA Comm %",0,50,18)/100
-        cu=st.selectbox("Currency",["OMR","AED","SAR","THB","EUR","USD"])
+        cu=st.selectbox("Currency",["OMR","AED","SAR","THB","EUR","GBP","USD"])
 
     def run(rms,adr,nts,mix,cp,fl):
         t=sum(rms)
@@ -84,6 +89,7 @@ if check_password():
     r5=seg("Group Tour & Travels","#d35400","#fbe9e7","gt",40,20,0.15)
     r6=seg("Group Corporate","#2c3e50","#eceff1","gc",55,30,0.0)
     
-    if st.button("Log Out"):
+    st.divider()
+    if st.button("🔒 Log Out"):
         st.session_state["auth"] = False
         st.rerun()

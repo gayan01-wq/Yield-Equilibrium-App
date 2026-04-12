@@ -48,12 +48,4 @@ def run_audit(s, d, t, adr, counts, comm, floor):
     profit = ((total_net_rev - fb_total) * (1.0 - comm)) - (p01_fee * paid)
     unit_wealth = profit / paid
     
-    if unit_wealth >= (floor + 10.0): res = {"st": "OPTIMIZED", "cl": "green"}
-    elif unit_wealth >= floor: res = {"st": "MARGINAL", "cl": "orange"}
-    else: res = {"st": "DILUTIVE", "cl": "red"}
-    
-    res.update({"rp": profit, "un": unit_wealth, "tfb": fb_total})
-    return res
-
-# --- UI SEGMENT ROW ---
-def segment(label, color, kp, adr_d, flr_d, comm
+    if unit_wealth >= (floor + 10

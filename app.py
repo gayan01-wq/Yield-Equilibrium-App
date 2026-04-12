@@ -5,7 +5,7 @@ st.set_page_config(page_title="Yield Auditor", layout="wide")
 st.markdown("<style>.stMetric { background-color: #ffffff; border: 2px solid #f0f2f6; padding: 10px; border-radius: 12px; } .card { padding: 10px; border-radius: 10px; margin-bottom: 8px; border-left: 10px solid; font-weight: bold; }</style>", unsafe_allow_html=True)
 
 st.title("🏨 Yield Equilibrium Center")
-st.caption("Developed by Gayan Nugawela | Property-Specific Capacity Logic")
+st.caption("Developed by Gayan Nugawela | Dynamic Wealth Contribution Logic")
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -37,22 +37,25 @@ def run(rms, adr, nts, mix, cp, flr):
     pr_total = pr_daily * nts
     u = pr_daily / tot
     pct = (u / adr) * 100 if adr > 0 else 0
-    
-    # NEW: Capacity Impact Calculation
     cap_impact = (tot / h_total) * 100
     
-    # SYSTEM LOGIC: "Yield Equilibrium" Optimized Trigger
-    # Green if: (Wealth > Floor + 5) OR (Margin > 55%) OR (Total Wealth > 5000) OR (Capacity Impact > 20%)
+    # NEW: Wealth Contribution % (Deal Wealth vs Total Hotel Floor Wealth)
+    # This measures how much of the hotel's potential profit this deal "buys"
+    total_hotel_potential = (flr * h_total) * nts
+    wealth_contrib = (pr_total / total_hotel_potential) * 100 if total_hotel_potential > 0 else 0
+    
+    # SYSTEM LOGIC: Equilibrium Triggers
     adj_floor = flr * 0.75 if nts > 7 else flr
     
-    if u >= (adj_floor + 5) or pct > 55 or pr_total > 5000 or cap_impact > 20: 
+    # Optimized if: Daily Profit is strong OR Margin is Elite OR Wealth Contribution > 15% OR Cap Impact > 20%
+    if u >= (adj_floor + 5) or pct > 55 or wealth_contrib > 15 or cap_impact > 20: 
         lbl, col = "OPTIMIZED", "#27ae60"
     elif u >= adj_floor: 
         lbl, col = "MARGINAL", "#f39c12"
     else: 
         lbl, col = "DILUTIVE", "#e74c3c"
     
-    return {"u":u, "s":lbl, "c":col, "p_t":pr_total, "pct":pct, "cap":cap_impact}
+    return {"u":u, "s":lbl, "c":col, "p_t":pr_total, "pct":pct, "cap":cap_impact, "w_con":wealth_contrib}
 
 # --- UI ROW ---
 def seg(name, color, bg, kp, adr_d, flr_d, cp):
@@ -68,31 +71,4 @@ def seg(name, color, bg, kp, adr_d, flr_d, cp):
         q_ro, q_bb = ca.number_input("RO Qty", 0, tot, key=kp+"ro"), ca.number_input("BB Qty", 0, tot, key=kp+"b")
         q_hb, q_fb = cb.number_input("HB Qty", 0, tot, key=kp+"h"), cb.number_input("FB Qty", 0, tot, key=kp+"f")
         q_sa, q_ai = cc.number_input("SAI Qty", 0, tot, key=kp+"sa"), cc.number_input("AI Qty", 0, tot, key=kp+"ai")
-        mix = {"RO":q_ro, "BB":q_bb, "HB":q_hb, "FB":q_fb, "SAI":q_sa, "AI":q_ai}
-    with c3:
-        adr = st.number_input("Rate", 0.0, 5000.0, float(adr_d), key=kp+"a")
-        flr = st.number_input("Floor", 0.0, 2000.0, float(flr_d), key=kp+"fl")
-    res = run(r, adr, nts, mix, cp, flr)
-    with c4:
-        if res:
-            st.metric("Net Wealth", f"{cur} {res['u']:.2f}")
-            st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
-            st.write(f"Cap Impact: **{res['cap']:.1f}%**")
-            st.write(f"Stay Wealth: **{res['p_t']:,.2f}**")
-    return res
-
-# --- RENDER ---
-st.header(f"📍 Audit for: {h_name}")
-r1 = seg("Wholesale", "#e67e22", "#fff3e0", "wh", 45, 25, 0.20)
-r2 = seg("Group Tour", "#d35400", "#fbe9e7", "gt", 40, 20, 0.15)
-r3 = seg("Group Corp", "#2c3e50", "#eceff1", "gc", 55, 30, 0.0)
-r4 = seg("Direct/FIT", "#2980b9", "#e3f2fd", "di", 65, 40, 0.0)
-r5 = seg("OTA Segment", "#2ecc71", "#e8f5e9", "ot", 60, 35, ota_com)
-r6 = seg("Corporate", "#8e44ad", "#f3e5f5", "co", 58, 32, 0.0)
-
-st.divider()
-all_r = [x for x in [r1,r2,r3,r4,r5,r6] if x]
-if all_r:
-    tp = sum(x['p_t'] for x in all_r)
-    st.metric(f"Total {h_name} Stay Wealth", f"{cur} {tp:,.2f}")
-st.write("✅ Capacity Impact logic added. Inventory Velocity is now live. # DONE")
+        mix = {"RO":q_ro, "BB":q_bb, "HB":

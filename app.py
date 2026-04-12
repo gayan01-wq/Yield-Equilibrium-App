@@ -76,10 +76,11 @@ if check_password():
         res = run([sgl, dbl, tpl], ad, nt, q, cp, fl, ev_r, tr_c)
         if res:
             with c4:
-                st.metric("Net Wealth", f"{cu} {res['u']:.2f}")
+                # Updated Label for Perfection
+                st.metric("Wealth (Stay/Room)", f"{cu} {res['u']:.2f}")
                 st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
                 st.write(f"Pax: **{res['pax']}** | Con: **{res['wc']:.1f}%**")
-                st.write(f"Stay Wealth: **{res['tp']:,.0f}**")
+                st.write(f"Stay Wealth (Total): **{res['tp']:,.0f}**")
         return res
 
     st.header(f"🧳 Strategic Audit: {h_nm}")
@@ -93,7 +94,7 @@ if check_password():
     st.divider()
     all_res = [x for x in [r1, r2, r3, r4, r5, r6] if x]
     if all_res:
-        st.metric(f"Total Combined Property Wealth", f"{cu} {sum(x['tp'] for x in all_res):,.2f}")
+        st.metric(f"Total Property Wealth (Portfolio)", f"{cu} {sum(x['tp'] for x in all_res):,.2f}")
     if st.button("🔒 Log Out"):
         st.session_state["auth"] = False
         st.rerun()

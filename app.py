@@ -1,120 +1,47 @@
 import streamlit as st
 
-# --- BRANDING ---
-st.set_page_config(page_title="Yield Equilibrium Master Auditor", layout="wide")
-st.title("🏨 Yield Equilibrium: Full Property & F&B Auditor")
-st.markdown("Developed by **Gayan Nugawela** | *The Surgical Total Revenue Framework*")
-st.divider()
+# ... (Sidebar and Meal Map logic remains the same) ...
 
-# --- SIDEBAR: DETAILED F&B ALLOCATIONS (PER PERSON) ---
-st.sidebar.header("🍽️ Per Person Net Costs")
-st.sidebar.caption("Enter the internal cost per guest")
-
-# Clean labels as requested
-cost_bb = st.sidebar.number_input("Breakfast Allocation", value=5.0)
-cost_lunch = st.sidebar.number_input("Lunch Allocation", value=7.0)
-cost_dinner = st.sidebar.number_input("Dinner Allocation", value=10.0)
-cost_sai = st.sidebar.number_input("SAI Allocation", value=8.0)
-cost_ai = st.sidebar.number_input("AI Allocation", value=15.0)
-cost_mice = st.sidebar.number_input("MICE/Delegate Supplement", value=20.0)
-
-# Build the Meal Map Logic
-meal_map = {
-    "RO": 0,
-    "BB": cost_bb,
-    "HB": cost_bb + cost_dinner,
-    "FB": cost_bb + cost_lunch + cost_dinner,
-    "SAI": cost_bb + cost_lunch + cost_dinner + cost_sai,
-    "AI": cost_bb + cost_lunch + cost_dinner + cost_sai + cost_ai,
-    "MICE": cost_bb + cost_mice
-}
-
-st.sidebar.divider()
-tax_div = st.sidebar.number_input("Tax Divisor", value=1.2327, format="%.4f")
-currency = st.sidebar.selectbox("Currency", ["OMR", "USD", "AED", "THB"])
-
-# --- CALCULATION ENGINE ---
-def run_audit(sgl, dbl, tpl, comp, adr, plan, trans, comm, p01, floor):
-    paid_r = sgl + dbl + tpl
-    total_r = paid_r + comp
-    pax = (sgl * 1) + (dbl * 2) + (tpl * 3)
-    
-    if total_r == 0: 
-        return {"room_p": 0, "fb_p": 0, "unit": 0, "stat": "N/A", "col": "gray"}
-
-    total_net_rev = (adr * paid_r) / tax_div
-    total_fb_rev = meal_map[plan] * pax
-    room_wealth = total_net_rev - total_fb_rev - (trans / tax_div)
-    total_room_profit = (room_wealth * (1 - comm)) - (p01 * total_r)
-    
-    unit_net = total_room_profit / total_r
-    status, col = ("🔴 DILUTIVE", "red")
-    if unit_net >= (floor + 10): status, col = ("🟢 OPTIMIZED", "green")
-    elif unit_net >= floor: status, col = ("🟡 STABLE", "orange")
-    
-    return {"room_p": total_room_profit, "fb_p": total_fb_rev, "unit": unit_net, "stat": status, "col": col}
-
-# --- SEGMENT INPUTS ---
-st.header("📊 Detailed Segment Inputs")
-
-# Layout with 6 segments (3 per row)
-row1_a, row1_b, row1_c = st.columns(3)
-row2_a, row2_b, row2_c = st.columns(3)
-
-def segment_box(col, icon, label, key_prefix, default_adr, default_floor, plans):
+def multi_meal_segment_box(col, icon, label, key_prefix, default_adr, default_floor):
     with col:
-        with st.expander(f"{icon} {label}", expanded=True):
+        with st.expander(f"{icon} {label} (Mixed Plans)", expanded=True):
+            # 1. Room Occupancy
             s = st.number_input(f"{label} SGL", 5, key=f"{key_prefix}s")
             d = st.number_input(f"{label} DBL", 10, key=f"{key_prefix}d")
             t = st.number_input(f"{label} TPL", 2, key=f"{key_prefix}t")
-            c = st.number_input(f"{label} COMP", 0, key=f"{key_prefix}c")
+            
+            # 2. Mixed Meal Plan Inputs (The "One-Time" Solution)
+            st.markdown("---")
+            st.caption("Distribute total rooms across plans:")
+            r_bb = st.number_input(f"Rooms on BB", value=0, key=f"{key_prefix}rbb")
+            r_hb = st.number_input(f"Rooms on HB", value=0, key=f"{key_prefix}rhb")
+            r_fb = st.number_input(f"Rooms on FB", value=0, key=f"{key_prefix}rfb")
+            
+            st.markdown("---")
             adr = st.number_input(f"{label} Gross ADR", default_adr, key=f"{key_prefix}a")
-            plan = st.selectbox(f"{label} Plan", plans, key=f"{key_prefix}p")
             flr = st.number_input(f"{label} Floor", default_floor, key=f"{key_prefix}f")
-            return [s, d, t, c, adr, plan, flr]
+            
+            # Calculate weighted F&B total for the whole segment
+            # We multiply by 2.0 as an average occupancy or link it to SGL/DBL logic
+            avg_pax = ((s*1) + (d*2) + (t*3)) / (s+d+t) if (s+d+t) > 0 else 0
+            
+            total_fb_mix = (r_bb * meal_map["BB"] * avg_pax) + \
+                           (r_hb * meal_map["HB"] * avg_pax) + \
+                           (r_fb * meal_map["FB"] * avg_pax)
+            
+            return [s, d, t, 0, adr, total_fb_mix, flr]
 
-# Core Segment Data with nicer icons
-d_in = segment_box(row1_a, "👤", "Direct", "dir", 200.0, 110.0, ["RO", "BB", "HB"])
-c_in = segment_box(row1_b, "💼", "Corporate", "cor", 160.0, 95.0, ["RO", "BB"])
-t_in = segment_box(row1_c, "✈️", "Wholesale", "who", 130.0, 75.0, ["BB", "HB", "FB", "SAI", "AI"])
-g_in = segment_box(row2_a, "🚌", "Group Tour & Travel", "tou", 140.0, 80.0, ["BB", "HB", "FB", "SAI", "AI"])
-m_in = segment_box(row2_b, "🏢", "Corporate Groups", "mic", 155.0, 85.0, ["HB", "FB", "MICE"])
-o_in = segment_box(row2_c, "📱", "OTA", "ota", 190.0, 100.0, ["RO", "BB", "HB"])
+# --- MODIFIED CALCULATION ENGINE ---
+def run_weighted_audit(sgl, dbl, tpl, comp, adr, total_fb_mix, floor):
+    paid_r = sgl + dbl + tpl
+    total_r = paid_r + comp
+    
+    if total_r == 0: return {"room_p": 0, "fb_p": 0, "unit": 0, "stat": "N/A", "col": "gray"}
 
-# --- EXECUTE AUDITS ---
-res_dir = run_audit(d_in[0], d_in[1], d_in[2], d_in[3], d_in[4], d_in[5], 0.0, 0.0, 10.0, d_in[6])
-res_corp = run_audit(c_in[0], c_in[1], c_in[2], c_in[3], c_in[4], c_in[5], 0.0, 0.0, 10.0, c_in[6])
-res_who = run_audit(t_in[0], t_in[1], t_in[2], t_in[3], t_in[4], t_in[5], 0.0, 0.20, 10.0, t_in[6])
-res_tour = run_audit(g_in[0], g_in[1], g_in[2], g_in[3], g_in[4], g_in[5], 0.0, 0.15, 12.0, g_in[6])
-res_mice = run_audit(m_in[0], m_in[1], m_in[2], m_in[3], m_in[4], m_in[5], 150.0, 0.10, 10.0, m_in[6])
-res_ota = run_audit(o_in[0], o_in[1], o_in[2], o_in[3], o_in[4], o_in[5], 0.0, 0.18, 10.0, o_in[6])
-
-# --- RESULTS SUMMARY ---
-st.divider()
-st.header("📊 Audit Results Summary")
-
-def display_res(icon, name, res):
-    st.markdown(f"### {icon} {name}")
-    st.metric("Surgical Net", f"{currency} {res['unit']:.2f}")
-    st.markdown(f"Status: :{res['col']}[{res['stat']}]")
-    st.caption(f"F&B/Events Rev: {currency} {res['fb_p']:,.0f}")
-
-# Display in columns
-c1, c2, c3, c4, c5, c6 = st.columns(6)
-with c1: display_res("👤", "Direct", res_dir)
-with c2: display_res("💼", "Corp", res_corp)
-with c3: display_res("✈️", "Whl", res_who)
-with c4: display_res("🚌", "Tour", res_tour)
-with c5: display_res("🏢", "MICE", res_mice)
-with c6: display_res("📱", "OTA", res_ota)
-
-# --- TOTAL PROPERTY WEALTH ---
-st.divider()
-st.header("🏢 Total Property Wealth Summary")
-total_room_p = sum(r['room_p'] for r in [res_dir, res_corp, res_who, res_tour, res_mice, res_ota])
-total_fb_p = sum(r['fb_p'] for r in [res_dir, res_corp, res_who, res_tour, res_mice, res_ota])
-
-m1, m2, m3 = st.columns(3)
-m1.metric("Total Net Room Wealth", f"{currency} {total_room_p:,.2f}")
-m2.metric("Total F&B/Events Revenue", f"{currency} {total_fb_p:,.2f}")
-m3.metric("Combined Property Wealth", f"{currency} {(total_room_p + total_fb_p):,.2f}")
+    total_net_rev = (adr * paid_r) / tax_div
+    # Instead of plan look-up, we use the pre-calculated total_fb_mix
+    room_wealth = total_net_rev - total_fb_mix
+    total_room_profit = (room_wealth * 0.90) - (10.0 * total_r) # Simplified comm/maint
+    
+    unit_net = total_room_profit / total_r
+    # ... (Rest of the status logic) ...

@@ -52,6 +52,4 @@ if check_password():
         if u >= (af + 5) or mg > 55 or wc > 15 or cap > 20: lb, cl = "OPTIMIZED", "#27ae60"
         elif u >= af: lb, cl = "MARGINAL", "#f39c12"
         else: lb, cl = "DILUTIVE", "#e74c3c"
-        return {"u": u, "s": lb, "c": cl, "tp": tp, "wc": wc, "pax": pax}
-
-    def
+        return {"u": u, "s": lb, "c": cl

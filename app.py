@@ -10,15 +10,17 @@ st.divider()
 st.sidebar.header("🍽️ Per Person Net Costs")
 st.sidebar.caption("Enter the internal cost per guest")
 
-# Exact words as requested
+# Exact words as requested - no brackets
 cost_bb = st.sidebar.number_input("Breakfast Allocation", value=5.0)
 cost_lunch = st.sidebar.number_input("Lunch Allocation", value=7.0)
 cost_dinner = st.sidebar.number_input("Dinner Allocation", value=10.0)
-cost_sai = st.sidebar.number_input("SAI Allocation (Soft Beverages)", value=8.0)
-cost_ai = st.sidebar.number_input("AI Allocation (Liquor/Alcohol)", value=15.0)
+cost_sai = st.sidebar.number_input("SAI Allocation", value=8.0)
+cost_ai = st.sidebar.number_input("AI Allocation", value=15.0)
 cost_mice = st.sidebar.number_input("MICE/Delegate Supplement", value=20.0)
 
-# Build the Meal Map based on your inputs
+# Build the Meal Map
+# SAI = BB + Lunch + Dinner + SAI Specific Cost
+# AI = BB + Lunch + Dinner + SAI Specific Cost + AI Specific Cost
 meal_map = {
     "RO": 0,
     "BB": cost_bb,
@@ -40,7 +42,7 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan, trans, comm, p01, floor):
     pax = (sgl * 1) + (dbl * 2) + (tpl * 3)
     
     if total_r == 0: 
-        return {"room_p": 0, "fb_p": 0, "unit": 0, "stat": "N/A", "col": "gray", "total_w": 0}
+        return {"room_p": 0, "fb_p": 0, "unit": 0, "stat": "N/A", "col": "gray"}
 
     total_net_rev = (adr * paid_r) / tax_div
     total_fb_rev = meal_map[plan] * pax
@@ -63,52 +65,4 @@ def segment_box(col, label, key_prefix, default_adr, default_floor, plans):
     with col:
         with st.expander(f"📍 {label}", expanded=True):
             s = st.number_input(f"{label} SGL", 5, key=f"{key_prefix}s")
-            d = st.number_input(f"{label} DBL", 10, key=f"{key_prefix}d")
-            t = st.number_input(f"{label} TPL", 2, key=f"{key_prefix}t")
-            c = st.number_input(f"{label} COMP", 0, key=f"{key_prefix}c")
-            adr = st.number_input(f"{label} Gross ADR", default_adr, key=f"{key_prefix}a")
-            plan = st.selectbox(f"{label} Plan", plans, key=f"{key_prefix}p")
-            flr = st.number_input(f"{label} Floor", default_floor, key=f"{key_prefix}f")
-            return [s, d, t, c, adr, plan, flr]
-
-# Core Segment Data
-d_in = segment_box(row1_a, "Direct", "dir", 200.0, 110.0, ["RO", "BB", "HB"])
-c_in = segment_box(row1_b, "Corporate", "cor", 160.0, 95.0, ["RO", "BB"])
-t_in = segment_box(row1_c, "Group Tour & Travel", "tou", 140.0, 80.0, ["BB", "HB", "FB", "SAI", "AI"])
-m_in = segment_box(row2_a, "Corporate Groups", "mic", 155.0, 85.0, ["HB", "FB", "MICE"])
-o_in = segment_box(row2_b, "OTA", "ota", 190.0, 100.0, ["RO", "BB", "HB"])
-
-# --- EXECUTE AUDITS ---
-res_dir = run_audit(d_in[0], d_in[1], d_in[2], d_in[3], d_in[4], d_in[5], 0.0, 0.0, 10.0, d_in[6])
-res_corp = run_audit(c_in[0], c_in[1], c_in[2], c_in[3], c_in[4], c_in[5], 0.0, 0.0, 10.0, c_in[6])
-res_tour = run_audit(t_in[0], t_in[1], t_in[2], t_in[3], t_in[4], t_in[5], 0.0, 0.15, 12.0, t_in[6])
-res_mice = run_audit(m_in[0], m_in[1], m_in[2], m_in[3], m_in[4], m_in[5], 150.0, 0.10, 10.0, m_in[6])
-res_ota = run_audit(o_in[0], o_in[1], o_in[2], o_in[3], o_in[4], o_in[5], 0.0, 0.18, 10.0, o_in[6])
-
-# --- RESULTS SUMMARY ---
-st.divider()
-st.header("📊 Audit Results Summary")
-
-def display_res(name, res):
-    st.markdown(f"### {name}")
-    st.metric("Surgical Net", f"{currency} {res['unit']:.2f}")
-    st.markdown(f"Status: :{res['col']}[{res['stat']}]")
-    st.caption(f"F&B/Events Rev: {currency} {res['fb_p']:,.0f}")
-
-c1, c2, c3, c4, c5 = st.columns(5)
-with c1: display_res("Direct", res_dir)
-with c2: display_res("Corporate", res_corp)
-with c3: display_res("Tour & Travel", res_tour)
-with c4: display_res("Corp Group", res_mice)
-with c5: display_res("OTA", res_ota)
-
-# --- TOTAL PROPERTY WEALTH ---
-st.divider()
-st.header("🏢 Total Property Wealth Summary")
-total_room_p = sum(r['room_p'] for r in [res_dir, res_corp, res_tour, res_mice, res_ota])
-total_fb_p = sum(r['fb_p'] for r in [res_dir, res_corp, res_tour, res_mice, res_ota])
-
-m1, m2, m3 = st.columns(3)
-m1.metric("Total Net Room Wealth", f"{currency} {total_room_p:,.2f}")
-m2.metric("Total F&B/Events Revenue", f"{currency} {total_fb_p:,.2f}")
-m3.metric("Combined Property Wealth", f"{currency} {(total_room_p + total_fb_p):,.2f}")
+            d = st.number_input(f"{label} DBL", 10, key=f"{

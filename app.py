@@ -48,10 +48,39 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan_counts, trans, comm, p01, floor):
     
     room_wealth = total_net_rev - total_fb_rev - (trans / tax_div)
     
-    # Final profit calculation - fully closed
+    # Corrected and fully closed profit calculation
     total_room_profit = (room_wealth * (1.0 - comm)) - (p01 * total_r)
     unit_net = total_room_profit / total_r
     
     # Verdict Logic (Optimized, Marginal, Dilutive)
     if unit_net >= (floor + 10.0):
-        res = {"stat": "🟢 OPTIMIZED", "col": "green", "def": "High
+        res = {"stat": "🟢 OPTIMIZED", "col": "green", "def": "High wealth retention. Exceeds profit floor targets."}
+    elif unit_net >= floor:
+        res = {"stat": "🟡 MARGINAL", "col": "orange", "def": "Meets basic floor. Low room wealth efficiency."}
+    else:
+        res = {"stat": "🔴 DILUTIVE", "col": "red", "def": "Wealth Leakage. Costs are eroding room profit."}
+    
+    res.update({"room_p": total_room_profit, "fb_p": total_fb_rev, "unit": unit_net})
+    return res
+
+# --- SEGMENT ROW FUNCTION ---
+def segment_row(icon, label, color, key_p, adr_def, floor_def, comm_rate):
+    st.markdown(f"""<div style="background-color: {color}15; border-left: 8px solid {color}; padding: 12px; border-radius: 8px; margin-top: 15px;">
+        <h3 style="margin:0; color: {color};">{icon} {label}</h3>
+        </div>""", unsafe_allow_html=True)
+    
+    c1, c2, c3, c4 = st.columns([1.5, 2, 1.5, 1.5])
+    
+    with c1:
+        s = st.number_input(f"{label} SGL", 0, key=f"{key_p}s")
+        d = st.number_input(f"{label} DBL", 0, key=f"{key_p}d")
+        t = st.number_input(f"{label} TPL", 0, key=f"{key_p}t")
+        total_rooms = s + d + t
+    
+    with c2:
+        st.caption(f"Distribute {total_rooms} Rooms across plans:")
+        p_bb = st.number_input(f"{label} Qty BB", 0, total_rooms, key=f"{key_p}pbb")
+        p_hb = st.number_input(f"{label} Qty HB", 0, total_rooms, key=f"{key_p}phb")
+        p_fb = st.number_input(f"{label} Qty FB", 0, total_rooms, key=f"{key_p}pfb")
+        # Remainder is automatically Room Only (RO)
+        counts = {"BB": p_bb

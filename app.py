@@ -62,4 +62,11 @@ if check_password():
         nt_r = (adr * t_r) / tx
         f_c = sum(q * m_map[p] * (px / t_r) for p, q in mix.items())
         ev_w = (ev_r * px) / tx
-        comm = (nt_r -
+        comm = (nt_r - f_c) * cp
+        # Split logic to prevent cut-offs
+        val_a = (nt_r - f_c - comm)
+        val_b = (p01 * t_r)
+        dp = (val_a - val_b) + (ev_w / t_r)
+        tp = (dp * t_r * nts) - (tr_c / tx)
+        u = tp / (t_r * nts)
+        imp = (t_

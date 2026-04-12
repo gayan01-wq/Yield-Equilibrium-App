@@ -1,7 +1,7 @@
 import streamlit as st
 
 # --- BRANDING ---
-st.set_page_config(page_title="Yield Equilibrium: Total Asset Auditor", layout="wide")
+st.set_page_config(page_title="Yield Equilibrium Master Auditor", layout="wide")
 st.title("🏨 Yield Equilibrium: Full Property & F&B Auditor")
 st.markdown("Developed by **Gayan Nugawela** | *The Surgical Total Revenue Framework*")
 st.divider()
@@ -16,7 +16,7 @@ cost_soft_bev = st.sidebar.number_input("Soft Beverage Cost (SAI)", value=8.0)
 cost_liq = st.sidebar.number_input("Liquor/Alcohol Cost (AI)", value=15.0)
 cost_mice = st.sidebar.number_input("MICE/Delegate Supplement", value=20.0)
 
-# Build the Meal Map based on your per-person inputs
+# Build the Meal Map
 meal_map = {
     "RO": 0,
     "BB": cost_bb,
@@ -39,13 +39,8 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan, trans, comm, p01, floor):
     
     if total_r == 0: return {"room_p": 0, "fb_p": 0, "unit": 0, "stat": "N/A", "col": "gray", "total_w": 0}
 
-    # 1. Surgical Tax Extraction
     total_net_rev = (adr * paid_r) / tax_div
-    
-    # 2. Surgical F&B Extraction (Per Person x Pax)
     total_fb_rev = meal_map[plan] * pax
-    
-    # 3. Net Room Wealth Calculation
     room_wealth = total_net_rev - total_fb_rev - (trans / tax_div)
     total_room_profit = (room_wealth * (1 - comm)) - (p01 * total_r)
     
@@ -73,24 +68,14 @@ def segment_box(col, label, key_prefix, default_adr, default_floor, plans):
             flr = st.number_input(f"Floor", default_floor, key=f"{key_prefix}f")
             return s, d, t, c, adr, plan, flr
 
-# Define your segments
+# 5 Core Segments
 dir_data = segment_box(row1_a, "Direct", "dir", 200.0, 110.0, ["RO", "BB", "HB"])
 corp_data = segment_box(row1_b, "Corporate", "cor", 160.0, 95.0, ["RO", "BB"])
 tour_data = segment_box(row1_c, "Group Tour & Travels", "tou", 140.0, 80.0, ["BB", "HB", "FB", "SAI", "AI"])
-mice_data = segment_box(row2_a, "Corp Groups / MICE", "mic", 155.0, 85.0, ["HB", "FB", "MICE"])
-ota_data = segment_box(row2_b, "OTA", "ota", 190.0, 100.0, ["RO", "BB", "HB"])
+mice_data = segment_box(row2_a, "Corporate Groups / MICE", "mic", 155.0, 85.0, ["HB", "FB", "MICE"])
+ota_data = segment_box(row2_b, "OTA / Booking", "ota", 190.0, 100.0, ["RO", "BB", "HB"])
 
-# --- EXECUTE ---
+# --- EXECUTE AUDITS ---
 res_dir = run_audit(*dir_data, 0, 0.0, 10.0, dir_data[6])
 res_corp = run_audit(*corp_data, 0, 0.0, 10.0, corp_data[6])
-res_tour = run_audit(*tour_data, 0, 0.15, 10.0, tour_data[6])
-res_mice = run_audit(*mice_data, 150.0, 0.10, 10.0, mice_data[6])
-res_ota = run_audit(*ota_data, 0, 0.18, 10.0, ota_data[6])
-
-# --- RESULTS SUMMARY ---
-st.divider()
-st.header("📊 Audit Results Summary")
-
-def display_res(name, res):
-    st.markdown(f"### {name}")
-    st.metric("Surgical Net", f"{currency} {res['unit
+res_tour = run_audit(*tour_data

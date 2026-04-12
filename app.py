@@ -4,12 +4,12 @@ import streamlit as st
 st.set_page_config(page_title="Yield Equilibrium Auditor", layout="wide")
 st.markdown("<style>.stMetric { background-color: white; border: 1px solid #ddd; padding: 10px; border-radius: 10px; } .row-box { background-color: rgba(0,0,0,0.03); padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid; }</style>", unsafe_allow_html=True)
 
-st.title("Yield Equilibrium: Strategic Command Center")
-st.caption("Developed by Gayan Nugawela | Strategic Property Audit")
+st.title("Yield Equilibrium: Full Property Command Center")
+st.caption("Developed by Gayan Nugawela | Total Revenue Strategy")
 
 # --- SIDEBAR SETTINGS ---
 with st.sidebar:
-    st.header("F&B Net Costs")
+    st.header("FB Net Costs")
     m_bb = st.number_input("Breakfast", value=5.0)
     m_lh = st.number_input("Lunch", value=7.0)
     m_dr = st.number_input("Dinner", value=10.0)
@@ -19,26 +19,24 @@ with st.sidebar:
     tax_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f")
     currency = st.selectbox("Currency", ["OMR", "USD", "AED", "THB"])
 
-meal_map = {
-    "RO": 0, "BB": m_bb, "HB": m_bb + m_dr, "FB": m_bb + m_lh + m_dr, 
-    "SAI": m_bb + m_lh + m_dr + m_sai, "AI": m_bb + m_lh + m_dr + m_sai + m_ai
-}
+meal_map = {"RO": 0, "BB": m_bb, "HB": m_bb+m_dr, "FB": m_bb+m_lh+m_dr, "SAI": m_bb+m_lh+m_dr+m_sai, "AI": m_bb+m_lh+m_dr+m_sai+m_ai}
 
 # --- CALCULATION ENGINE ---
 def run_audit(s, d, t, adr, counts, comm, floor):
     paid = s + d + t
-    if paid <= 0:
-        return {"rp": 0.0, "fp": 0.0, "un": 0.0, "st": "Waiting", "cl": "gray"}
+    if paid <= 0: return {"rp": 0.0, "fp": 0.0, "un": 0.0, "st": "Waiting", "cl": "gray"}
     
+    # Surgical Pax Ratio
     pax_ratio = ((s * 1.0) + (d * 2.0) + (t * 3.0)) / paid
     net_rev = (adr * paid) / tax_div
     fb_rev = sum(qty * meal_map[pl] * pax_ratio for pl, qty in counts.items())
     
-    # Net Wealth Calculation
+    # Net Wealth (Revenue minus FB, Commission, and P01 overhead)
     profit = ((net_rev - fb_rev) * (1.0 - comm)) - (10.0 * paid)
     unit = profit / paid
     
-    if unit >= (floor + 10): res = {"st": "OPTIMIZED", "cl": "green"}
+    # FIXED FLOOR LOGIC: Immediate Dilutive Trigger
+    if unit >= (floor + 15.0): res = {"st": "OPTIMIZED", "cl": "green"}
     elif unit >= floor: res = {"st": "MARGINAL", "cl": "orange"}
     else: res = {"st": "DILUTIVE", "cl": "red"}
     
@@ -73,30 +71,26 @@ def segment(label, color, kp, adr_d, flr_d, comm):
         st.markdown(f"<b style='color:{res['cl']}'>{res['st']}</b>", unsafe_allow_html=True)
     return res
 
-# --- RENDER DASHBOARD ---
-st.header("🏢 Group & Wholesale Segments")
+# --- DASHBOARD RENDER ---
+st.header("Groups & Wholesale")
 r1 = segment("Wholesale", "#e67e22", "wh", 130, 75, 0.20)
 r2 = segment("Group Tour & Travels", "#d35400", "gt", 140, 80, 0.15)
 r3 = segment("Group Corporate", "#2c3e50", "gc", 150, 85, 0.0)
 
-st.markdown("<br>", unsafe_allow_html=True)
-
-st.header("👤 Individual & FIT Segments")
+st.header("Individual & FIT")
 r4 = segment("Direct / FIT", "#3498db", "di", 200, 110, 0.0)
 r5 = segment("OTA Segment", "#2ecc71", "ot", 190, 100, 0.18)
 r6 = segment("Corporate Segment", "#9b59b6", "co", 160, 95, 0.0)
 
-# --- TOTAL PROPERTY SUMMARY ---
+# --- PROPERTY SUMMARY ---
 st.divider()
-st.header("🏢 Property Wealth Summary")
 all_res = [r1, r2, r3, r4, r5, r6]
 t_r = sum(r['rp'] for r in all_res)
 t_f = sum(r['fp'] for r in all_res)
 
 m1, m2, m3 = st.columns(3)
 m1.metric("Total Room Wealth", f"{currency} {t_r:,.2f}")
-m2.metric("Total F&B Allocation", f"{currency} {t_f:,.2f}")
+m2.metric("Total FB Allocation", f"{currency} {t_f:,.2f}")
 m3.metric("Combined Property Wealth", f"{currency} {(t_r + t_f):,.2f}")
 
-st.write("---")
-st.write("✅ System Ready: Total Revenue Engine Active. # END OF SCRIPT")
+st.write("✅ Audit System Ready - All Segments Active")

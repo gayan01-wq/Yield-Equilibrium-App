@@ -1,98 +1,121 @@
 import streamlit as st
 
 # --- BRANDING ---
-st.set_page_config(page_title="Yield Equilibrium Auditor", page_icon="🏨", layout="wide")
-st.title("🏨 Yield Equilibrium Auditor")
-st.markdown("Developed by **Gayan Nugawela** | *The Revenue Engineer Framework*")
+st.set_page_config(page_title="Yield Equilibrium: Enterprise Auditor", layout="wide")
+st.title("🏨 Yield Equilibrium: Enterprise Group & MICE Auditor")
+st.markdown("Developed by **Gayan Nugawela** | *Total Property Wealth Strategy*")
 st.divider()
 
-# --- SIDEBAR: GLOBAL SETTINGS ---
-st.sidebar.header("🏨 Property Identity")
-hotel_name = st.sidebar.text_input("Property Name", value="Wyndham Garden Salalah Mirbat")
+# --- SIDEBAR: MASTER RATE CONFIG ---
+st.sidebar.header("🍽️ F&B & MICE Net Credits")
+st.sidebar.caption("Per Person Rates (Net of Tax)")
+rate_bb = st.sidebar.number_input("Breakfast Credit", value=6.0)
+rate_hb = st.sidebar.number_input("HB Supplement", value=12.0)
+rate_fb = st.sidebar.number_input("FB Supplement", value=22.0)
+rate_mice = st.sidebar.number_input("MICE / Meeting Package (DDR)", value=30.0)
 
+meal_map = {
+    "RO": 0, "BB": rate_bb, "HB": rate_bb + rate_hb, 
+    "FB": rate_bb + rate_fb, "MICE/Events": rate_bb + rate_mice
+}
+
+st.sidebar.divider()
 st.sidebar.header("⚙️ Global Settings")
-currency_list = [
-    "$ (USD)", "€ (EUR)", "£ (GBP)", "OMR (OMR)", "THB (THB)", 
-    "AED (AED)", "SAR (SAR)", "SGD (SGD)", "KWD (KWD)", "BHD (BHD)"
-]
-currency_display = st.sidebar.selectbox("Select Currency", currency_list)
-currency_symbol = currency_display.split(" ")[0]
-tax_div = st.sidebar.number_input("Tax Formula (Divisor)", value=1.2327, format="%.4f")
+tax_div = st.sidebar.number_input("Tax Divisor", value=1.2327, format="%.4f")
+currency = st.sidebar.selectbox("Currency", ["OMR", "USD", "AED", "THB"])
 
-def get_input(label, adr_def, comm_def, maint_def, floor_def, rooms_def=1):
-    with st.sidebar.expander(f"📊 {label} Settings"):
-        r = st.number_input(f"{label} Rooms/Nights", value=rooms_def, step=1)
-        a = st.number_input(f"{label} Gross ADR", value=adr_def)
-        c = st.number_input(f"{label} Comm % (P02)", value=comm_def)
-        m = st.number_input(f"{label} Maint (P01)", value=maint_def)
-        f = st.number_input(f"{label} Profit Floor", value=floor_def)
-    return r, a, c, m, f
+# --- ADVANCED GROUP INPUT ---
+def get_enterprise_group(label):
+    with st.expander(f"🏢 {label} - Strategic Input"):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.markdown("**Room Occupancy**")
+            sgl = st.number_input(f"{label} SGL", value=10, step=1, key=f"{label}s")
+            dbl = st.number_input(f"{label} DBL", value=20, step=1, key=f"{label}d")
+            tpl = st.number_input(f"{label} TPL", value=5, step=1, key=f"{label}t")
+            comp = st.number_input(f"{label} COMP Rooms", value=2, step=1, key=f"{label}cp")
+        with c2:
+            st.markdown("**Financials & Package**")
+            adr = st.number_input(f"{label} Gross ADR", value=145.0, key=f"{label}a")
+            plan = st.selectbox(f"{label} Package", ["RO", "BB", "HB", "FB", "MICE/Events"], index=4, key=f"{label}p")
+            trans = st.number_input(f"{label} Transport Cost (Total)", value=100.0, key=f"{label}tr")
+        with c3:
+            st.markdown("**Yield Guardrails**")
+            comm = st.number_input(f"{label} Comm %", value=0.10, key=f"{label}c")
+            p01 = st.number_input(f"{label} Room Cost (P01)", value=10.0, key=f"{label}m")
+            floor = st.number_input(f"{label} Room Profit Floor", value=85.0, key=f"{label}f")
+            
+    paid_r = sgl + dbl + tpl
+    total_r = paid_r + comp
+    pax = (sgl * 1) + (dbl * 2) + (tpl * 3)
+    return paid_r, total_r, pax, adr, plan, trans, comm, p01, floor
 
-# --- DATA INPUTS ---
-st.sidebar.subheader("Individual Segments")
-ota = get_input("OTA", 195.0, 0.18, 11.0, 105.0)
-drct = get_input("Direct", 220.0, 0.02, 10.0, 100.0)
-corp = get_input("Corporate", 180.0, 0.0, 10.0, 95.0)
-whls = get_input("Wholesale", 130.0, 0.15, 15.0, 110.0)
+# --- DATA ---
+current_group = get_enterprise_group("Current Group Inquiry")
 
-st.sidebar.subheader("Group Segments")
-grp_corp = get_input("Corp Group", 160.0, 0.0, 10.0, 90.0, 20)
-grp_tour = get_input("Tour/Travel", 120.0, 0.10, 12.0, 85.0, 30)
-grp_mice = get_input("MICE Group", 175.0, 0.05, 18.0, 100.0, 50)
+# --- CALCULATION ENGINE ---
+def run_enterprise_audit(paid_r, total_r, pax, adr, plan, trans, comm, p01, floor):
+    if total_r == 0: return None
 
-# --- THE SURGICAL ENGINE ---
-def audit(rooms, adr, comm, maint, floor):
-    net_unit = (adr / tax_div) * (1 - comm) - maint
-    total_net = net_unit * rooms
+    # 1. Total Net Revenue from Rooms (After Tax)
+    total_net_rev = (adr * paid_r) / tax_div
     
-    if net_unit >= (floor + 10):
-        return net_unit, total_net, "OPTIMIZED", "green", "Wealth Builder: High surplus above sustainability target."
-    elif net_unit >= floor:
-        return net_unit, total_net, "STABLE", "orange", "Margin Warning: Covering costs but limited wealth creation."
-    else:
-        return net_unit, total_net, "DILUTIVE", "red", "Wealth Destroyer: Net profit is below sustainability floor."
+    # 2. Extract F&B / Events Revenue (This is calculated separately)
+    total_events_rev = meal_map[plan] * pax
+    
+    # 3. Surgical Room Profit (Removing F&B, Transport, Comm, and P01 for ALL rooms)
+    # Note: Transport is a leakage from the Room side in this framework
+    room_wealth_pre_cost = total_net_rev - total_events_rev - (trans / tax_div)
+    total_room_profit = (room_wealth_pre_cost * (1 - comm)) - (p01 * total_r)
+    
+    unit_net_room = total_room_profit / total_r
+    overall_total_wealth = total_room_profit + total_events_rev
 
-# --- DISPLAY ---
-st.markdown(f"<h1 style='text-align: center; color: #1E3A8A;'>{hotel_name}</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-style: italic;'>Surgical Revenue Audit Dashboard</p>", unsafe_allow_html=True)
+    # Verdict Logic
+    status, col = ("🔴 DILUTIVE", "red")
+    if unit_net_room >= (floor + 10): status, col = ("🟢 OPTIMIZED", "green")
+    elif unit_net_room >= floor: status, col = ("🟡 STABLE", "orange")
+    
+    return {
+        "room_p": total_room_profit,
+        "event_p": total_events_rev,
+        "total_w": overall_total_wealth,
+        "unit_r": unit_net_room,
+        "stat": status,
+        "col": col,
+        "trans": trans,
+        "comp": total_r - paid_r
+    }
 
-# Row 1: Individuals
-st.subheader("Individual Segment Health")
-cols1 = st.columns(4)
-for i, (name, data) in enumerate({"OTA":ota, "Direct":drct, "Corporate":corp, "Wholesale":whls}.items()):
-    unit, total, stat, colr, desc = audit(*data)
-    with cols1[i]:
-        st.metric(f"{name} Net ADR", f"{currency_symbol} {unit:.2f}")
-        if colr == "green": st.success(f"**{stat}**")
-        elif colr == "orange": st.warning(f"**{stat}**")
-        else: st.error(f"**{stat}**")
-        st.caption(desc)
+# --- RESULTS ---
+res = run_enterprise_audit(*current_group)
 
-# Row 2: Groups
-st.divider()
-st.subheader("Group Volume Impact")
-cols2 = st.columns(3)
-for i, (name, data) in enumerate({"Corp Group":grp_corp, "Tour & Travel":grp_tour, "MICE":grp_mice}.items()):
-    unit, total, stat, colr, desc = audit(*data)
-    with cols2[i]:
-        st.metric(f"{name} Total Net", f"{currency_symbol} {total:,.2f}")
-        st.write(f"**{stat}**")
-        st.caption(f"Unit Net: {currency_symbol}{unit:.2f} | {desc}")
+if res:
+    st.divider()
+    st.header("📊 Surgical Audit Results")
+    
+    # Row 1: The Verdict
+    v1, v2 = st.columns([1, 2])
+    with v1:
+        st.metric("Surgical Room Net", f"{currency} {res['unit_r']:.2f}")
+        st.markdown(f"### Verdict: :{res['col']}[{res['stat']}]")
+    with v2:
+        st.info(f"**Analysis:** This segment uses **{current_group[1]}** physical keys and serves **{current_group[2]}** delegates. "
+                f"Room wealth is impacted by **{res['comp']}** comp rooms and **{currency}{res['trans']}** in transport costs.")
 
-st.divider()
+    # Row 2: Departmental Breakdown
+    st.divider()
+    st.subheader("🏢 Departmental Contribution")
+    d1, d2, d3 = st.columns(3)
+    d1.metric("Rooms Department (Net Wealth)", f"{currency} {res['room_p']:,.2f}")
+    d2.metric("F&B & Events Revenue", f"{currency} {res['event_p']:,.2f}")
+    d3.metric("OVERALL GROUP PROFIT", f"{currency} {res['total_w']:,.2f}", delta="Total Net Impact")
 
-# --- THE SURGICAL PILLARS ---
-st.subheader("🛡️ The Three Pillars of Yield Equilibrium")
-s1, s2, s3 = st.columns(3)
-
-with s1:
-    st.write("### 🏗️ P01: Asset Protection")
-    st.info("**The Cost of Wear:** Maintenance (Laundry + Labor) is the price to 'reset' the asset. This ensures the hotel is paid for every physical interaction with the building.")
-
-with s2:
-    st.write("### 📉 P02: Channel Efficiency")
-    st.info("**The Price of Visibility:** Commission is the fee paid to secure the guest. Equilibrium is shifting toward low-P02 direct business to keep wealth inside the property.")
-
-with s3:
-    st.write("### ⚖️ The Profit Floor")
-    st.info("**The Final Take-Home:** This is your net rate minus P01/P02 costs. It is the absolute minimum cash the hotel must retain per room to remain sustainable.")
+    # Row 3: Visual Insights
+    with st.expander("📝 Strategic Advice for this Group"):
+        if res['col'] == "red":
+            st.warning("This group is DILUTIVE. Consider reducing comp rooms or increasing the MICE package rate to balance the Room Department loss.")
+        elif res['col'] == "orange":
+            st.info("This group is STABLE. It is a good filler for low-occupancy periods but provides limited wealth growth.")
+        else:
+            st.success("This group is OPTIMIZED. This is a high-value 'Wealth Builder' for the property. Prioritize this booking!")

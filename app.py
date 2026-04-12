@@ -50,14 +50,4 @@ if check_password():
         p01 = st.number_input("P01 Fee", 0.0, 100.0, 6.9)
         tx = st.number_input("Tax Divisor", 1.0, 2.0, 1.2327, format="%.4f")
         op = st.slider("OTA Commission %", 0, 50, 18) / 100
-        cu = st.selectbox("Currency", ["OMR", "AED", "SAR", "THB", "EUR", "GBP", "USD"])
-
-    st.title("🏨 Yield Equilibrium Center")
-    st.markdown("---")
-
-    def run(rms, adr, nts, mix, cp, fl, ev_r=0, tr_c=0):
-        t_rms = sum(rms)
-        if t_rms <= 0:
-            return None
-        pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
-        gross = (adr * t_rms * nts
+        cu = st.selectbox("Currency", ["OM

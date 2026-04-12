@@ -30,7 +30,7 @@ st.sidebar.divider()
 tax_div = st.sidebar.number_input("Tax Divisor", value=1.2327, format="%.4f")
 currency = st.sidebar.selectbox("Currency", ["OMR", "USD", "AED", "THB"])
 
-# --- CALCULATION ENGINE ---
+# --- CALCULATION ENGINE (10 Arguments) ---
 def run_audit(sgl, dbl, tpl, comp, adr, plan, trans, comm, p01, floor):
     paid_r = sgl + dbl + tpl
     total_r = paid_r + comp
@@ -66,21 +66,25 @@ def segment_box(col, label, key_prefix, default_adr, default_floor, plans):
             adr = st.number_input(f"{label} Gross ADR", default_adr, key=f"{key_prefix}a")
             plan = st.selectbox(f"{label} Plan", plans, key=f"{key_prefix}p")
             flr = st.number_input(f"{label} Floor", default_floor, key=f"{key_prefix}f")
-            return s, d, t, c, adr, plan, flr
+            return [s, d, t, c, adr, plan, flr]
 
-# Capture Data
-d_data = segment_box(row1_a, "Direct", "dir", 200.0, 110.0, ["RO", "BB", "HB"])
-c_data = segment_box(row1_b, "Corporate", "cor", 160.0, 95.0, ["RO", "BB"])
-t_data = segment_box(row1_c, "Group Tour & Travel", "tou", 140.0, 80.0, ["BB", "HB", "FB", "SAI", "AI"])
-m_data = segment_box(row2_a, "Corporate Groups", "mic", 155.0, 85.0, ["HB", "FB", "MICE"])
-o_data = segment_box(row2_b, "OTA", "ota", 190.0, 100.0, ["RO", "BB", "HB"])
+# 1. Direct
+d_in = segment_box(row1_a, "Direct", "dir", 200.0, 110.0, ["RO", "BB", "HB"])
+# 2. Corporate
+c_in = segment_box(row1_b, "Corporate", "cor", 160.0, 95.0, ["RO", "BB"])
+# 3. Group Tour & Travel
+t_in = segment_box(row1_c, "Group Tour & Travel", "tou", 140.0, 80.0, ["BB", "HB", "FB", "SAI", "AI"])
+# 4. Corporate Groups
+m_in = segment_box(row2_a, "Corporate Groups", "mic", 155.0, 85.0, ["HB", "FB", "MICE"])
+# 5. OTA
+o_in = segment_box(row2_b, "OTA", "ota", 190.0, 100.0, ["RO", "BB", "HB"])
 
-# --- EXECUTE AUDITS ---
-res_dir = run_audit(*d_data, 0, 0.0, 10.0, d_data[6])
-res_corp = run_audit(*c_data, 0, 0.0, 10.0, c_data[6])
-res_tour = run_audit(*t_data, 0, 0.15, 10.0, t_data[6])
-res_mice = run_audit(*m_data, 150.0, 0.10, 10.0, m_data[6])
-res_ota = run_audit(*o_data, 0, 0.18, 10.0, o_data[6])
+# --- EXECUTE AUDITS (Mapping correctly to 10 arguments) ---
+res_dir = run_audit(d_in[0], d_in[1], d_in[2], d_in[3], d_in[4], d_in[5], 0.0, 0.0, 10.0, d_in[6])
+res_corp = run_audit(c_in[0], c_in[1], c_in[2], c_in[3], c_in[4], c_in[5], 0.0, 0.0, 10.0, c_in[6])
+res_tour = run_audit(t_in[0], t_in[1], t_in[2], t_in[3], t_in[4], t_in[5], 0.0, 0.15, 10.0, t_in[6])
+res_mice = run_audit(m_in[0], m_in[1], m_in[2], m_in[3], m_in[4], m_in[5], 150.0, 0.10, 10.0, m_in[6])
+res_ota = run_audit(o_in[0], o_in[1], o_in[2], o_in[3], o_in[4], o_in[5], 0.0, 0.18, 10.0, o_in[6])
 
 # --- RESULTS SUMMARY ---
 st.divider()

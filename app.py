@@ -47,3 +47,11 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan_counts, trans, comm, p01, floor):
     total_fb_rev = sum(count * meal_map[plan] * pax_ratio for plan, count in plan_counts.items())
     
     room_wealth = total_net_rev - total_fb_rev - (trans / tax_div)
+    
+    # Final profit calculation - fully closed
+    total_room_profit = (room_wealth * (1.0 - comm)) - (p01 * total_r)
+    unit_net = total_room_profit / total_r
+    
+    # Verdict Logic (Optimized, Marginal, Dilutive)
+    if unit_net >= (floor + 10.0):
+        res = {"stat": "🟢 OPTIMIZED", "col": "green", "def": "High

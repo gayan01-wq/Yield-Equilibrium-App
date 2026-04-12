@@ -37,11 +37,23 @@ def run_audit(s, d, t, adr, counts, comm, floor):
     if paid <= 0:
         return {"rp": 0.0, "un": 0.0, "st": "Waiting", "cl": "gray", "tfb": 0.0}
     
+    # Surgical Pax Ratio
     pax_ratio = ((s * 1.0) + (d * 2.0) + (t * 3.0)) / paid
     total_net_rev = (adr * paid) / tax_div
     
-    # Calculate Total F&B cost across all meal plans
+    # Total F&B cost across all meal plans
     fb_total = sum(qty * meal_costs[plan] * pax_ratio for plan, qty in counts.items())
     
-    # Net Wealth: (Rev - F&B) * (1 - Comm) - Maintenance Fee
-    profit = ((total_net_rev - fb_total) * (1.0
+    # Net Wealth Calculation
+    profit = ((total_net_rev - fb_total) * (1.0 - comm)) - (p01_fee * paid)
+    unit_wealth = profit / paid
+    
+    if unit_wealth >= (floor + 10.0): res = {"st": "OPTIMIZED", "cl": "green"}
+    elif unit_wealth >= floor: res = {"st": "MARGINAL", "cl": "orange"}
+    else: res = {"st": "DILUTIVE", "cl": "red"}
+    
+    res.update({"rp": profit, "un": unit_wealth, "tfb": fb_total})
+    return res
+
+# --- UI SEGMENT ROW ---
+def segment(label, color, kp, adr_d, flr_d, comm

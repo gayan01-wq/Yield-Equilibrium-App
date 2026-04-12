@@ -16,9 +16,14 @@ def check_password():
 if check_password():
     st.set_page_config(layout="wide", page_title="Yield Equilibrium")
     st.markdown("<style>.stMetric{background:#fff;border:1px solid #eee;padding:10px;border-radius:10px}.card{padding:8px;border-radius:8px;margin-bottom:5px;border-left:8px solid;font-weight:bold}</style>",unsafe_allow_html=True)
-    st.title("🏨 Yield Equilibrium Center")
     
     with st.sidebar:
+        # --- BRANDING SECTION ---
+        st.title("👨‍💼 Architect")
+        st.subheader("Gayan Nugawela, CRME")
+        st.caption("Revenue Management Expert | SME")
+        st.divider()
+        
         st.title("⚙️ Global Settings")
         h_nm = st.text_input("Hotel", "Wyndham Garden Salalah")
         h_cp = st.number_input("Total Inventory", 1, 1000, 158)
@@ -29,6 +34,8 @@ if check_password():
         p01, tx = st.number_input("P01 Fee", 0., 100., 6.9), st.number_input("Tax Div", 1., 2., 1.2327, format="%.4f")
         op = st.slider("OTA Comm %", 0, 50, 18) / 100
         cu = st.selectbox("Currency", ["OMR", "AED", "SAR", "THB", "EUR", "GBP", "USD"])
+
+    st.title("🏨 Yield Equilibrium Center")
 
     def run(rms, adr, nts, mix, cp, fl, ev_rev=0, total_tr_cost=0):
         t_rms = sum(rms)
@@ -42,25 +49,19 @@ if check_password():
         tp = (dp * t_rms * nts) - (total_tr_cost / tx)
         u = tp / (t_rms * nts)
         af = fl * 0.75 if nts > 7 else fl
-        
-        # Friction Math
         fric = (1 - (tp / gross_total)) * 100 if gross_total > 0 else 0
-        
-        # Adaptive Labels
         if fric < 26: fric_lb = "Net Contribution"
         elif 26 <= fric < 38: fric_lb = "Yield Dilution"
         else: fric_lb = "Revenue Erosion"
-        
         if u < af: lb, cl = "DILUTIVE", "#e74c3c"
         elif af <= u < (af + 5): lb, cl = "MARGINAL", "#f1c40f"
         else: lb, cl = "OPTIMIZED", "#27ae60"
-        
         return {"u": u, "s": lb, "c": cl, "tp": tp, "pax": pax, "fric": fric, "fric_lb": fric_lb}
 
     def seg(nm, cl, bg, kp, ad_d, fl_d, cp, is_group=False):
         st.markdown(f"<div class='card' style='background:{bg};border-left-color:{cl}'>{nm}</div>", unsafe_allow_html=True)
         c1, c2, c3, c4 = st.columns([1, 2.8, 1, 1.2])
-        ev_r, tr_c = 0, 0
+        ev_r, tr_c = 0.0, 0.0
         with c1:
             sgl, dbl, tpl = st.number_input("SGL",0,key=kp+"s"), st.number_input("DBL",0,key=kp+"d"), st.number_input("TPL",0,key=kp+"t")
             nt = st.number_input("Nights", 1, 365, key=kp+"n")
@@ -70,8 +71,8 @@ if check_password():
             q = {"RO": ca.number_input("RO",0,key=kp+"ro"), "BB": ca.number_input("BB",0,key=kp+"b"), "HB": cb.number_input("HB",0,key=kp+"h"), "FB": cb.number_input("FB",0,key=kp+"f"), "SAI": cc.number_input("SAI",0,key=kp+"sa"), "AI": cc.number_input("AI",0,key=kp+"ai")}
             if is_group:
                 cx, cy = st.columns(2)
-                ev_r = cx.number_input("Event/Pax", 0.0, 500.0, key=kp+"ev")
-                tr_c = cy.number_input("Trans Cost", 0.0, 5000.0, key=kp+"tr")
+                ev_r = cx.number_input("Event/Pax", 0.0, key=kp+"ev")
+                tr_c = cy.number_input("Trans Cost", 0.0, key=kp+"tr")
         with c3:
             ad = st.number_input("Rate", 0., 5000., float(ad_d), key=kp+"a")
             fl = st.number_input("Market Hurdle", 0., 2000., float(fl_d), key=kp+"fl")
@@ -81,9 +82,7 @@ if check_password():
                 st.metric("Wealth (Stay/Room)", f"{cu} {res['u']:.2f}")
                 st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
                 st.write(f"Pax: **{res['pax']}**")
-                # Label with Percentage
                 st.write(f"{res['fric_lb']}: **{res['fric']:.1f}%**")
-                # Brackets definition using caption for a cleaner look
                 st.caption("(Tax + Comm + Meals + Fees)")
                 st.write(f"Stay Wealth (Total): **{res['tp']:,.0f}**")
         return res

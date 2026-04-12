@@ -50,12 +50,16 @@ if check_password():
         wc = (tp / ((fl * h_cp) * nts)) * 100 if fl > 0 and nts > 0 else 0
         af = fl * 0.75 if nts > 7 else fl
         
-        # Calculate Progress for the Visual Chart
+        # Calculate Progress Scale
         progress = min(max(u / (af + 10) if af > 0 else 1.0, 0.0), 1.0)
         
-        if u >= (af + 5) or mg > 55 or wc > 15 or cap > 20: lb, cl = "OPTIMIZED", "#27ae60"
-        elif u >= af: lb, cl = "MARGINAL", "#f39c12"
-        else: lb, cl = "DILUTIVE", "#e74c3c"
+        # Logic for Status and Bar Colors
+        if u >= (af + 5) or mg > 55 or wc > 15 or cap > 20: 
+            lb, cl = "OPTIMIZED", "#27ae60"
+        elif u >= af: 
+            lb, cl = "MARGINAL", "#f1c40f" # Yellow for Marginal
+        else: 
+            lb, cl = "DILUTIVE", "#e74c3c"
         return {"u": u, "s": lb, "c": cl, "tp": tp, "wc": wc, "pax": pax, "prog": progress}
 
     def seg(nm, cl, bg, kp, ad_d, fl_d, cp, is_group=False):
@@ -83,8 +87,8 @@ if check_password():
             with c4:
                 st.metric("Wealth (Stay/Room)", f"{cu} {res['u']:.2f}")
                 st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
-                # The New Mini Visual Chart
-                st.progress(res['prog'])
+                # Colored Progress Bar logic
+                st.progress(res['prog']) 
                 st.write(f"Pax: **{res['pax']}** | Stay Wealth: **{res['tp']:,.0f}**")
         return res
 

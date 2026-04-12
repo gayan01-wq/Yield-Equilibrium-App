@@ -11,7 +11,7 @@ st.caption("Developed by Gayan Nugawela | Dynamic Wealth Contribution Logic")
 with st.sidebar:
     st.header("🏢 Property Settings")
     h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah")
-    h_total = st.number_input("Total Room Capacity", 1, 1000, 158)
+    h_cap = st.number_input("Total Capacity", 1, 1000, 158)
     
     st.header("🍽️ Meal Costs")
     b, l, d = st.number_input("BB", 0.0, 1000.0, 5.0), st.number_input("LN", 0.0, 1000.0, 7.0), st.number_input("DN", 0.0, 1000.0, 10.0)
@@ -37,30 +37,29 @@ def run(rms, adr, nts, mix, cp, flr):
     pr_total = pr_daily * nts
     u = pr_daily / tot
     pct = (u / adr) * 100 if adr > 0 else 0
-    cap_impact = (tot / h_total) * 100
+    cap_impact = (tot / h_cap) * 100
     
-    # NEW: Wealth Contribution % (Deal Wealth vs Total Hotel Floor Wealth)
-    # This measures how much of the hotel's potential profit this deal "buys"
-    total_hotel_potential = (flr * h_total) * nts
-    wealth_contrib = (pr_total / total_hotel_potential) * 100 if total_hotel_potential > 0 else 0
+    # NEW: Wealth Contribution % (Deal Total vs. Potential Hotel Total)
+    pot_total = (flr * h_cap) * nts
+    w_con = (pr_total / pot_total) * 100 if pot_total > 0 else 0
     
     # SYSTEM LOGIC: Equilibrium Triggers
-    adj_floor = flr * 0.75 if nts > 7 else flr
+    adj_f = flr * 0.75 if nts > 7 else flr
     
-    # Optimized if: Daily Profit is strong OR Margin is Elite OR Wealth Contribution > 15% OR Cap Impact > 20%
-    if u >= (adj_floor + 5) or pct > 55 or wealth_contrib > 15 or cap_impact > 20: 
+    # Optimized if: Daily Wealth > AdjFloor+5 OR Margin > 55% OR Contribution > 15% OR CapImpact > 20%
+    if u >= (adj_f + 5) or pct > 55 or w_con > 15 or cap_impact > 20: 
         lbl, col = "OPTIMIZED", "#27ae60"
-    elif u >= adj_floor: 
+    elif u >= adj_f: 
         lbl, col = "MARGINAL", "#f39c12"
     else: 
         lbl, col = "DILUTIVE", "#e74c3c"
     
-    return {"u":u, "s":lbl, "c":col, "p_t":pr_total, "pct":pct, "cap":cap_impact, "w_con":wealth_contrib}
+    return {"u":u, "s":lbl, "c":col, "p_t":pr_total, "pct":pct, "cap":cap_impact, "w_con":w_con}
 
 # --- UI ROW ---
 def seg(name, color, bg, kp, adr_d, flr_d, cp):
     st.markdown(f"<div class='card' style='background:{bg}; border-left-color:{color};'>{name}</div>", unsafe_allow_html=True)
-    c1, c2, c3, c4 = st.columns([1, 3, 1, 1.2])
+    c1, c2, c3, c4 = st.columns([1, 3.2, 1, 1.2])
     with c1:
         r = [st.number_input("SGL",0,key=kp+"s"), st.number_input("DBL",0,key=kp+"d"), st.number_input("TPL",0,key=kp+"t")]
         tot = sum(r)
@@ -71,4 +70,22 @@ def seg(name, color, bg, kp, adr_d, flr_d, cp):
         q_ro, q_bb = ca.number_input("RO Qty", 0, tot, key=kp+"ro"), ca.number_input("BB Qty", 0, tot, key=kp+"b")
         q_hb, q_fb = cb.number_input("HB Qty", 0, tot, key=kp+"h"), cb.number_input("FB Qty", 0, tot, key=kp+"f")
         q_sa, q_ai = cc.number_input("SAI Qty", 0, tot, key=kp+"sa"), cc.number_input("AI Qty", 0, tot, key=kp+"ai")
-        mix = {"RO":q_ro, "BB":q_bb, "HB":
+        mix = {"RO":q_ro, "BB":q_bb, "HB":q_hb, "FB":q_fb, "SAI":q_sa, "AI":q_ai}
+    with c3:
+        adr = st.number_input("Rate", 0.0, 5000.0, float(adr_d), key=kp+"a")
+        flr = st.number_input("Floor", 0.0, 2000.0, float(flr_d), key=kp+"fl")
+    res = run(r, adr, nts, mix, cp, flr)
+    with c4:
+        if res:
+            st.metric("Net Wealth", f"{cur} {res['u']:.2f}")
+            st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
+            st.write(f"Wealth Contrib: **{res['w_con']:.1f}%**")
+            st.write(f"Stay Wealth: **{res['p_t']:,.2f}**")
+    return res
+
+# --- RENDER ---
+st.header(f"📍 Strategic Audit: {h_name}")
+r1 = seg("Wholesale", "#e67e22", "#fff3e0", "wh", 45, 25, 0.20)
+r2 = seg("Group Tour", "#d35400", "#fbe9e7", "gt", 40, 20, 0.15)
+r3 = seg("Group Corp", "#2c3e50", "#eceff1", "gc", 55, 30, 0.0)
+r4 = seg("Direct/

@@ -1,6 +1,6 @@
 import streamlit as st
 
-# --- CORE CONFIG ---
+# --- BRANDING & STYLE ---
 st.set_page_config(page_title="Yield Equilibrium Auditor", layout="wide")
 st.markdown("<style>.stMetric { background-color: white; border: 1px solid #ddd; padding: 10px; border-radius: 10px; } .row-box { background-color: rgba(0,0,0,0.03); padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid; }</style>", unsafe_allow_html=True)
 
@@ -44,34 +44,4 @@ def run_audit(s, d, t, adr, counts, comm, floor):
     fb_total = sum(qty * meal_costs[plan] * pax_ratio for plan, qty in counts.items())
     
     # Net Wealth: (Rev - F&B) * (1 - Comm) - Maintenance Fee
-    profit = ((total_net_rev - fb_total) * (1.0 - comm)) - (p01_fee * paid)
-    unit_wealth = profit / paid
-    
-    if unit_wealth >= (floor + 10.0): res = {"st": "OPTIMIZED", "cl": "green"}
-    elif unit_wealth >= floor: res = {"st": "MARGINAL", "cl": "orange"}
-    else: res = {"st": "DILUTIVE", "cl": "red"}
-    
-    res.update({"rp": profit, "un": unit_wealth, "tfb": fb_total})
-    return res
-
-# --- UI SEGMENT ROW ---
-def segment(label, color, kp, adr_d, flr_d, comm_rate):
-    st.markdown(f"<div class='row-box' style='border-left-color: {color};'><h3>{label}</h3></div>", unsafe_allow_html=True)
-    c1, c2, c3, c4 = st.columns([1.5, 2.5, 1.2, 1.2])
-    
-    with c1:
-        s = st.number_input("SGL", 0, key=kp+"s")
-        d = st.number_input("DBL", 0, key=kp+"d")
-        t = st.number_input("TPL", 0, key=kp+"t")
-        tot = s + d + t
-    
-    with c2:
-        st.write("Meal Mix")
-        col_a, col_b = st.columns(2)
-        with col_a:
-            q_bb = st.number_input("BB Qty", 0, tot, key=kp+"bb")
-            q_hb = st.number_input("HB Qty", 0, tot, key=kp+"hb")
-            q_fb = st.number_input("FB Qty", 0, tot, key=kp+"fb")
-        with col_b:
-            q_sai = st.number_input("SAI Qty", 0, tot, key=kp+"sai")
-            q_ai = st.number_input("AI Qty", 0, tot,
+    profit = ((total_net_rev - fb_total) * (1.0

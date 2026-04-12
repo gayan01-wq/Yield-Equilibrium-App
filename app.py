@@ -1,22 +1,30 @@
 import streamlit as st
 
 # --- BRANDING ---
-st.set_page_config(page_title="Yield Equilibrium Master Auditor", layout="wide")
-st.title("🏨 Yield Equilibrium: Full Property Segment Auditor")
+st.set_page_config(page_title="Yield Equilibrium: Total Asset Auditor", layout="wide")
+st.title("🏨 Yield Equilibrium: Full Property & F&B Auditor")
 st.markdown("Developed by **Gayan Nugawela** | *The Surgical Total Revenue Framework*")
 st.divider()
 
-# --- SIDEBAR: MASTER RATE CONFIG ---
-st.sidebar.header("🍽️ F&B & MICE Net Credits")
-st.sidebar.caption("Per Person Rates (Net of Tax)")
-rate_bb = st.sidebar.number_input("Breakfast Credit", value=6.0)
-rate_hb = st.sidebar.number_input("HB Supplement", value=12.0)
-rate_fb = st.sidebar.number_input("FB Supplement", value=22.0)
-rate_mice = st.sidebar.number_input("MICE / Meeting Package", value=30.0)
+# --- SIDEBAR: DETAILED F&B ALLOCATIONS (PER PERSON) ---
+st.sidebar.header("🍽️ Per Person Net Costs")
+st.sidebar.caption("Enter the internal cost per guest")
+cost_bb = st.sidebar.number_input("Breakfast Cost", value=5.0)
+cost_lunch = st.sidebar.number_input("Lunch Cost", value=7.0)
+cost_dinner = st.sidebar.number_input("Dinner Cost", value=10.0)
+cost_soft_bev = st.sidebar.number_input("Soft Beverage Cost (SAI)", value=8.0)
+cost_liq = st.sidebar.number_input("Liquor/Alcohol Cost (AI)", value=15.0)
+cost_mice = st.sidebar.number_input("MICE/Delegate Supplement", value=20.0)
 
+# Build the Meal Map based on your per-person inputs
 meal_map = {
-    "RO": 0, "BB": rate_bb, "HB": rate_bb + rate_hb, 
-    "FB": rate_bb + rate_fb, "MICE/Events": rate_bb + rate_mice
+    "RO": 0,
+    "BB": cost_bb,
+    "HB": cost_bb + cost_dinner,
+    "FB": cost_bb + cost_lunch + cost_dinner,
+    "SAI": cost_bb + cost_lunch + cost_dinner + cost_soft_bev,
+    "AI": cost_bb + cost_lunch + cost_dinner + cost_soft_bev + cost_liq,
+    "MICE": cost_bb + cost_mice
 }
 
 st.sidebar.divider()
@@ -31,8 +39,13 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan, trans, comm, p01, floor):
     
     if total_r == 0: return {"room_p": 0, "fb_p": 0, "unit": 0, "stat": "N/A", "col": "gray", "total_w": 0}
 
+    # 1. Surgical Tax Extraction
     total_net_rev = (adr * paid_r) / tax_div
+    
+    # 2. Surgical F&B Extraction (Per Person x Pax)
     total_fb_rev = meal_map[plan] * pax
+    
+    # 3. Net Room Wealth Calculation
     room_wealth = total_net_rev - total_fb_rev - (trans / tax_div)
     total_room_profit = (room_wealth * (1 - comm)) - (p01 * total_r)
     
@@ -45,93 +58,39 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan, trans, comm, p01, floor):
 
 # --- SEGMENT INPUTS ---
 st.header("📊 Detailed Segment Inputs")
-
-# Create two rows of columns to fit all 5 segments
 row1_a, row1_b, row1_c = st.columns(3)
 row2_a, row2_b = st.columns(2)
 
-# Segment 1: Direct
-with row1_a:
-    with st.expander("👤 Direct / Individual", expanded=True):
-        d_s = st.number_input("Direct SGL", 2, key="ds")
-        d_d = st.number_input("Direct DBL", 5, key="dd")
-        d_t = st.number_input("Direct TPL", 1, key="dt")
-        d_adr = st.number_input("Direct ADR", 200.0, key="da")
-        d_plan = st.selectbox("Direct Plan", ["RO", "BB", "HB"], index=1, key="dp")
-        d_floor = st.number_input("Direct Floor", 110.0, key="df")
+def segment_box(col, label, key_prefix, default_adr, default_floor, plans):
+    with col:
+        with st.expander(f"📍 {label}", expanded=True):
+            s = st.number_input(f"SGL", 5, key=f"{key_prefix}s")
+            d = st.number_input(f"DBL", 10, key=f"{key_prefix}d")
+            t = st.number_input(f"TPL", 2, key=f"{key_prefix}t")
+            c = st.number_input(f"COMP", 0, key=f"{key_prefix}c")
+            adr = st.number_input(f"Gross ADR", default_adr, key=f"{key_prefix}a")
+            plan = st.selectbox(f"Plan", plans, key=f"{key_prefix}p")
+            flr = st.number_input(f"Floor", default_floor, key=f"{key_prefix}f")
+            return s, d, t, c, adr, plan, flr
 
-# Segment 2: Corporate (Individual)
-with row1_b:
-    with st.expander("💼 Corporate", expanded=True):
-        c_s = st.number_input("Corp SGL", 10, key="cs")
-        c_d = st.number_input("Corp DBL", 5, key="cd")
-        c_t = st.number_input("Corp TPL", 0, key="ct")
-        c_adr = st.number_input("Corp ADR", 160.0, key="ca")
-        c_plan = st.selectbox("Corp Plan", ["RO", "BB"], index=1, key="cp")
-        c_floor = st.number_input("Corp Floor", 90.0, key="cf")
+# Define your segments
+dir_data = segment_box(row1_a, "Direct", "dir", 200.0, 110.0, ["RO", "BB", "HB"])
+corp_data = segment_box(row1_b, "Corporate", "cor", 160.0, 95.0, ["RO", "BB"])
+tour_data = segment_box(row1_c, "Group Tour & Travels", "tou", 140.0, 80.0, ["BB", "HB", "FB", "SAI", "AI"])
+mice_data = segment_box(row2_a, "Corp Groups / MICE", "mic", 155.0, 85.0, ["HB", "FB", "MICE"])
+ota_data = segment_box(row2_b, "OTA", "ota", 190.0, 100.0, ["RO", "BB", "HB"])
 
-# Segment 3: Group Tour & Travels
-with row1_c:
-    with st.expander("🌍 Group Tour & Travels", expanded=True):
-        g_s = st.number_input("G-Tour SGL", 10, key="gs")
-        g_d = st.number_input("G-Tour DBL", 20, key="gd")
-        g_t = st.number_input("G-Tour TPL", 5, key="gt")
-        g_adr = st.number_input("G-Tour ADR", 140.0, key="ga")
-        g_plan = st.selectbox("G-Tour Plan", ["BB", "HB", "FB"], index=1, key="gp")
-        g_floor = st.number_input("G-Tour Floor", 80.0, key="gf")
+# --- EXECUTE ---
+res_dir = run_audit(*dir_data, 0, 0.0, 10.0, dir_data[6])
+res_corp = run_audit(*corp_data, 0, 0.0, 10.0, corp_data[6])
+res_tour = run_audit(*tour_data, 0, 0.15, 10.0, tour_data[6])
+res_mice = run_audit(*mice_data, 150.0, 0.10, 10.0, mice_data[6])
+res_ota = run_audit(*ota_data, 0, 0.18, 10.0, ota_data[6])
 
-# Segment 4: Corporate Groups / MICE
-with row2_a:
-    with st.expander("🏢 Corporate Groups / MICE", expanded=True):
-        m_s = st.number_input("MICE SGL", 15, key="ms")
-        m_d = st.number_input("MICE DBL", 10, key="md")
-        m_t = st.number_input("MICE TPL", 2, key="mt")
-        m_adr = st.number_input("MICE ADR", 150.0, key="ma")
-        m_plan = st.selectbox("MICE Plan", ["HB", "FB", "MICE/Events"], index=2, key="mp")
-        m_floor = st.number_input("MICE Floor", 85.0, key="mf")
-
-# Segment 5: OTA (Standard)
-with row2_b:
-    with st.expander("📱 OTA / Booking.com", expanded=True):
-        o_s = st.number_input("OTA SGL", 5, key="os")
-        o_d = st.number_input("OTA DBL", 15, key="od")
-        o_t = st.number_input("OTA TPL", 3, key="ot")
-        o_adr = st.number_input("OTA ADR", 190.0, key="oa")
-        o_plan = st.selectbox("OTA Plan", ["RO", "BB", "HB"], index=1, key="op")
-        o_floor = st.number_input("OTA Floor", 100.0, key="of")
-
-# --- EXECUTE AUDITS ---
-res_direct = run_audit(d_s, d_d, d_t, 0, d_adr, d_plan, 0, 0.0, 10.0, d_floor)
-res_corp = run_audit(c_s, c_d, c_t, 0, c_adr, c_plan, 0, 0.0, 10.0, c_floor)
-res_tour = run_audit(g_s, g_d, g_t, 2, g_adr, g_plan, 0, 0.15, 10.0, g_floor)
-res_mice = run_audit(m_s, m_d, m_t, 3, m_adr, m_plan, 150.0, 0.10, 10.0, m_floor)
-res_ota = run_audit(o_s, o_d, o_t, 0, o_adr, o_plan, 0, 0.18, 10.0, o_floor)
-
-# --- DISPLAY RESULTS ---
+# --- RESULTS SUMMARY ---
 st.divider()
 st.header("📊 Audit Results Summary")
 
 def display_res(name, res):
     st.markdown(f"### {name}")
-    st.metric("Surgical Unit Net", f"{currency} {res['unit']:.2f}")
-    st.markdown(f"Status: :{res['col']}[{res['stat']}]")
-    st.caption(f"F&B/Events Rev: {currency} {res['fb_p']:,.0f}")
-
-# Display in columns
-c1, c2, c3, c4, c5 = st.columns(5)
-with c1: display_res("Direct", res_direct)
-with c2: display_res("Corporate", res_corp)
-with c3: display_res("Tour & Travel", res_tour)
-with c4: display_res("Corp Group", res_mice)
-with c5: display_res("OTA", res_ota)
-
-# --- TOTAL PROPERTY WEALTH ---
-st.divider()
-st.header("🏢 Property Wealth Total")
-total_room_p = res_direct['room_p'] + res_corp['room_p'] + res_tour['room_p'] + res_mice['room_p'] + res_ota['room_p']
-total_fb_p = res_direct['fb_p'] + res_corp['fb_p'] + res_tour['fb_p'] + res_mice['fb_p'] + res_ota['fb_p']
-
-m1, m2, m3 = st.columns(3)
-m1.metric("Total Net Room Wealth", f"{currency} {total_room_p:,.2f}")
-m2.metric("Total F&B/Events Revenue", f"{currency} {total_fb_p:,.2f}")
-m3.metric("Combined Property Wealth", f"{currency} {(total_room_p + total_fb_p):,.2f}")
+    st.metric("Surgical Net", f"{currency} {res['unit

@@ -8,21 +8,24 @@ st.divider()
 
 # --- SIDEBAR: DETAILED F&B ALLOCATIONS (PER PERSON) ---
 st.sidebar.header("🍽️ Per Person Net Costs")
-cost_bb = st.sidebar.number_input("Breakfast Cost", value=5.0)
-cost_lunch = st.sidebar.number_input("Lunch Cost", value=7.0)
-cost_dinner = st.sidebar.number_input("Dinner Cost", value=10.0)
-cost_soft_bev = st.sidebar.number_input("Soft Beverage Cost (SAI)", value=8.0)
-cost_liq = st.sidebar.number_input("Liquor/Alcohol Cost (AI)", value=15.0)
+st.sidebar.caption("Enter the internal cost per guest")
+
+# Exact words as requested
+cost_bb = st.sidebar.number_input("Breakfast Allocation", value=5.0)
+cost_lunch = st.sidebar.number_input("Lunch Allocation", value=7.0)
+cost_dinner = st.sidebar.number_input("Dinner Allocation", value=10.0)
+cost_sai = st.sidebar.number_input("SAI Allocation (Soft Beverages)", value=8.0)
+cost_ai = st.sidebar.number_input("AI Allocation (Liquor/Alcohol)", value=15.0)
 cost_mice = st.sidebar.number_input("MICE/Delegate Supplement", value=20.0)
 
-# Build the Meal Map
+# Build the Meal Map based on your inputs
 meal_map = {
     "RO": 0,
     "BB": cost_bb,
     "HB": cost_bb + cost_dinner,
     "FB": cost_bb + cost_lunch + cost_dinner,
-    "SAI": cost_bb + cost_lunch + cost_dinner + cost_soft_bev,
-    "AI": cost_bb + cost_lunch + cost_dinner + cost_soft_bev + cost_liq,
+    "SAI": cost_bb + cost_lunch + cost_dinner + cost_sai,
+    "AI": cost_bb + cost_lunch + cost_dinner + cost_sai + cost_ai,
     "MICE": cost_bb + cost_mice
 }
 
@@ -30,7 +33,7 @@ st.sidebar.divider()
 tax_div = st.sidebar.number_input("Tax Divisor", value=1.2327, format="%.4f")
 currency = st.sidebar.selectbox("Currency", ["OMR", "USD", "AED", "THB"])
 
-# --- CALCULATION ENGINE (10 Arguments) ---
+# --- CALCULATION ENGINE ---
 def run_audit(sgl, dbl, tpl, comp, adr, plan, trans, comm, p01, floor):
     paid_r = sgl + dbl + tpl
     total_r = paid_r + comp
@@ -49,7 +52,7 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan, trans, comm, p01, floor):
     if unit_net >= (floor + 10): status, col = ("🟢 OPTIMIZED", "green")
     elif unit_net >= floor: status, col = ("🟡 STABLE", "orange")
     
-    return {"room_p": total_room_profit, "fb_p": total_fb_rev, "unit": unit_net, "stat": status, "col": col, "total_w": total_room_profit + total_fb_rev}
+    return {"room_p": total_room_profit, "fb_p": total_fb_rev, "unit": unit_net, "stat": status, "col": col}
 
 # --- SEGMENT INPUTS ---
 st.header("📊 Detailed Segment Inputs")
@@ -68,21 +71,17 @@ def segment_box(col, label, key_prefix, default_adr, default_floor, plans):
             flr = st.number_input(f"{label} Floor", default_floor, key=f"{key_prefix}f")
             return [s, d, t, c, adr, plan, flr]
 
-# 1. Direct
+# Core Segment Data
 d_in = segment_box(row1_a, "Direct", "dir", 200.0, 110.0, ["RO", "BB", "HB"])
-# 2. Corporate
 c_in = segment_box(row1_b, "Corporate", "cor", 160.0, 95.0, ["RO", "BB"])
-# 3. Group Tour & Travel
 t_in = segment_box(row1_c, "Group Tour & Travel", "tou", 140.0, 80.0, ["BB", "HB", "FB", "SAI", "AI"])
-# 4. Corporate Groups
 m_in = segment_box(row2_a, "Corporate Groups", "mic", 155.0, 85.0, ["HB", "FB", "MICE"])
-# 5. OTA
 o_in = segment_box(row2_b, "OTA", "ota", 190.0, 100.0, ["RO", "BB", "HB"])
 
-# --- EXECUTE AUDITS (Mapping correctly to 10 arguments) ---
+# --- EXECUTE AUDITS ---
 res_dir = run_audit(d_in[0], d_in[1], d_in[2], d_in[3], d_in[4], d_in[5], 0.0, 0.0, 10.0, d_in[6])
 res_corp = run_audit(c_in[0], c_in[1], c_in[2], c_in[3], c_in[4], c_in[5], 0.0, 0.0, 10.0, c_in[6])
-res_tour = run_audit(t_in[0], t_in[1], t_in[2], t_in[3], t_in[4], t_in[5], 0.0, 0.15, 10.0, t_in[6])
+res_tour = run_audit(t_in[0], t_in[1], t_in[2], t_in[3], t_in[4], t_in[5], 0.0, 0.15, 12.0, t_in[6])
 res_mice = run_audit(m_in[0], m_in[1], m_in[2], m_in[3], m_in[4], m_in[5], 150.0, 0.10, 10.0, m_in[6])
 res_ota = run_audit(o_in[0], o_in[1], o_in[2], o_in[3], o_in[4], o_in[5], 0.0, 0.18, 10.0, o_in[6])
 

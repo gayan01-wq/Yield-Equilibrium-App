@@ -3,9 +3,9 @@ st.set_page_config(layout="wide")
 st.markdown("<style>.stMetric{background:#fff;border:1px solid #eee;padding:10px;border-radius:10px}.card{padding:8px;border-radius:8px;margin-bottom:5px;border-left:8px solid;font-weight:bold}</style>",unsafe_allow_html=True)
 st.title("🏨 Yield Equilibrium Center")
 with st.sidebar:
-    h_nm=st.text_input("Hotel","Wyndham Salalah")
+    h_nm=st.text_input("Hotel Name","Wyndham Garden Salalah")
     h_cp=st.number_input("Total Inventory",1,1000,158)
-    st.header("🍽️ Meal Costs")
+    st.header("🍽️ Meal Allocation")
     b,l,d=st.number_input("BB",0.,500.,5.),st.number_input("LN",0.,500.,7.),st.number_input("DN",0.,500.,10.)
     s,a=st.number_input("SAI",0.,500.,8.),st.number_input("AI",0.,500.,15.)
     m={"RO":0,"BB":b,"HB":b+d,"FB":b+l+d,"SAI":b+l+d+s,"AI":b+l+d+s+a}
@@ -36,19 +36,16 @@ def seg(nm,cl,bg,kp,ad_d,fl_d,cp):
     st.markdown(f"<div class='card' style='background:{bg};border-left-color:{cl}'>{nm}</div>",unsafe_allow_html=True)
     c1,c2,c3,c4=st.columns([1,2.8,1,1.2])
     with c1:
-        sgl=st.number_input("SGL",0,key=kp+"s")
-        dbl=st.number_input("DBL",0,key=kp+"d")
-        tpl=st.number_input("TPL",0,key=kp+"t")
+        sgl,dbl,tpl=st.number_input("SGL",0,key=kp+"s"),st.number_input("DBL",0,key=kp+"d"),st.number_input("TPL",0,key=kp+"t")
         nt=st.number_input("Nights",1,365,key=kp+"n")
     with c2:
-        st.write("Meal Allocation")
+        st.write("Meal Basis")
         ca,cb,cc=st.columns(3)
         q={"RO":ca.number_input("RO",0,key=kp+"ro"),"BB":ca.number_input("BB",0,key=kp+"b"),
            "HB":cb.number_input("HB",0,key=kp+"h"),"FB":cb.number_input("FB",0,key=kp+"f"),
            "SAI":cc.number_input("SAI",0,key=kp+"sa"),"AI":cc.number_input("AI",0,key=kp+"ai")}
     with c3:
-        ad=st.number_input("Rate",0.,5000.,float(ad_d),key=kp+"a")
-        fl=st.number_input("Floor",0.,2000.,float(fl_d),key=kp+"fl")
+        ad,fl=st.number_input("Rate",0.,5000.,float(ad_d),key=kp+"a"),st.number_input("Floor",0.,2000.,float(fl_d),key=kp+"fl")
     res=run([sgl,dbl,tpl],ad,nt,q,cp,fl)
     if res:
         with c4:
@@ -65,6 +62,8 @@ r3=seg("Wholesale","#e67e22","#fff3e0","wh",45,25,0.2)
 r4=seg("Corporate","#8e44ad","#f3e5f5","co",58,32,0.0)
 r5=seg("Group Tour & Travels","#d35400","#fbe9e7","gt",40,20,0.15)
 r6=seg("Group Corporate","#2c3e50","#eceff1","gc",55,30,0.0)
-
 st.divider()
-all_res
+all_res=[x for x in [r1,r2,r3,r4,r5,r6] if x]
+if all_res:
+    st.metric(f"Total {h_nm} Wealth",f"{cu} {sum(x['tp'] for x in all_res):,.2f}")
+st.write("✅ Ready.")

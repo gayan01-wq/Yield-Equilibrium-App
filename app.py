@@ -16,7 +16,14 @@ def check_password():
 
 if check_password():
     st.set_page_config(layout="wide", page_title="Yield Equilibrium")
-    st.markdown("<style>.stMetric{background:#fff;border:1px solid #eee;padding:10px;border-radius:10px}.card{padding:8px;border-radius:8px;margin-bottom:5px;border-left:8px solid;font-weight:bold}</style>",unsafe_allow_html=True)
+    
+    # Custom CSS for styling
+    st.markdown("""
+        <style>
+        .stMetric {background:#fff; border:1px solid #eee; padding:10px; border-radius:10px}
+        .card {padding:8px; border-radius:8px; margin-bottom:5px; border-left:8px solid; font-weight:bold}
+        </style>
+    """, unsafe_allow_html=True)
     
     with st.sidebar:
         st.title("👨‍💼 Architect")
@@ -28,11 +35,17 @@ if check_password():
         st.title("⚙️ Global Settings")
         h_nm = st.text_input("Hotel", "Wyndham Garden Salalah")
         h_cp = st.number_input("Total Inventory", 1, 1000, 158)
+        
         st.header("🍽️ Meals (Net)")
-        b, l, d = st.number_input("BB", 0., 500., 2.), st.number_input("LN", 0., 500., 6.), st.number_input("DN", 0., 500., 6.)
-        s, a = st.number_input("SAI", 0., 500., 8.), st.number_input("AI", 0., 500., 15.)
+        b = st.number_input("BB", 0., 500., 2.)
+        l = st.number_input("LN", 0., 500., 6.)
+        d = st.number_input("DN", 0., 500., 6.)
+        s = st.number_input("SAI", 0., 500., 8.)
+        a = st.number_input("AI", 0., 500., 15.)
         m = {"RO":0, "BB":b, "HB":b+d, "FB":b+l+d, "SAI":b+l+d+s, "AI":b+l+d+s+a}
-        p01, tx = st.number_input("P01 Fee", 0., 100., 6.9), st.number_input("Tax Div", 1., 2., 1.2327, format="%.4f")
+        
+        p01 = st.number_input("P01 Fee", 0., 100., 6.9)
+        tx = st.number_input("Tax Div", 1., 2., 1.2327, format="%.4f")
         op = st.slider("OTA Comm %", 0, 50, 18) / 100
         cu = st.selectbox("Currency", ["OMR", "AED", "SAR", "THB", "EUR", "GBP", "USD"])
 
@@ -43,20 +56,27 @@ if check_password():
         if t_rms <= 0: return None
         pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
         gross_total = (adr * t_rms * nts) + (ev_rev * pax * nts)
-        nt_rev, fb_cost = (adr * t_rms) / tx, sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
+        
+        nt_rev = (adr * t_rms) / tx
+        fb_cost = sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
         ev_w = (ev_rev * pax) / tx
         cm = (nt_rev - fb_cost) * cp
+        
         dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
         tp = (dp * t_rms * nts) - (total_tr_cost / tx)
         u = tp / (t_rms * nts)
+        
         af = fl * 0.75 if nts > 7 else fl
         fric = (1 - (tp / gross_total)) * 100 if gross_total > 0 else 0
+        
         if fric < 26: fric_lb = "Net Contribution"
         elif 26 <= fric < 38: fric_lb = "Yield Dilution"
         else: fric_lb = "Revenue Erosion"
+        
         if u < af: lb, cl = "DILUTIVE", "#e74c3c"
         elif af <= u < (af + 5): lb, cl = "MARGINAL", "#f1c40f"
         else: lb, cl = "OPTIMIZED", "#27ae60"
+        
         return {"u": u, "s": lb, "c": cl, "tp": tp, "pax": pax, "fric": fric, "fric_lb": fric_lb}
 
     def seg(nm, cl, bg, kp, ad_d, fl_d, cp, is_group=False):
@@ -64,12 +84,21 @@ if check_password():
         c1, c2, c3, c4 = st.columns([1, 2.8, 1, 1.2])
         ev_r, tr_c = 0.0, 0.0
         with c1:
-            sgl, dbl, tpl = st.number_input("SGL",0,key=kp+"s"), st.number_input("DBL",0,key=kp+"d"), st.number_input("TPL",0,key=kp+"t")
+            sgl = st.number_input("SGL", 0, key=kp+"s")
+            dbl = st.number_input("DBL", 0, key=kp+"d")
+            tpl = st.number_input("TPL", 0, key=kp+"t")
             nt = st.number_input("Nights", 1, 365, key=kp+"n")
         with c2:
             st.write("Meal Basis")
             ca, cb, cc = st.columns(3)
-            q = {"RO": ca.number_input("RO",0,key=kp+"ro"), "BB": ca.number_input("BB",0,key=kp+"b"), "HB": cb.number_input("HB",0,key=kp+"h"), "FB": cb.number_input("FB",0,key=kp+"f"), "SAI": cc.number_input("SAI",0,key=kp+"sa"), "AI": cc.number_input("AI",0,key=kp+"ai")}
+            q = {
+                "RO": ca.number_input("RO", 0, key=kp+"ro"),
+                "BB": ca.number_input("BB", 0, key=kp+"b"),
+                "HB": cb.number_input("HB", 0, key=kp+"h"),
+                "FB": cb.number_input("FB", 0, key=kp+"f"),
+                "SAI": cc.number_input("SAI", 0, key=kp+"sa"),
+                "AI": cc.number_input("AI", 0, key=kp+"ai")
+            }
             if is_group:
                 cx, cy = st.columns(2)
                 ev_r = cx.number_input("Event/Pax", 0.0, key=kp+"ev")
@@ -77,6 +106,7 @@ if check_password():
         with c3:
             ad = st.number_input("Rate", 0., 5000., float(ad_d), key=kp+"a")
             fl = st.number_input("Market Hurdle", 0., 2000., float(fl_d), key=kp+"fl")
+        
         res = run([sgl, dbl, tpl], ad, nt, q, cp, fl, ev_r, tr_c)
         if res:
             with c4:
@@ -104,7 +134,6 @@ if check_password():
         total_wealth = sum(v['tp'] for v in active_res.values())
         st.metric(f"Total Portfolio Wealth ({cu})", f"{total_wealth:,.2f}")
         
-        # --- STRATEGIC ANALYSIS SECTION ---
         st.subheader("📊 Yield Equilibrium Breakdown")
         col_chart, col_text = st.columns([2, 1])
         
@@ -114,17 +143,16 @@ if check_password():
                 "Wealth Contribution": [v['tp'] for v in active_res.values()]
             })
             st.bar_chart(chart_data.set_index("Segment"))
-            st.caption("Wealth Contribution per Segment: A visual representation of Integrated Yield.")
 
         with col_text:
             st.markdown("### 🔍 The SME Insight")
             st.markdown(f"""
             **Yield Equilibrium Logic:**
-            1. **Tax Stripping:** Gross ADR is immediately divided by the **{tx}** Tax Divisor.
-            2. **Ancillary Weight:** Event revenue is calculated per pax, acting as a **Yield Multiplier**.
-            3. **Variable Drag:** Meal costs and **P01 ({p01})** fees are stripped to find the 'Cold Wealth'.
-            4. **Friction Scaling:** Efficiency is labeled based on the % of total deductions.
-            5. **Status Hierarchy:** Based on the **Market Hurdle** vs the final Net Room Wealth.
+            1. **Tax Stripping:** Gross ADR divided by **{tx}**.
+            2. **Ancillary Weight:** Event revenue acts as a **Yield Multiplier**.
+            3. **Variable Drag:** Meals and **P01 ({p01})** stripped.
+            4. **Friction Scaling:** Efficiency labeled by deduction %.
+            5. **Status:** Based on **Market Hurdle** vs Net Wealth.
             """)
 
     if st.button("🔒 Log Out"):

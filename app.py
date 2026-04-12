@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-# --- PASSWORD PROTECTION ---
+# --- ACCESS CONTROL ---
 def check_password():
     if "auth" not in st.session_state:
         st.session_state["auth"] = False
@@ -15,7 +15,7 @@ def check_password():
     return True
 
 if check_password():
-    # --- UNIVERSAL PREMIUM STYLING ---
+    # --- EXECUTIVE STYLING ---
     st.set_page_config(layout="wide", page_title="Yield Equilibrium SME")
     
     st.markdown("""
@@ -87,13 +87,4 @@ if check_password():
         cm = (nt_rev - fb_cost) * cp
         dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
         tp = (dp * t_rms * nts) - (total_tr_cost / tx)
-        u = tp / (t_rms * nts)
-        af = fl * 0.75 if nts > 7 else fl
-        fric = (1 - (tp / gross_total)) * 100 if gross_total > 0 else 0
-        
-        if fric < 26: fric_lb = "Net Contribution"
-        elif 26 <= fric < 38: fric_lb = "Yield Dilution"
-        else: fric_lb = "Revenue Erosion"
-        
-        if u < af: lb, cl = "DILUTIVE", "#e74c3c"
-        elif af <= u < (af + 5): lb, cl = "MARGINAL", "#f1c40f
+        u = tp / (t_rms * n

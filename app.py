@@ -10,7 +10,7 @@ st.divider()
 st.sidebar.header("🍽️ Per Person Net Costs")
 st.sidebar.caption("Enter the internal cost per guest")
 
-# Exact labels as requested by the user
+# Clean labels as requested
 cost_bb = st.sidebar.number_input("Breakfast Allocation", value=5.0)
 cost_lunch = st.sidebar.number_input("Lunch Allocation", value=7.0)
 cost_dinner = st.sidebar.number_input("Dinner Allocation", value=10.0)
@@ -56,12 +56,14 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan, trans, comm, p01, floor):
 
 # --- SEGMENT INPUTS ---
 st.header("📊 Detailed Segment Inputs")
-row1_a, row1_b, row1_c = st.columns(3)
-row2_a, row2_b = st.columns(2)
 
-def segment_box(col, label, key_prefix, default_adr, default_floor, plans):
+# Layout with 6 segments (3 per row)
+row1_a, row1_b, row1_c = st.columns(3)
+row2_a, row2_b, row2_c = st.columns(3)
+
+def segment_box(col, icon, label, key_prefix, default_adr, default_floor, plans):
     with col:
-        with st.expander(f"📍 {label}", expanded=True):
+        with st.expander(f"{icon} {label}", expanded=True):
             s = st.number_input(f"{label} SGL", 5, key=f"{key_prefix}s")
             d = st.number_input(f"{label} DBL", 10, key=f"{key_prefix}d")
             t = st.number_input(f"{label} TPL", 2, key=f"{key_prefix}t")
@@ -71,17 +73,19 @@ def segment_box(col, label, key_prefix, default_adr, default_floor, plans):
             flr = st.number_input(f"{label} Floor", default_floor, key=f"{key_prefix}f")
             return [s, d, t, c, adr, plan, flr]
 
-# Core Segment Data
-d_in = segment_box(row1_a, "Direct", "dir", 200.0, 110.0, ["RO", "BB", "HB"])
-c_in = segment_box(row1_b, "Corporate", "cor", 160.0, 95.0, ["RO", "BB"])
-t_in = segment_box(row1_c, "Group Tour & Travel", "tou", 140.0, 80.0, ["BB", "HB", "FB", "SAI", "AI"])
-m_in = segment_box(row2_a, "Corporate Groups", "mic", 155.0, 85.0, ["HB", "FB", "MICE"])
-o_in = segment_box(row2_b, "OTA", "ota", 190.0, 100.0, ["RO", "BB", "HB"])
+# Core Segment Data with nicer icons
+d_in = segment_box(row1_a, "👤", "Direct", "dir", 200.0, 110.0, ["RO", "BB", "HB"])
+c_in = segment_box(row1_b, "💼", "Corporate", "cor", 160.0, 95.0, ["RO", "BB"])
+t_in = segment_box(row1_c, "✈️", "Wholesale", "who", 130.0, 75.0, ["BB", "HB", "FB", "SAI", "AI"])
+g_in = segment_box(row2_a, "🚌", "Group Tour & Travel", "tou", 140.0, 80.0, ["BB", "HB", "FB", "SAI", "AI"])
+m_in = segment_box(row2_b, "🏢", "Corporate Groups", "mic", 155.0, 85.0, ["HB", "FB", "MICE"])
+o_in = segment_box(row2_c, "📱", "OTA", "ota", 190.0, 100.0, ["RO", "BB", "HB"])
 
 # --- EXECUTE AUDITS ---
 res_dir = run_audit(d_in[0], d_in[1], d_in[2], d_in[3], d_in[4], d_in[5], 0.0, 0.0, 10.0, d_in[6])
 res_corp = run_audit(c_in[0], c_in[1], c_in[2], c_in[3], c_in[4], c_in[5], 0.0, 0.0, 10.0, c_in[6])
-res_tour = run_audit(t_in[0], t_in[1], t_in[2], t_in[3], t_in[4], t_in[5], 0.0, 0.15, 12.0, t_in[6])
+res_who = run_audit(t_in[0], t_in[1], t_in[2], t_in[3], t_in[4], t_in[5], 0.0, 0.20, 10.0, t_in[6])
+res_tour = run_audit(g_in[0], g_in[1], g_in[2], g_in[3], g_in[4], g_in[5], 0.0, 0.15, 12.0, g_in[6])
 res_mice = run_audit(m_in[0], m_in[1], m_in[2], m_in[3], m_in[4], m_in[5], 150.0, 0.10, 10.0, m_in[6])
 res_ota = run_audit(o_in[0], o_in[1], o_in[2], o_in[3], o_in[4], o_in[5], 0.0, 0.18, 10.0, o_in[6])
 
@@ -89,24 +93,26 @@ res_ota = run_audit(o_in[0], o_in[1], o_in[2], o_in[3], o_in[4], o_in[5], 0.0, 0
 st.divider()
 st.header("📊 Audit Results Summary")
 
-def display_res(name, res):
-    st.markdown(f"### {name}")
+def display_res(icon, name, res):
+    st.markdown(f"### {icon} {name}")
     st.metric("Surgical Net", f"{currency} {res['unit']:.2f}")
     st.markdown(f"Status: :{res['col']}[{res['stat']}]")
-    st.caption(f"F&B Contribution: {currency} {res['fb_p']:,.0f}")
+    st.caption(f"F&B/Events Rev: {currency} {res['fb_p']:,.0f}")
 
-c1, c2, c3, c4, c5 = st.columns(5)
-with c1: display_res("Direct", res_dir)
-with c2: display_res("Corporate", res_corp)
-with c3: display_res("Tour & Travel", res_tour)
-with c4: display_res("Corp Group", res_mice)
-with c5: display_res("OTA", res_ota)
+# Display in columns
+c1, c2, c3, c4, c5, c6 = st.columns(6)
+with c1: display_res("👤", "Direct", res_dir)
+with c2: display_res("💼", "Corp", res_corp)
+with c3: display_res("✈️", "Whl", res_who)
+with c4: display_res("🚌", "Tour", res_tour)
+with c5: display_res("🏢", "MICE", res_mice)
+with c6: display_res("📱", "OTA", res_ota)
 
 # --- TOTAL PROPERTY WEALTH ---
 st.divider()
 st.header("🏢 Total Property Wealth Summary")
-total_room_p = sum(r['room_p'] for r in [res_dir, res_corp, res_tour, res_mice, res_ota])
-total_fb_p = sum(r['fb_p'] for r in [res_dir, res_corp, res_tour, res_mice, res_ota])
+total_room_p = sum(r['room_p'] for r in [res_dir, res_corp, res_who, res_tour, res_mice, res_ota])
+total_fb_p = sum(r['fb_p'] for r in [res_dir, res_corp, res_who, res_tour, res_mice, res_ota])
 
 m1, m2, m3 = st.columns(3)
 m1.metric("Total Net Room Wealth", f"{currency} {total_room_p:,.2f}")

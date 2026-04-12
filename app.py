@@ -8,10 +8,10 @@ def check_password():
         st.title("🏨 Yield Equilibrium Center")
         pwd = st.text_input("Enter Access Key", type="password", placeholder="Type key and hit Enter")
         if st.button("Unlock Dashboard") or (pwd > ""):
-            if pwd == "Gayan2026": # <--- CHANGE PASSWORD HERE
+            if pwd == "Gayan2026": 
                 st.session_state["auth"] = True
                 st.rerun()
-            elif pwd > "":
+            else:
                 st.error("Unauthorized Key.")
         return False
     return True
@@ -35,15 +35,16 @@ if check_password():
         op=st.slider("OTA Comm %",0,50,18)/100
         cu=st.selectbox("Currency",["OMR","AED","SAR","THB","EUR","GBP","USD"])
 
-    def run(rms,adr,nts,mix,cp,fl,ev_rev=0):
+    def run(rms,adr,nts,mix,cp,fl,ev_rev=0, tr_cost=0):
         t_rms=sum(rms)
         if t_rms<=0:return None
         pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
         nt_rev=(adr*t_rms)/tx
         fb_cost=sum(q*m[p]*(pax/t_rms) for p,q in mix.items())
-        ev_wealth = (ev_rev * pax) / tx
+        # Event Profit - Transportation Cost
+        logistics_wealth = ((ev_rev - tr_cost) * pax) / tx
         cm=(nt_rev-fb_cost)*cp
-        dp=((nt_rev-fb_cost-cm)-(p01*t_rms)) + (ev_wealth / t_rms)
+        dp=((nt_rev-fb_cost-cm)-(p01*t_rms)) + (logistics_wealth / t_rms)
         tp,u=dp*nts,dp/t_rms
         mg,cap=(u/adr)*100 if adr>0 else 0,(t_rms/h_cp)*100
         wc=(tp/((fl*h_cp)*nts))*100 if fl>0 and nts>0 else 0
@@ -56,7 +57,7 @@ if check_password():
     def seg(nm,cl,bg,kp,ad_d,fl_d,cp,is_group=False):
         st.markdown(f"<div class='card' style='background:{bg};border-left-color:{cl}'>{nm}</div>",unsafe_allow_html=True)
         c1,c2,c3,c4=st.columns([1,2.8,1,1.2])
-        ev_pax_rev = 0
+        ev_r, tr_c = 0, 0
         with c1:
             sgl,dbl,tpl=st.number_input("SGL",0,key=kp+"s"),st.number_input("DBL",0,key=kp+"d"),st.number_input("TPL",0,key=kp+"t")
             nt=st.number_input("Nights",1,365,key=kp+"n")
@@ -67,11 +68,12 @@ if check_password():
                "HB":cb.number_input("HB",0,key=kp+"h"),"FB":cb.number_input("FB",0,key=kp+"f"),
                "SAI":cc.number_input("SAI",0,key=kp+"sa"),"AI":cc.number_input("AI",0,key=kp+"ai")}
             if is_group:
-                st.markdown("---")
-                ev_pax_rev = st.number_input("Event Revenue per Pax (Daily)", 0.0, 1000.0, 0.0, key=kp+"ev")
+                cx, cy = st.columns(2)
+                ev_r = cx.number_input("Event Rev/Pax", 0.0, 500.0, 0.0, key=kp+"ev")
+                tr_c = cy.number_input("Trans Cost/Pax", 0.0, 500.0, 0.0, key=kp+"tr")
         with c3:
             ad,fl=st.number_input("Rate",0.,5000.,float(ad_d),key=kp+"a"),st.number_input("Floor",0.,2000.,float(fl_d),key=kp+"fl")
-        res=run([sgl,dbl,tpl],ad,nt,q,cp,fl,ev_pax_rev)
+        res=run([sgl,dbl,tpl],ad,nt,q,cp,fl,ev_r, tr_c)
         if res:
             with c4:
                 st.metric("Net Wealth",f"{cu} {res['u']:.2f}")
@@ -81,23 +83,17 @@ if check_password():
         return res
 
     st.header(f"🧳 Strategic Audit: {h_nm}")
-    # 1. OTA
     r1=seg("OTA Segment","#2ecc71","#e8f5e9","ot",60,35,op)
-    # 2. Direct
     r2=seg("Direct/FIT","#2980b9","#e3f2fd","di",65,40,0.0)
-    # 3. Wholesale
     r3=seg("Wholesale","#e67e22","#fff3e0","wh",45,25,0.2)
-    # 4. Corporate
     r4=seg("Corporate","#8e44ad","#f3e5f5","co",58,32,0.0)
-    # 5. Group Tour & Travels (Events Enabled)
     r5=seg("Group Tour & Travels","#d35400","#fbe9e7","gt",40,20,0.15, is_group=True)
-    # 6. Group Corporate MICE (Events Enabled)
     r6=seg("Group Corporate (MICE)","#2c3e50","#eceff1","gc",55,30,0.0, is_group=True)
     
     st.divider()
     all_res=[x for x in [r1,r2,r3,r4,r5,r6] if x]
     if all_res:
-        st.metric(f"Total Combined {h_nm} Wealth",f"{cu} {sum(x['tp'] for x in all_res):,.2f}")
+        st.metric(f"Total Property Wealth",f"{cu} {sum(x['tp'] for x in all_res):,.2f}")
     if st.button("🔒 Log Out"):
         st.session_state["auth"] = False
         st.rerun()

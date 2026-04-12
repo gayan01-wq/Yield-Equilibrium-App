@@ -39,38 +39,7 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan_counts, trans, comm, p01, floor):
     if paid_r <= 0:
         return {"room_p": 0.0, "fb_p": 0.0, "unit": 0.0, "stat": "Waiting...", "col": "gray", "def": "Enter inventory to begin audit."}
     
+    # Calculate pax ratio for weighted extraction
     pax_ratio = ((sgl * 1.0) + (dbl * 2.0) + (tpl * 3.0)) / paid_r
     total_net_rev = (adr * paid_r) / tax_div
-    total_fb_rev = sum(count * meal_map[plan] * pax_ratio for plan, count in plan_counts.items())
-    
-    room_wealth = total_net_rev - total_fb_rev - (trans / tax_div)
-    total_room_profit = (room_wealth * (1.0 - comm)) - (p01 * total_r)
-    unit_net = total_room_profit / total_r
-    
-    if unit_net >= (floor + 10.0):
-        res = {"stat": "🟢 OPTIMIZED", "col": "green", "def": "High wealth retention. Exceeds profit floor targets."}
-    elif unit_net >= floor:
-        res = {"stat": "🟡 MARGINAL", "col": "orange", "def": "Meets basic floor. Low room wealth efficiency."}
-    else:
-        res = {"stat": "🔴 DILUTIVE", "col": "red", "def": "Wealth Leakage. Costs are eroding room profit."}
-    
-    res.update({"room_p": total_room_profit, "fb_p": total_fb_rev, "unit": unit_net})
-    return res
-
-# --- SEGMENT ROW FUNCTION ---
-def segment_row(icon, label, color, key_p, adr_def, floor_def, comm_rate):
-    st.markdown(f"""<div style="background-color: {color}15; border-left: 8px solid {color}; padding: 12px; border-radius: 8px; margin-top: 15px;">
-        <h3 style="margin:0; color: {color};">{icon} {label}</h3>
-        </div>""", unsafe_allow_html=True)
-    
-    c1, c2, c3, c4 = st.columns([1.5, 2, 1.5, 1.5])
-    
-    with c1:
-        s = st.number_input(f"SGL Rooms", 0, key=f"{key_p}s")
-        d = st.number_input(f"DBL Rooms", 0, key=f"{key_p}d")
-        t = st.number_input(f"TPL Rooms", 0, key=f"{key_p}t")
-        total_rooms = s + d + t
-    
-    with c2:
-        st.caption(f"Distribute {total_rooms} Rooms:")
-        p_bb = st.number_input(f"Qty BB", 0, total_rooms, key=f"{key_p}p
+    total_fb_rev = sum(count * meal_map[plan] * pax_ratio for

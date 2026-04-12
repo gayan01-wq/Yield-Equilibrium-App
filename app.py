@@ -37,18 +37,13 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan_counts, trans, comm, p01, floor):
     if paid_r == 0: 
         return {"room_p": 0.0, "fb_p": 0.0, "unit": 0.0, "stat": "N/A", "col": "gray"}
     
-    # Calculate pax ratio
+    # Surgical Pax Ratio calculation
     pax_ratio = ((sgl * 1.0) + (dbl * 2.0) + (tpl * 3.0)) / paid_r
     total_net_rev = (adr * paid_r) / tax_div
     
-    # Calculate F&B Wealth extraction
+    # Weighted F&B Extraction
     total_fb_rev = sum(count * meal_map[plan] * pax_ratio for plan, count in plan_counts.items())
     
     room_wealth = total_net_rev - total_fb_rev - (trans / tax_div)
     
-    # Fixed Profit Calculation
-    total_room_profit = (room_wealth * (1.0 - comm)) - (p01 * total_r)
-    
-    unit_net = total_room_profit / total_r
-    status, col = ("🔴 DILUTIVE", "red")
-    if unit_net >= (floor + 10.0): status, col = ("🟢
+    # Final Wealth Calculation

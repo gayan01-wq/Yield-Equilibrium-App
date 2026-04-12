@@ -5,7 +5,7 @@ st.set_page_config(page_title="Yield Auditor", layout="wide")
 st.markdown("<style>.stMetric { background-color: #ffffff; border: 2px solid #f0f2f6; padding: 10px; border-radius: 12px; } .card { padding: 10px; border-radius: 10px; margin-bottom: 8px; border-left: 10px solid; font-weight: bold; }</style>", unsafe_allow_html=True)
 
 st.title("🏨 Yield Equilibrium Center")
-st.caption("Developed by Gayan Nugawela | Certified Revenue Strategy")
+st.caption("Developed by Gayan Nugawela | Wealth Efficiency Ratio Active")
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -15,10 +15,8 @@ with st.sidebar:
     mls = {"RO":0, "BB":b, "HB":b+d, "FB":b+l+d, "SAI":b+l+d+s, "AI":b+l+d+s+a}
     
     st.header("⚙️ Global Settings")
-    # P01 Definition included as tooltip
-    p01 = st.number_input("P01 Fee (Maint)", 0.0, 500.0, 10.0, help="P01: Fixed operational/maintenance cost per room.")
+    p01 = st.number_input("P01 Fee (Maint)", 0.0, 500.0, 10.0, help="Fixed operational cost per room.")
     tax = st.number_input("Tax Div", 1.0, 2.0, 1.2327, format="%.4f")
-    # OTA Commission Selector restored
     ota_com = st.slider("OTA Comm %", 0, 50, 18) / 100
     cur = st.selectbox("Currency", ["OMR", "USD", "AED", "THB"])
 
@@ -32,10 +30,15 @@ def run(rms, adr, mix, cp, flr):
     cm = (net - fb) * cp
     pr = (net - fb - cm) - (p01 * tot)
     u = pr / tot
-    if u >= (flr + 15): lbl, col, ds = "OPTIMIZED", "#27ae60", "Strong Wealth Retention."
-    elif u >= flr: lbl, col, ds = "MARGINAL", "#f39c12", "Minimal Wealth Leakage."
+    
+    # NEW: Wealth Margin Percentage (Wealth / Gross Rate)
+    margin_pct = (u / adr) * 100 if adr > 0 else 0
+    
+    if u >= (flr + 15): lbl, col, ds = "OPTIMIZED", "#27ae60", "High Efficiency Deal."
+    elif u >= flr: lbl, col, ds = "MARGINAL", "#f39c12", "Fair Wealth Retention."
     else: lbl, col, ds = "DILUTIVE", "#e74c3c", "Wealth Leakage Detected!"
-    return {"u":u, "s":lbl, "c":col, "d":ds, "cm":cm, "fb":fb, "p":pr}
+    
+    return {"u":u, "s":lbl, "c":col, "d":ds, "cm":cm, "fb":fb, "p":pr, "pct":margin_pct}
 
 # --- UI ROW ---
 def seg(name, color, bg, kp, adr_d, flr_d, cp):
@@ -60,7 +63,9 @@ def seg(name, color, bg, kp, adr_d, flr_d, cp):
     with c4:
         if res:
             st.metric("Net Wealth", f"{cur} {res['u']:.2f}")
-            st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b><br><small>{res['d']}</small>", unsafe_allow_html=True)
+            st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
+            # Display Wealth Margin %
+            st.write(f"Wealth Margin: **{res['pct']:.1f}%**")
             st.caption(f"Comm({cp*100:.0f}%): {res['cm']:.2f} | FB: {res['fb']:.2f}")
     return res
 
@@ -79,4 +84,4 @@ if all_r:
     m1, m2 = st.columns(2)
     m1.metric("Total Property Wealth", f"{cur} {tp:,.2f}")
     m2.metric("Total F&B Cost", f"{cur} {tf:,.2f}")
-st.write("✅ System Active. # DONE")
+st.write("✅ Wealth Efficiency Ratio calculated as (Net Wealth / Gross Rate). # DONE")

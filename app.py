@@ -78,3 +78,22 @@ if check_password():
     def run(rms, adr, nts, mix, cp, fl, ev_rev=0, total_tr_cost=0):
         t_rms = sum(rms)
         if t_rms <= 0:
+            return None
+        pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
+        gross_total = (adr * t_rms * nts) + (ev_rev * pax * nts)
+        nt_rev = (adr * t_rms) / tx
+        fb_cost = sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
+        ev_w = (ev_rev * pax) / tx
+        cm = (nt_rev - fb_cost) * cp
+        dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
+        tp = (dp * t_rms * nts) - (total_tr_cost / tx)
+        u = tp / (t_rms * nts)
+        af = fl * 0.75 if nts > 7 else fl
+        fric = (1 - (tp / gross_total)) * 100 if gross_total > 0 else 0
+        
+        if fric < 26: fric_lb = "Net Contribution"
+        elif 26 <= fric < 38: fric_lb = "Yield Dilution"
+        else: fric_lb = "Revenue Erosion"
+        
+        if u < af: lb, cl = "DILUTIVE", "#e74c3c"
+        elif af <= u < (af + 5): lb, cl = "MARGINAL", "#f1c40f

@@ -5,19 +5,21 @@ st.set_page_config(page_title="Yield Auditor", layout="wide")
 st.markdown("<style>.stMetric { background-color: #ffffff; border: 2px solid #f0f2f6; padding: 10px; border-radius: 12px; } .card { padding: 10px; border-radius: 10px; margin-bottom: 8px; border-left: 10px solid; font-weight: bold; }</style>", unsafe_allow_html=True)
 
 st.title("🏨 Yield Equilibrium Center")
-st.caption("Developed by Gayan Nugawela | Full Allocation Logic Active")
+st.caption("Developed by Gayan Nugawela | Certified Revenue Strategy")
 
 # --- SIDEBAR ---
 with st.sidebar:
     st.header("🍽️ Meal Costs")
-    # All values start at 0.0
     b, l, d = st.number_input("BB", 0.0, 1000.0, 5.0), st.number_input("LN", 0.0, 1000.0, 7.0), st.number_input("DN", 0.0, 1000.0, 10.0)
     s, a = st.number_input("SAI", 0.0, 1000.0, 8.0), st.number_input("AI", 0.0, 1000.0, 15.0)
     mls = {"RO":0, "BB":b, "HB":b+d, "FB":b+l+d, "SAI":b+l+d+s, "AI":b+l+d+s+a}
-    st.header("⚙️ Fees")
-    # Definition for P01 added as a tooltip
-    p01 = st.number_input("P01 Fee (Maint)", 0.0, 500.0, 10.0, help="Operational/Maintenance cost per room.")
+    
+    st.header("⚙️ Global Settings")
+    # P01 Definition included as tooltip
+    p01 = st.number_input("P01 Fee (Maint)", 0.0, 500.0, 10.0, help="P01: Fixed operational/maintenance cost per room.")
     tax = st.number_input("Tax Div", 1.0, 2.0, 1.2327, format="%.4f")
+    # OTA Commission Selector restored
+    ota_com = st.slider("OTA Comm %", 0, 50, 18) / 100
     cur = st.selectbox("Currency", ["OMR", "USD", "AED", "THB"])
 
 # --- ENGINE ---
@@ -59,7 +61,6 @@ def seg(name, color, bg, kp, adr_d, flr_d, cp):
         if res:
             st.metric("Net Wealth", f"{cur} {res['u']:.2f}")
             st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b><br><small>{res['d']}</small>", unsafe_allow_html=True)
-            # Commission % now showing clearly
             st.caption(f"Comm({cp*100:.0f}%): {res['cm']:.2f} | FB: {res['fb']:.2f}")
     return res
 
@@ -68,7 +69,7 @@ r1 = seg("Wholesale", "#e67e22", "#fff3e0", "wh", 45, 25, 0.20)
 r2 = seg("Group Tour", "#d35400", "#fbe9e7", "gt", 40, 20, 0.15)
 r3 = seg("Group Corp", "#2c3e50", "#eceff1", "gc", 55, 30, 0.0)
 r4 = seg("Direct/FIT", "#2980b9", "#e3f2fd", "di", 65, 40, 0.0)
-r5 = seg("OTA Segment", "#2ecc71", "#e8f5e9", "ot", 60, 35, 0.18)
+r5 = seg("OTA Segment", "#2ecc71", "#e8f5e9", "ot", 60, 35, ota_com)
 r6 = seg("Corporate", "#8e44ad", "#f3e5f5", "co", 58, 32, 0.0)
 
 st.divider()

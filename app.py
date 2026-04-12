@@ -5,7 +5,7 @@ st.set_page_config(page_title="Yield Auditor", layout="wide")
 st.markdown("<style>.stMetric { background-color: #ffffff; border: 2px solid #f0f2f6; padding: 10px; border-radius: 12px; } .card { padding: 10px; border-radius: 10px; margin-bottom: 8px; border-left: 10px solid; font-weight: bold; }</style>", unsafe_allow_html=True)
 
 st.title("🏨 Yield Equilibrium Center")
-st.caption("Developed by Gayan Nugawela | Length of Stay (LOS) Logic Verified")
+st.caption("Developed by Gayan Nugawela | Total Revenue Wealth Auditor")
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -34,20 +34,18 @@ def run(rms, adr, nts, mix, cp, flr):
     u = pr_daily / tot
     pct = (u / adr) * 100 if adr > 0 else 0
     
-    # SYSTEM LOGIC: "Yield Equilibrium" Volume Discount
-    # If stay is > 7 nights, we reduce the profit floor requirement by 20%
-    if nts > 7:
-        adj_floor = flr * 0.80
-        flex_applied = True
-    else:
-        adj_floor = flr
-        flex_applied = False
+    # SYSTEM LOGIC: "Yield Equilibrium" Optimized Trigger
+    # A deal is Optimized if Wealth is OMR 5 above floor OR Margin is > 55%
+    adj_floor = flr * 0.75 if nts > 7 else flr
     
-    if u >= (adj_floor + 5): lbl, col, ds = "OPTIMIZED", "#27ae60", "High Value Stay."
-    elif u >= adj_floor: lbl, col, ds = "MARGINAL", "#f39c12", "Volume Yield Applied."
-    else: lbl, col, ds = "DILUTIVE", "#e74c3c", "Wealth Leakage!"
+    if u >= (adj_floor + 5) or pct > 55: 
+        lbl, col, ds = "OPTIMIZED", "#27ae60", "High Wealth Retention."
+    elif u >= adj_floor: 
+        lbl, col, ds = "MARGINAL", "#f39c12", "Acceptable Volume Yield."
+    else: 
+        lbl, col, ds = "DILUTIVE", "#e74c3c", "Wealth Leakage!"
     
-    return {"u":u, "s":lbl, "c":col, "d":ds, "cm":cm, "fb":fb, "p_total":pr_total, "pct":pct, "flex":flex_applied}
+    return {"u":u, "s":lbl, "c":col, "d":ds, "cm":cm, "fb":fb, "p_total":pr_total, "pct":pct}
 
 # --- UI ROW ---
 def seg(name, color, bg, kp, adr_d, flr_d, cp):
@@ -74,7 +72,6 @@ def seg(name, color, bg, kp, adr_d, flr_d, cp):
         if res:
             st.metric("Net Wealth", f"{cur} {res['u']:.2f}")
             st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
-            if res['flex']: st.caption("✨ Volume Floor Applied")
             st.write(f"Total Stay Wealth: **{cur} {res['p_total']:,.2f}**")
             st.caption(f"Wealth Margin: {res['pct']:.1f}%")
     return res
@@ -92,4 +89,4 @@ all_r = [x for x in [r1,r2,r3,r4,r5,r6] if x]
 if all_r:
     tp = sum(x['p_total'] for x in all_r)
     st.metric("Total Property Stay Wealth", f"{cur} {tp:,.2f}")
-st.write("✅ Audit Engine Active. 'Volume-Value' threshold added to Yield Equilibrium theory. # DONE")
+st.write("✅ Audit Finalized. Protecting Total Revenue Wealth. # DONE")

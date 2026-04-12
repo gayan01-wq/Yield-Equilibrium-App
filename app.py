@@ -5,7 +5,7 @@ st.set_page_config(page_title="Yield Equilibrium Auditor", layout="wide")
 st.markdown("<style>.stMetric { background-color: white; border: 1px solid #ddd; padding: 10px; border-radius: 10px; } .row-box { background-color: rgba(0,0,0,0.03); padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid; }</style>", unsafe_allow_html=True)
 
 st.title("Yield Equilibrium: Strategic Command Center")
-st.caption("Developed by Gayan Nugawela | Assistant Revenue Manager")
+st.caption("Developed by Gayan Nugawela | Strategic Property Audit")
 
 # --- SIDEBAR SETTINGS ---
 with st.sidebar:
@@ -20,12 +20,8 @@ with st.sidebar:
     currency = st.selectbox("Currency", ["OMR", "USD", "AED", "THB"])
 
 meal_map = {
-    "RO": 0, 
-    "BB": m_bb, 
-    "HB": m_bb + m_dr, 
-    "FB": m_bb + m_lh + m_dr, 
-    "SAI": m_bb + m_lh + m_dr + m_sai, 
-    "AI": m_bb + m_lh + m_dr + m_sai + m_ai
+    "RO": 0, "BB": m_bb, "HB": m_bb + m_dr, "FB": m_bb + m_lh + m_dr, 
+    "SAI": m_bb + m_lh + m_dr + m_sai, "AI": m_bb + m_lh + m_dr + m_sai + m_ai
 }
 
 # --- CALCULATION ENGINE ---
@@ -38,16 +34,13 @@ def run_audit(s, d, t, adr, counts, comm, floor):
     net_rev = (adr * paid) / tax_div
     fb_rev = sum(qty * meal_map[pl] * pax_ratio for pl, qty in counts.items())
     
-    # Net Wealth Calculation (Total Revenue - F&B Costs - Commission - Fixed P01)
+    # Net Wealth Calculation
     profit = ((net_rev - fb_rev) * (1.0 - comm)) - (10.0 * paid)
     unit = profit / paid
     
-    if unit >= (floor + 10):
-        res = {"st": "OPTIMIZED", "cl": "green"}
-    elif unit >= floor:
-        res = {"st": "MARGINAL", "cl": "orange"}
-    else:
-        res = {"st": "DILUTIVE", "cl": "red"}
+    if unit >= (floor + 10): res = {"st": "OPTIMIZED", "cl": "green"}
+    elif unit >= floor: res = {"st": "MARGINAL", "cl": "orange"}
+    else: res = {"st": "DILUTIVE", "cl": "red"}
     
     res.update({"rp": profit, "fp": fb_rev, "un": unit})
     return res
@@ -81,17 +74,22 @@ def segment(label, color, kp, adr_d, flr_d, comm):
     return res
 
 # --- RENDER DASHBOARD ---
-st.header("Groups & Wholesale")
-r1 = segment("Wholesale Segment", "#e67e22", "wh", 130, 75, 0.20)
-r2 = segment("MICE / Group Segment", "#2c3e50", "mi", 150, 85, 0.0)
+st.header("🏢 Group & Wholesale Segments")
+r1 = segment("Wholesale", "#e67e22", "wh", 130, 75, 0.20)
+r2 = segment("Group Tour & Travels", "#d35400", "gt", 140, 80, 0.15)
+r3 = segment("Group Corporate", "#2c3e50", "gc", 150, 85, 0.0)
 
-st.header("Individual / FIT")
-r3 = segment("Direct / Member", "#3498db", "di", 200, 110, 0.0)
-r4 = segment("OTA Segment", "#2ecc71", "ot", 190, 100, 0.18)
+st.markdown("<br>", unsafe_allow_html=True)
+
+st.header("👤 Individual & FIT Segments")
+r4 = segment("Direct / FIT", "#3498db", "di", 200, 110, 0.0)
+r5 = segment("OTA Segment", "#2ecc71", "ot", 190, 100, 0.18)
+r6 = segment("Corporate Segment", "#9b59b6", "co", 160, 95, 0.0)
 
 # --- TOTAL PROPERTY SUMMARY ---
 st.divider()
-all_res = [r1, r2, r3, r4]
+st.header("🏢 Property Wealth Summary")
+all_res = [r1, r2, r3, r4, r5, r6]
 t_r = sum(r['rp'] for r in all_res)
 t_f = sum(r['fp'] for r in all_res)
 
@@ -101,5 +99,4 @@ m2.metric("Total F&B Allocation", f"{currency} {t_f:,.2f}")
 m3.metric("Combined Property Wealth", f"{currency} {(t_r + t_f):,.2f}")
 
 st.write("---")
-st.write("✅ System Ready: Total Revenue Engine Active.")
-# END OF SCRIPT
+st.write("✅ System Ready: Total Revenue Engine Active. # END OF SCRIPT")

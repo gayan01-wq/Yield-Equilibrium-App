@@ -20,30 +20,10 @@ if check_password():
     
     st.markdown("""
         <style>
-        .stApp {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-        [data-testid="stSidebar"] {
-            background-color: #0e1117 !important;
-            color: white;
-        }
-        .stMetric {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 15px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        .card {
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border-left: 10px solid;
-            font-weight: bold;
-            background: rgba(255, 255, 255, 0.6);
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.03);
-        }
+        .stApp { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+        [data-testid="stSidebar"] { background-color: #0e1117 !important; color: white; }
+        .stMetric { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border-radius: 15px; padding: 15px; }
+        .card { padding: 12px; border-radius: 12px; margin-bottom: 10px; border-left: 10px solid; font-weight: bold; background: rgba(255, 255, 255, 0.6); }
         h1, h2, h3 { color: #1e3a8a; }
         </style>
     """, unsafe_allow_html=True)
@@ -75,16 +55,9 @@ if check_password():
     st.title("🏨 Yield Equilibrium Center")
     st.markdown("---")
 
-    def run(rms, adr, nts, mix, cp, fl, ev_rev=0, total_tr_cost=0):
+    def run(rms, adr, nts, mix, cp, fl, ev_r=0, tr_c=0):
         t_rms = sum(rms)
         if t_rms <= 0:
             return None
         pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
-        gross_total = (adr * t_rms * nts) + (ev_rev * pax * nts)
-        nt_rev = (adr * t_rms) / tx
-        fb_cost = sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
-        ev_w = (ev_rev * pax) / tx
-        cm = (nt_rev - fb_cost) * cp
-        dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
-        tp = (dp * t_rms * nts) - (total_tr_cost / tx)
-        u = tp / (t_rms * n
+        gross = (adr * t_rms * nts

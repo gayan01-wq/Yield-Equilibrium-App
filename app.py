@@ -49,10 +49,14 @@ if check_password():
         mg, cap = (u / adr) * 100 if adr > 0 else 0, (t_rms / h_cp) * 100
         wc = (tp / ((fl * h_cp) * nts)) * 100 if fl > 0 and nts > 0 else 0
         af = fl * 0.75 if nts > 7 else fl
+        
+        # Calculate Progress for the Visual Chart
+        progress = min(max(u / (af + 10) if af > 0 else 1.0, 0.0), 1.0)
+        
         if u >= (af + 5) or mg > 55 or wc > 15 or cap > 20: lb, cl = "OPTIMIZED", "#27ae60"
         elif u >= af: lb, cl = "MARGINAL", "#f39c12"
         else: lb, cl = "DILUTIVE", "#e74c3c"
-        return {"u": u, "s": lb, "c": cl, "tp": tp, "wc": wc, "pax": pax}
+        return {"u": u, "s": lb, "c": cl, "tp": tp, "wc": wc, "pax": pax, "prog": progress}
 
     def seg(nm, cl, bg, kp, ad_d, fl_d, cp, is_group=False):
         st.markdown(f"<div class='card' style='background:{bg};border-left-color:{cl}'>{nm}</div>", unsafe_allow_html=True)
@@ -72,15 +76,16 @@ if check_password():
                 ev_r = cx.number_input("Event Rev/Pax", 0.0, 500.0, 0.0, key=kp+"ev")
                 tr_c = cy.number_input("Total Trans Cost (Flat)", 0.0, 5000.0, 0.0, key=kp+"tr")
         with c3:
-            ad, fl = st.number_input("Rate", 0., 5000., float(ad_d), key=kp+"a"), st.number_input("Floor", 0., 2000., float(fl_d), key=kp+"fl")
+            ad = st.number_input("Rate", 0., 5000., float(ad_d), key=kp+"a")
+            fl = st.number_input("Market-Adjusted Hurdle", 0., 2000., float(fl_d), key=kp+"fl")
         res = run([sgl, dbl, tpl], ad, nt, q, cp, fl, ev_r, tr_c)
         if res:
             with c4:
-                # Updated Label for Perfection
                 st.metric("Wealth (Stay/Room)", f"{cu} {res['u']:.2f}")
                 st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
-                st.write(f"Pax: **{res['pax']}** | Con: **{res['wc']:.1f}%**")
-                st.write(f"Stay Wealth (Total): **{res['tp']:,.0f}**")
+                # The New Mini Visual Chart
+                st.progress(res['prog'])
+                st.write(f"Pax: **{res['pax']}** | Stay Wealth: **{res['tp']:,.0f}**")
         return res
 
     st.header(f"🧳 Strategic Audit: {h_nm}")

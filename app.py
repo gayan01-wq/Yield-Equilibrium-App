@@ -7,7 +7,6 @@ st.markdown("""
     .main { background-color: #f8f9fa; }
     .stMetric { border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; background-color: white; }
     .definition-box { font-size: 13px; color: #555; margin-top: 5px; line-height: 1.3; font-style: italic; }
-    .floor-info { font-size: 14px; color: #2c3e50; background-color: #ecf0f1; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -48,7 +47,6 @@ def run_audit(sgl, dbl, tpl, comp, adr, plan_counts, trans, comm, p01, floor):
     total_room_profit = (room_wealth * (1.0 - comm)) - (p01 * total_r)
     unit_net = total_room_profit / total_r
     
-    # Verdict Logic & Indications (Optimized, Marginal, Dilutive)
     if unit_net >= (floor + 10.0):
         res = {"stat": "🟢 OPTIMIZED", "col": "green", "def": "High wealth retention. Exceeds profit floor targets."}
     elif unit_net >= floor:
@@ -74,4 +72,5 @@ def segment_row(icon, label, color, key_p, adr_def, floor_def, comm_rate):
         total_rooms = s + d + t
     
     with c2:
-        st.caption(f"Distribute {total_rooms} Rooms
+        st.caption(f"Distribute {total_rooms} Rooms:")
+        p_bb = st.number_input(f"Qty BB", 0, total_rooms, key=f"{key_p}p

@@ -58,6 +58,7 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor_price, eve
     pax_count = (rooms[0]*1 + rooms[1]*2 + rooms[2]*3)
     occ_percent = (total_rooms / h_total) * 100
     
+    # 50% Dominance Logic
     hurdle = floor_price * 1.25 if occ_percent >= 50.0 else floor_price
     if nights >= 5: hurdle *= 0.90
     
@@ -85,4 +86,16 @@ def show_segment(title, key, start_adr, start_fl, comm_val, is_group=False):
     with col1:
         st.write("**Inventory**")
         s = st.number_input("SGL Rooms", 0, key=key+"s")
-        d = st.number_input("DBL Rooms", 0, key=key
+        # FIXED: Corrected brackets on line 88
+        d = st.number_input("DBL Rooms", 0, key=key+"d")
+        t = st.number_input("TPL Rooms", 0, key=key+"t")
+        n = st.number_input("Nights Stay", 1, key=key+"n")
+        
+    with col2:
+        st.write("**Meal Mix & Price**")
+        m_cols = st.columns(3)
+        meal_mix = {
+            "RO": m_cols[0].number_input("RO", 0, key=key+"ro"),
+            "BB": m_cols[0].number_input("BB", 0, key=key+"bb"),
+            "HB": m_cols[1].number_input("HB", 0, key=key+"hb"),
+            "FB": m_cols[1].number_

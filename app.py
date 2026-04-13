@@ -79,14 +79,13 @@ def calculate_wealth(rooms, adr, nights, meal_mix, comm, floor, ev_pax=0.0, tr_f
 st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
 st.markdown(f"<p class='sub-header'>{hotel_name.upper()} • STRATEGIC ANALYTICS</p>", unsafe_allow_html=True)
 
-st.markdown(f"""
+st.markdown("""
 <div class='definition-box'>
     <b>The Yield Equilibrium Framework:</b> Calculating <b>Real Bankable Wealth</b> by stripping taxes, 
     commissions, and per-pax meal allocations to protect bottom-line efficiency.
 </div>
 """, unsafe_allow_html=True)
 
-# FIXED: Pillar Column Logic correctly implemented
 p_col1, p_col2, p_col3 = st.columns(3)
 with p_col1:
     st.info("**1. Wealth Stripping**\n\nIsolating net liquidity by stripping taxes and variable costs.")
@@ -99,5 +98,4 @@ st.divider()
 
 # --- 6. RENDER SEGMENTS ---
 all_results = []
-def draw_seg(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
-    st.markdown(f"<div class='card' style
+def draw_seg(title, key, d_adr

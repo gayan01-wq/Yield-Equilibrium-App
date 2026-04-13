@@ -33,7 +33,6 @@ if check_password():
     with st.sidebar:
         st.title("👨‍💼 Architect")
         st.subheader("Gayan Nugawela")
-        # --- TITLE UPDATE ---
         st.caption("Revenue management specialist- SME")
         st.divider()
         st.header("⚙️ Global Architecture")
@@ -45,7 +44,6 @@ if check_password():
         st.header("📊 Statutory & Costs")
         c_side1, c_side2 = st.columns(2)
         p01 = c_side1.number_input("P01 Fee", 0., 100., 6.90)
-        # --- TAX DIVISOR FIX (4 Decimal Places) ---
         tx = c_side2.number_input("Tax Div", 1.0000, 2.5000, 1.2327, format="%.4f", step=0.0001)
         op_comm = st.slider("OTA Comm %", 0, 50, 18) / 100
         
@@ -53,4 +51,4 @@ if check_password():
         st.header("🍽️ Meal Cost Allocation")
         mc_bb = st.number_input("BB Cost", 0.0, 500.0, 2.0)
         mc_hb = st.number_input("HB Cost", 0.0, 500.0, 8.0)
-        mc_fb = st.number
+        mc_fb = st

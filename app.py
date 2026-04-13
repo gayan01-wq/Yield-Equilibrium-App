@@ -1,6 +1,6 @@
 import streamlit as st
 
-# --- 1. CONFIG & STYLING ---
+# --- 1. CONFIG & PREMIUM STYLING ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium")
 
 st.markdown("""
@@ -33,10 +33,17 @@ with st.sidebar:
     st.caption("Revenue management specialist- SME")
     st.divider()
     
+    # 1. Added Hotel Name field
+    hotel_name = st.text_input("Hotel Name", "Wyndham Garden Salalah")
     h_total = st.number_input("Total Inventory Baseline", 1, 5000, 237)
-    # Global Currencies
-    cu_list = sorted(["OMR", "AED", "SAR", "QAR", "BHD", "KWD", "EUR", "GBP", "USD", "LKR", "INR", "THB", "SGD", "JPY"])
-    cu = st.selectbox("Currency", cu_list)
+    
+    # 2. Expanded Global Currency List
+    curr_list = sorted([
+        "OMR", "AED", "SAR", "QAR", "BHD", "KWD", "JOD", "EGP", # Middle East
+        "EUR", "GBP", "CHF", "USD", "SEK", "NOK", "DKK", # Europe/Global
+        "LKR", "INR", "THB", "SGD", "MYR", "CNY", "JPY", "IDR", "KRW", "VND" # Asia
+    ])
+    cu = st.selectbox("Currency", curr_list)
     
     st.divider()
     st.write("### Statutory & Costs")
@@ -45,9 +52,9 @@ with st.sidebar:
     ota_comm = st.slider("OTA Commission %", 0, 50, 18) / 100
     
     st.divider()
-    st.write("### Unit Operating Costs")
-    m_bb, m_hb = st.number_input("BB", 0.0, 500.0, 2.0), st.number_input("HB", 0.0, 500.0, 8.0)
-    m_fb, m_ai = st.number_input("FB", 0.0, 500.0, 14.0), st.number_input("AI", 0.0, 500.0, 27.0)
+    st.write("### Operating Meal Costs")
+    m_bb, m_hb = st.number_input("BB Cost", 0.0, 500.0, 2.0), st.number_input("HB Cost", 0.0, 500.0, 8.0)
+    m_fb, m_ai = st.number_input("FB Cost", 0.0, 500.0, 14.0), st.number_input("AI Cost", 0.0, 500.0, 27.0)
     m_map = {"RO": 0.0, "BB": m_bb, "HB": m_hb, "FB": m_fb, "AI": m_ai}
     
     if st.button("Logout"):
@@ -67,7 +74,6 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0,
     net_rev = adr / tx
     meal_cost = sum((qty/total_rooms) * m_map[p] * pax_per_room for p, qty in meal_plan.items())
     
-    # Base wealth + Ancillary (Events & Transport)
     base_w = ((net_rev - meal_cost - ((net_rev - meal_cost) * commission)) - p01)
     ancillary_w = ((ev_pax * pax_per_room) / tx) + ((tr_pax * pax_per_room) / tx)
     unit_w = base_w + ancillary_w
@@ -86,18 +92,20 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0,
     return {"u": unit_w, "label": label, "color": color, "bg": bg, "total": total_w, "util": util, "eff": eff, "desc": desc}
 
 # --- 5. RENDER DASHBOARD ---
-st.markdown("<h1 class='main-title'>Yield Equilibrium</h1>", unsafe_allow_html=True)
+st.markdown(f"<h1 class='main-title'>Yield Equilibrium: {hotel_name}</h1>", unsafe_allow_html=True)
 all_res = []
 
 def render_segment(title, key, d_adr, d_fl, color, is_ota=False, is_group=False):
     st.markdown(f"<div class='card' style='border-left-color:{color}'>{title}</div>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1.5, 1.2])
     with c1:
-        st.write("**Capacity**")
+        # 3. Renamed to Occupancy
+        st.write("**Occupancy**")
         s, d, t = st.number_input("SGL",0,key=key+"s"), st.number_input("DBL",0,key=key+"d"), st.number_input("TPL",0,key=key+"t")
         n = st.number_input("Nights", 1, key=key+"n")
     with c2:
-        st.write("**Revenue Setup**")
+        # 4. Renamed to Meal Basis
+        st.write("**Meal Basis**")
         mc = st.columns(3)
         mix = {"RO": mc[0].number_input("RO",0,key=key+"ro"), "BB": mc[0].number_input("BB",0,key=key+"bb"),
                "HB": mc[1].number_input("HB",0,key=key+"hb"), "FB": mc[1].number_input("FB",0,key=key+"fb"),

@@ -6,10 +6,16 @@ st.set_page_config(layout="wide", page_title="Yield Equilibrium", initial_sideba
 
 st.markdown("""
     <style>
+    /* Metric Font Adjustment to prevent dots (...) */
+    [data-testid="stMetricValue"] {
+        font-size: 1.8rem !important;
+        overflow-wrap: break-word;
+        white-space: normal;
+    }
     .stMetric {background:#fff; border:1px solid #eee; padding:15px; border-radius:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
     .card {padding:12px; border-radius:10px; margin-bottom:10px; border-left:12px solid; font-weight:bold; font-size: 1.1em; color: #2c3e50;}
-    .density-warn {color: #e67e22; font-weight: bold; border: 1px solid #e67e22; padding: 5px; border-radius: 5px; display: block; margin-top: 5px; text-align: center;}
-    .section-head {color: #34495e; font-size: 0.9em; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #eee;}
+    .dominance-warn {color: #d35400; font-weight: bold; border: 2px solid #d35400; padding: 8px; border-radius: 5px; display: block; margin-top: 5px; text-align: center; background: #fff5f0;}
+    .section-head {color: #34495e; font-size: 0.85em; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #eee; letter-spacing: 1px;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -41,31 +47,19 @@ if check_password():
         cu = st.selectbox("Currency", ["OMR", "AED", "SAR", "USD", "LKR", "GBP", "EUR"])
         
         st.divider()
-        st.header("📊 Statutory & Fixed Costs")
-        # Grouped P01 and Tax Divisor together as requested
+        st.header("📊 Statutory & Costs")
         c_side1, c_side2 = st.columns(2)
         p01 = c_side1.number_input("P01 Fee", 0., 100., 6.9)
         tx = c_side2.number_input("Tax Div", 1.0, 2.5, 1.2327, format="%.4f")
-        op = st.slider("OTA Comm %", 0, 50, 18) / 100
+        op_comm = st.slider("OTA Comm %", 0, 50, 18) / 100
         
         st.divider()
         st.header("🍽️ Meal Costs (Net)")
         b = st.number_input("BB Cost", 0., 500., 2.0)
-        l = st.number_input("LN Cost", 0., 500., 6.0)
         d_cost = st.number_input("DN Cost", 0., 500., 6.0)
-        s_cost = st.number_input("SAI Supplement", 0., 500., 8.0)
-        a_cost = st.number_input("AI Supplement", 0., 500., 15.0)
-        
-        m_map = {
-            "RO": 0.0, "BB": b, "HB": b + d_cost, 
-            "FB": b + l + d_cost, "SAI": b + l + d_cost + s_cost, 
-            "AI": b + l + d_cost + s_cost + a_cost
-        }
-        
-        st.divider()
-        risk_premium = 0.15 
+        m_map = {"RO": 0.0, "BB": b, "HB": b+d_cost, "FB": b+12.0, "SAI": b+14.0, "AI": b+21.0}
 
-    # --- CORE ENGINE ---
+    # --- CORE ENGINE: 50% DOMINANCE LOGIC ---
     def run_calculation(rms, adr, nts, mix, cp, fl, ev_rev=0, total_tr_cost=0):
         t_rms = sum(rms)
         if t_rms <= 0: return None
@@ -73,85 +67,72 @@ if check_password():
         pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
         inv_impact = (t_rms / h_cp) * 100
         
-        # 20% Density Rule & LOS Logic
+        # 50% DOMINANCE TRIGGER
         effective_hurdle = fl
-        density_alert = False
-        if inv_impact >= 20.0:
-            effective_hurdle = fl * (1 + risk_premium)
-            density_alert = True
-        if nts > 7:
-            effective_hurdle = effective_hurdle * 0.85
+        dominance_risk = False
+        if inv_impact >= 50.0:
+            effective_hurdle = fl * 1.25 # 25% Premium for Segment Dominance
+            dominance_risk = True
+            
+        if nts >= 5: effective_hurdle *= 0.90
 
-        gross_total = (adr * t_rms * nts) + (ev_rev * pax * nts)
         nt_rev = (adr * t_rms) / tx
         fb_cost = sum(q * m_map[p] * (pax / t_rms) for p, q in mix.items())
-        ev_w = (ev_rev * pax) / tx
-        cm = (nt_rev - fb_cost) * cp
-        dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
+        dp = ((nt_rev - fb_cost - ((nt_rev-fb_cost)*cp)) - (p01 * t_rms)) + ((ev_rev * pax) / tx / t_rms)
         tp = (dp * t_rms * nts) - (total_tr_cost / tx)
         u = tp / (t_rms * nts)
         
-        if u < effective_hurdle: lb, cl = "DILUTIVE", "#e74c3c"
-        elif effective_hurdle <= u < (effective_hurdle + 5): lb, cl = "MARGINAL", "#f1c40f"
+        if u < (effective_hurdle * 0.8) or tp <= 0: lb, cl = "DILUTIVE", "#e74c3c"
+        elif u < effective_hurdle: lb, cl = "MARGINAL", "#f1c40f"
         else: lb, cl = "OPTIMIZED", "#27ae60"
         
-        return {"u": u, "s": lb, "c": cl, "tp": tp, "impact": inv_impact, "risk": density_alert}
+        return {"u": u, "s": lb, "c": cl, "tp": tp, "impact": inv_impact, "risk": dominance_risk}
 
     def seg(nm, cl, bg, kp, ad_d, fl_d, cp, is_group=False):
         st.markdown(f"<div class='card' style='background:{bg};border-left-color:{cl}'>{nm}</div>", unsafe_allow_html=True)
-        c1, c2, c3 = st.columns([1.3, 2.4, 1.3])
+        # Increased C3 width to 1.5 to prevent dots (...)
+        c1, c2, c3 = st.columns([1.3, 2.2, 1.5])
         
         with c1:
-            st.markdown("<div class='section-head'>Stay Details</div>", unsafe_allow_html=True)
-            sgl = st.number_input("SGL Rooms", 0, key=kp+"s")
-            dbl = st.number_input("DBL Rooms", 0, key=kp+"d")
-            tpl = st.number_input("TPL Rooms", 0, key=kp+"t")
-            nt = st.number_input("Total Nights", 1, 365, key=kp+"n")
+            st.markdown("<div class='section-head'>Stay Dynamics</div>", unsafe_allow_html=True)
+            sgl, dbl, tpl = st.number_input("SGL",0,key=kp+"s"), st.number_input("DBL",0,key=kp+"d"), st.number_input("TPL",0,key=kp+"t")
+            nt = st.number_input("Nights", 1, key=kp+"n")
             
         with c2:
-            st.markdown("<div class='section-head'>Meal Plan Distribution</div>", unsafe_allow_html=True)
+            st.markdown("<div class='section-head'>Strategy & Meals</div>", unsafe_allow_html=True)
             ca, cb, cc = st.columns(3)
             q = {"RO": ca.number_input("RO", 0, key=kp+"ro"), "BB": ca.number_input("BB", 0, key=kp+"b"),
                  "HB": cb.number_input("HB", 0, key=kp+"h"), "FB": cb.number_input("FB", 0, key=kp+"f"),
                  "SAI": cc.number_input("SAI", 0, key=kp+"sa"), "AI": cc.number_input("AI", 0, key=kp+"ai")}
             
-            # Rate and Hurdle Box Aligned Separately & Nicely
-            st.markdown("<div class='section-head'>Pricing Strategy</div>", unsafe_allow_html=True)
             r_col, h_col = st.columns(2)
-            ad = r_col.number_input("Gross ADR", 0., 5000., float(ad_d), key=kp+"a")
-            fl = h_col.number_input("Market Hurdle", 0., 2000., float(fl_d), key=kp+"fl")
-            
-            ev_r, tr_c = 0.0, 0.0
-            if is_group:
-                st.markdown("<div class='section-head'>Ancillary & Logistics</div>", unsafe_allow_html=True)
-                gx, gy = st.columns(2)
-                ev_r = gx.number_input("Event Rev/Pax", 0.0, key=kp+"ev")
-                tr_c = gy.number_input("Trans. Cost", 0.0, key=kp+"tr")
+            ad = r_col.number_input("Gross ADR", 0.0, 5000.0, float(ad_d), key=kp+"a")
+            fl = h_col.number_input("Market Floor", 0.0, 2000.0, float(fl_d), key=kp+"fl")
+            ev_r = st.number_input("Event Rev/Pax", 0.0, key=kp+"ev") if is_group else 0.0
         
-        res = run_calculation([sgl, dbl, tpl], ad, nt, q, cp, fl, ev_r, tr_c)
+        res = run_calculation([sgl, dbl, tpl], ad, nt, q, cp, fl, ev_r)
         
         with c3:
-            st.markdown("<div class='section-head'>Wealth Window</div>", unsafe_allow_html=True)
+            st.markdown("<div class='section-head'>Wealth Result</div>", unsafe_allow_html=True)
             if res:
-                st.metric("Wealth Per Room", f"{cu} {res['u']:.2f}")
+                st.metric("Wealth / Room", f"{cu} {res['u']:,.2f}")
                 st.markdown(f"<h3 style='color:{res['c']}; margin:0; text-align:center;'>{res['s']}</h3>", unsafe_allow_html=True)
-                if res['risk']: st.markdown("<span class='density-warn'>⚠️ DENSITY DISPLACEMENT</span>", unsafe_allow_html=True)
+                
+                if res['risk']:
+                    st.markdown(f"<div class='dominance-warn'>⚠️ SEGMENT DOMINANCE RISK<br>{res['impact']:.1f}% Concentration</div>", unsafe_allow_html=True)
+                
                 st.divider()
-                st.write(f"Net Stay Wealth: **{res['tp']:,.0f}**")
-                st.write(f"Inv. Impact: **{res['impact']:.1f}%**")
+                st.write(f"Total Wealth: **{res['tp']:,.0f}**")
+                st.write(f"Inventory Used: **{res['impact']:.1f}%**")
             else:
-                st.info("Awaiting Input")
+                st.info("Input Inventory")
         return res
 
-    st.header(f"🧳 Strategic Audit: {h_nm}")
-    r1 = seg("OTA Segment", "#2ecc71", "#e8f5e9", "ot", 60, 35, op)
+    st.header(f"🧳 Strategic Portfolio Audit: {h_nm}")
+    r1 = seg("OTA Segment", "#2ecc71", "#e8f5e9", "ot", 60, 35, op_comm)
     st.divider()
-    r2 = seg("Direct / FIT", "#2980b9", "#e3f2fd", "di", 65, 40, 0.0)
+    r2 = seg("Direct / FIT", "#2980b9", "#ebf5fb", "di", 65, 40, 0.0)
     st.divider()
     r3 = seg("Wholesale", "#e67e22", "#fff3e0", "wh", 45, 25, 0.2)
     st.divider()
     r4 = seg("MICE & Groups", "#2c3e50", "#eceff1", "gc", 55, 30, 0.0, is_group=True)
-    
-    if st.button("🔒 Log Out"):
-        st.session_state["auth"] = False
-        st.rerun()

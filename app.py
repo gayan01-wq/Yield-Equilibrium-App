@@ -58,9 +58,7 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor_price, eve
     pax_count = (rooms[0]*1 + rooms[1]*2 + rooms[2]*3)
     occ_percent = (total_rooms / h_total) * 100
     
-    # FIXED LINE 62: Added the 'else' part
     hurdle = floor_price * 1.25 if occ_percent >= 50.0 else floor_price
-    
     if nights >= 5: hurdle *= 0.90
     
     gross_total = adr * total_rooms * nights
@@ -87,20 +85,4 @@ def show_segment(title, key, start_adr, start_fl, comm_val, is_group=False):
     with col1:
         st.write("**Inventory**")
         s = st.number_input("SGL Rooms", 0, key=key+"s")
-        d = st.number_input("DBL Rooms", 0, key=key+"d")
-        t = st.number_input("TPL Rooms", 0, key=key+"t")
-        n = st.number_input("Nights Stay", 1, key=key+"n")
-        
-    with col2:
-        st.write("**Meal Mix & Price**")
-        m_cols = st.columns(3)
-        meal_mix = {
-            "RO": m_cols[0].number_input("RO", 0, key=key+"ro"),
-            "BB": m_cols[0].number_input("BB", 0, key=key+"bb"),
-            "HB": m_cols[1].number_input("HB", 0, key=key+"hb"),
-            "FB": m_cols[1].number_input("FB", 0, key=key+"fb"),
-            "SAI": m_cols[2].number_input("SAI", 0, key=key+"sai"),
-            "AI": m_cols[2].number_input("AI", 0, key=key+"ai")
-        }
-        st.write("---")
-        adr_val = st.number_input("Gross ADR", 0.0, 5000.0, float(start_adr), key=key+"adr
+        d = st.number_input("DBL Rooms", 0, key=key

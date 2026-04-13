@@ -90,4 +90,57 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0.
     return {"u": unit_w, "l": label, "c": color, "b": bg, "total": total_w, "util": util, "eff": eff}
 
 # --- 5. RENDER DASHBOARD ---
-st.markdown(f"<h1 class='main-title'>Yield
+# FIXED: Sealed the f-string correctly
+st.markdown(f"<h1 class='main-title'>Yield Equilibrium: {hotel_name}</h1>", unsafe_allow_html=True)
+all_res = []
+
+def draw_seg(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
+    st.markdown(f"<div class='card' style='border-left-color:{color}'>{title}</div>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1, 1.5, 1.2])
+    with c1:
+        st.write("**Occupancy**")
+        s = st.number_input("SGL", 0, key=key+"s")
+        d = st.number_input("DBL", 0, key=key+"d")
+        t = st.number_input("TPL", 0, key=key+"t")
+        n = st.number_input("Nights", 1, key=key+"n")
+    with c2:
+        st.write("**Meal Basis Mix**")
+        mc = st.columns(3)
+        mix = {
+            "RO": mc[0].number_input("RO", 0, key=key+"ro"),
+            "BB": mc[0].number_input("BB", 0, key=key+"bb"),
+            "HB": mc[1].number_input("HB", 0, key=key+"hb"),
+            "FB": mc[1].number_input("FB", 0, key=key+"fb"),
+            "SAI": mc[2].number_input("SAI", 0, key=key+"sai"),
+            "AI": mc[2].number_input("AI", 0, key=key+"ai")
+        }
+        st.write("---")
+        adr_v = st.number_input("Gross ADR", 0.0, 5000.0, float(d_adr), key=key+"adr")
+        fl_v = st.number_input("Market Floor", 0.0, 5000.0, float(d_fl), key=key+"fl")
+        ev_rate, tr_flat = 0.0, 0.0
+        if is_grp:
+            gc = st.columns(2)
+            ev_rate = gc[0].number_input("Event Rate /Pax", 0.0, key=key+"ev")
+            tr_flat = gc[1].number_input("Trans. Fixed Fee", 0.0, key=key+"tr")
+            
+    res = calculate_wealth([s,d,t], adr_v, n, mix, (ota_comm if is_ota else 0.0), fl_v, ev_rate, tr_flat)
+    if res: all_res.append(res)
+    with c3:
+        if res:
+            st.metric("Net Wealth / Room", f"{cu} {res['u']:,.2f}")
+            st.markdown(f"<div class='status-box' style='background-color:{res['b']}; color:{res['c']}'>{res['l']}</div>", unsafe_allow_html=True)
+            st.write(f"Utilization: **{res['util']:.1f}%** | Efficiency: **{res['eff']:.1f}%**")
+            st.write(f"Segment Wealth: **{res['total']:,.0f}**")
+        else: st.info("Awaiting input...")
+    st.divider()
+
+# PORTFOLIO SEGMENTS
+draw_seg("1. Direct / FIT Portfolio", "fit", 65.0, 40.0, "#3498db")
+draw_seg("2. OTA Channels", "ota", 60.0, 35.0, "#2ecc71", is_ota=True)
+draw_seg("3. Corporate / Government", "corp", 55.0, 38.0, "#34495e")
+draw_seg("4. Corporate Groups", "cgrp", 50.0, 30.0, "#9b59b6", is_grp=True)
+draw_seg("5. Group Tour & Travels", "tnt", 45.0, 25.0, "#e67e22", is_grp=True)
+
+# Footer Totals
+final_w = sum(r['total'] for r in all_res)
+st.markdown(f"<div style='background-color:#2c3e50; padding:30px; border-radius:15px; text-align:center;'><h2 style='color:white; margin:0;'>Total Portfolio Bottom Line</h2><h1 style='color:#27ae60; margin:0; font-size:3.5rem;'>{cu} {final_w:,.2f}</h1></div>", unsafe_allow_html=True)

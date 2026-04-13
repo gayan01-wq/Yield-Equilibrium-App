@@ -37,4 +37,25 @@ with st.sidebar:
     st.markdown("<p class='sidebar-tag'>Strategic Revenue Architect</p>", unsafe_allow_html=True)
     st.divider()
     hotel_name = st.text_input("Property Identity", "Wyndham Garden Salalah")
-    h_total = st.number_input("Total
+    # FIXED: Closed the string correctly
+    h_total = st.number_input("Total Inventory Baseline", 1, 5000, 237)
+    cu = st.selectbox("Currency Selection", sorted(["OMR", "AED", "SAR", "QAR", "USD", "EUR", "LKR", "INR", "THB", "SGD"]))
+    st.divider()
+    st.write("### 📊 Financial Parameters")
+    p01 = st.number_input("P01 Fixed Fee", value=6.90)
+    tx = st.number_input("Tax Divisor", value=1.2327, format="%.4f")
+    ota_comm = st.slider("OTA Commission %", 0, 50, 18) / 100
+    st.write("### 🍽️ Meal Allocations (Per Pax)")
+    m_bb = st.number_input("Breakfast (BB) Allocation", value=2.0)
+    m_dn = st.number_input("Dinner (DN) Allocation", value=6.0)
+    m_sai = st.number_input("SAI Full Allocation", value=20.0)
+    m_ai = st.number_input("AI Full Allocation", value=27.0)
+    
+    m_map = {"RO": 0.0, "BB": m_bb, "HB": m_bb+m_dn, "FB": m_bb+(m_dn*2), "SAI": m_sai, "AI": m_ai}
+    
+    if st.button("🔒 Secure Logout"):
+        st.session_state["auth_key"] = False
+        st.rerun()
+
+# --- 4. ENGINE ---
+def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0.0, trans_flat

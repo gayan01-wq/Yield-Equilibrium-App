@@ -66,7 +66,7 @@ if check_password():
         tp = (dp * t_rms * nts) - (total_tr_cost / tx)
         u = tp / (t_rms * nts)
         
-        # Calculate impact logic
+        # Calculate impact for displacement audit
         inv_impact = (t_rms / h_cp) * 100
         
         af = fl * 0.75 if nts > 7 else fl
@@ -95,4 +95,74 @@ if check_password():
             st.write("Meal Basis")
             ca, cb, cc = st.columns(3)
             q = {
-                "RO": ca.number_input("RO
+                "RO": ca.number_input("RO", 0, key=kp+"ro"),
+                "BB": ca.number_input("BB", 0, key=kp+"b"),
+                "HB": cb.number_input("HB", 0, key=kp+"h"),
+                "FB": cb.number_input("FB", 0, key=kp+"f"),
+                "SAI": cc.number_input("SAI", 0, key=kp+"sa"),
+                "AI": cc.number_input("AI", 0, key=kp+"ai")
+            }
+            if is_group:
+                cx, cy = st.columns(2)
+                ev_r = cx.number_input("Event/Pax", 0.0, key=kp+"ev")
+                tr_c = cy.number_input("Trans Cost", 0.0, key=kp+"tr")
+        with c3:
+            ad = st.number_input("Rate", 0., 5000., float(ad_d), key=kp+"a")
+            fl = st.number_input("Market Hurdle", 0., 2000., float(fl_d), key=kp+"fl")
+        
+        res = run([sgl, dbl, tpl], ad, nt, q, cp, fl, ev_r, tr_c)
+        if res:
+            with c4:
+                st.metric("Wealth (Stay/Room)", f"{cu} {res['u']:.2f}")
+                st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
+                
+                # SME logic: Display inventory % only for group segments
+                if is_group:
+                    st.write(f"Inventory Impact: **{res['impact']:.1f}%**")
+                
+                st.write(f"Pax: **{res['pax']}**")
+                st.write(f"{res['fric_lb']}: **{res['fric']:.1f}%**")
+                st.caption("(Tax + Comm + Meals + Fees)")
+                st.write(f"Stay Wealth (Total): **{res['tp']:,.0f}**")
+        return res
+
+    st.header(f"🧳 Strategic Audit: {h_nm}")
+    r1 = seg("OTA Segment", "#2ecc71", "#e8f5e9", "ot", 60, 35, op)
+    r2 = seg("Direct/FIT", "#2980b9", "#e3f2fd", "di", 65, 40, 0.0)
+    r3 = seg("Wholesale", "#e67e22", "#fff3e0", "wh", 45, 25, 0.2)
+    r4 = seg("Corporate", "#8e44ad", "#f3e5f5", "co", 58, 32, 0.0)
+    r5 = seg("Group Tour & Travels", "#d35400", "#fbe9e7", "gt", 40, 20, 0.15, is_group=True)
+    r6 = seg("Group Corporate (MICE)", "#2c3e50", "#eceff1", "gc", 55, 30, 0.0, is_group=True)
+    
+    st.divider()
+    all_res = {"OTA": r1, "Direct": r2, "Wholesale": r3, "Corporate": r4, "Group T&T": r5, "MICE": r6}
+    active_res = {k: v for k, v in all_res.items() if v}
+
+    if active_res:
+        total_wealth = sum(v['tp'] for v in active_res.values())
+        st.metric(f"Total Portfolio Wealth ({cu})", f"{total_wealth:,.2f}")
+        
+        st.subheader("📊 Yield Equilibrium Breakdown")
+        col_chart, col_text = st.columns([2, 1])
+        
+        with col_chart:
+            chart_data = pd.DataFrame({
+                "Segment": active_res.keys(),
+                "Wealth Contribution": [v['tp'] for v in active_res.values()]
+            })
+            st.bar_chart(chart_data.set_index("Segment"))
+
+        with col_text:
+            st.markdown("### 🔍 The SME Insight")
+            st.markdown(f"""
+            **Yield Equilibrium Logic:**
+            1. **Tax Stripping:** Gross ADR divided by **{tx}**.
+            2. **Ancillary Weight:** Event revenue acts as a **Yield Multiplier**.
+            3. **Variable Drag:** Meals and **P01 ({p01})** stripped.
+            4. **Friction Scaling:** Efficiency labeled by deduction %.
+            5. **Status:** Based on **Market Hurdle** vs Net Wealth.
+            6. **Inventory Impact:** Contribution to property occupancy (Groups Only).
+            """)
+
+    if st.button("🔒 Log Out"):
+        st.session_state["auth"] = False

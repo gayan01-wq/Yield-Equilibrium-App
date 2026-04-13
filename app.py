@@ -15,6 +15,8 @@ st.markdown("""
     .pillar-box {background:#f8f9fa; padding:15px; border-radius:10px; border-top:4px solid #2c3e50; min-height: 180px; margin-bottom: 20px;}
     .coach-note {padding: 12px; border-radius: 8px; font-size: 0.95rem; margin-top: 10px; border: 2px solid #eee; background-color: #fdfefe; line-height: 1.4;}
     .copyright-text {font-size: 0.75rem; color: #95a5a6; text-align: center; margin-top: 50px;}
+    /* Ensure Tax Divisor is fully visible */
+    .stNumberInput input { font-size: 1.1rem !important; font-weight: bold !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -34,6 +36,7 @@ def check_password():
     return True
 
 if check_password():
+    # --- 3. SIDEBAR CONTROLS ---
     with st.sidebar:
         st.title("👨‍💼 Architect")
         st.subheader("Gayan Nugawela")
@@ -44,11 +47,4 @@ if check_password():
         h_cp = st.number_input("Total Inventory", 1, 1000, 158)
         
         currencies = ["OMR", "AED", "SAR", "QAR", "BHD", "KWD", "JOD", "EGP", "EUR", "GBP", "USD", "LKR", "INR", "JPY", "CNY", "SGD", "THB"]
-        cu = st.selectbox("Currency", sorted(currencies))
-        
-        st.divider()
-        st.header("📊 Statutory & Costs")
-        c_side1, c_side2 = st.columns([1, 1.3]) 
-        p01 = c_side1.number_input("P01 Fee", 0., 100., 6.90)
-        tx = c_side2.number_input("Tax Div", 1.0000, 2.5000, 1.2327, format="%.4f", step=0.0001)
-        op_comm = st.slider("OTA Comm %", 0, 50, 18) / 100
+        cu = st

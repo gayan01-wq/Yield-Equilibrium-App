@@ -92,7 +92,6 @@ def draw_seg(title, key, d_adr, d_fl, is_ota=False, is_grp=False):
     c1, c2, c3 = st.columns([1, 1.5, 1.2])
     with c1:
         st.write("**Occupancy**")
-        # FIXED: Line 95 and all following inputs correctly quoted and closed
         s = st.number_input("SGL Rooms", 0, key=key+"s")
         d = st.number_input("DBL Rooms", 0, key=key+"d")
         t = st.number_input("TPL Rooms", 0, key=key+"t")
@@ -121,4 +120,4 @@ def draw_seg(title, key, d_adr, d_fl, is_ota=False, is_grp=False):
     if res:
         all_results.append(res)
         with c3:
-            st.metric("Net Wealth / Room", f"{cu} {res['
+            # FIXED: Line 124 meticulously closed

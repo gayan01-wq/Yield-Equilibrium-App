@@ -17,7 +17,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. AUTHENTICATION (Hardened) ---
+# --- 2. AUTHENTICATION ---
 if "auth_key" not in st.session_state:
     st.session_state["auth_key"] = False
 
@@ -47,13 +47,12 @@ with st.sidebar:
     st.write("### 🍽️ Meal Allocations (Per Pax)")
     m_bb, m_dn = st.number_input("Breakfast (BB)", value=2.0), st.number_input("Dinner (DN)", value=6.0)
     m_sai, m_ai = st.number_input("SAI Full Allocation", value=20.0), st.number_input("AI Full Allocation", value=27.0)
+    
     m_map = {"RO": 0.0, "BB": m_bb, "HB": m_bb+m_dn, "FB": m_bb+(m_dn*2), "SAI": m_sai, "AI": m_ai}
+    
     if st.button("🔒 Secure Logout"):
         st.session_state["auth_key"] = False
         st.rerun()
 
 # --- 4. ENGINE ---
-def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0.0, trans_flat=0.0):
-    total_rooms = sum(rooms)
-    if total_rooms <= 0: return None
-    pax_total = (rooms[0]*1 + rooms[1]*2 +
+def calculate_wealth(rooms, adr, nights, meal_plan,

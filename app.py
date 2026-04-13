@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 
 # --- CONFIG & THEME ---
-# We keep this outside the auth check to ensure the page loads correctly
 st.set_page_config(layout="wide", page_title="Yield Equilibrium", initial_sidebar_state="expanded")
 
 st.markdown("""
@@ -16,7 +15,7 @@ st.markdown("""
     .stMetric {background:#fff; border:1px solid #eee; padding:15px; border-radius:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
     .card {padding:12px; border-radius:10px; margin-bottom:10px; border-left:12px solid; font-weight:bold; font-size: 1.1em; color: #2c3e50;}
     
-    /* THE PRICING FRAME - Distinct background and border */
+    /* THE PRICING FRAME - Cleaned up without the extra placeholder box */
     .pricing-container {
         border: 3px double #3498db;
         padding: 15px;
@@ -112,6 +111,7 @@ if check_password():
                  "HB": cb.number_input("HB", 0, key=kp+"h"), "FB": cb.number_input("FB", 0, key=kp+"f"),
                  "SAI": cc.number_input("SAI", 0, key=kp+"sa"), "AI": cc.number_input("AI", 0, key=kp+"ai")}
             
+            # --- THE CLEANED PRICING CONTAINER ---
             st.markdown('<div class="pricing-container">', unsafe_allow_html=True)
             st.markdown("<div class='section-head' style='border-bottom: 1px solid #3498db; color: #3498db;'>Pricing Frame</div>", unsafe_allow_html=True)
             r_col, h_col = st.columns(2)

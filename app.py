@@ -107,7 +107,7 @@ with c4:
 st.metric(&quot;Wealth (Stay/Room)&quot;, f&quot;{cu} {res[&#39;u&#39;]:.2f}&quot;)
 st.markdown(f&quot;&lt;b style=&#39;color:{res[&#39;c&#39;]}&#39;&gt;{res[&#39;s&#39;]}&lt;/b&gt;&quot;,
 unsafe_allow_html=True)
-# SME LOGIC: Only show inventory % for group business
+# Only show inventory % for group business
 if is_group:
 st.write(f&quot;Inventory Impact: **{res[&#39;impact&#39;]:.1f}%**&quot;)
 st.write(f&quot;Pax: **{res[&#39;pax&#39;]}**&quot;)

@@ -7,38 +7,32 @@ st.markdown("""
     <style>
     .main-title { font-size: 3rem !important; font-weight: 900; color: #1e3799; text-align: center; margin-bottom: 0px; }
     .sub-header { font-size: 1.1rem; text-align: center; color: #4a69bd; font-weight: 600; margin-bottom: 20px; letter-spacing: 1px; }
-    
-    .definition-box { 
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); 
-        padding: 20px; border-radius: 15px; border-left: 8px solid #1e3799; 
-        margin-bottom: 25px; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); 
-    }
-    
-    .pillar-box { 
-        background-color: #ffffff; padding: 15px; border-radius: 10px; 
-        border-top: 4px solid #1e3799; text-align: center;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.05); min-height: 120px;
-    }
+    .definition-box { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 15px; border-left: 8px solid #1e3799; margin-bottom: 25px; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); }
+    .pillar-box { background-color: #ffffff; padding: 15px; border-radius: 10px; border-top: 4px solid #1e3799; text-align: center; box-shadow: 0px 4px 10px rgba(0,0,0,0.05); min-height: 120px; }
     .pillar-box h4 { margin-top: 0; color: #1e3799; font-size: 1rem; }
     .pillar-box p { font-size: 0.85rem; color: #555; line-height: 1.2; }
-
     .card { padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 10px solid; font-weight: bold; background-color: #fcfcfc; }
     .status-box { padding: 20px; border-radius: 15px; text-align: center; font-size: 1.5rem; font-weight: bold; margin: 10px 0; border: 1px solid rgba(0,0,0,0.1); }
+    [data-testid="stSidebar"] { background-color: #f1f4f9; border-right: 2px solid #3498db; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. AUTHENTICATION ---
+# --- 2. AUTHENTICATION (Enter-Key Enabled) ---
 if "auth_key" not in st.session_state:
     st.session_state["auth_key"] = False
 
 if not st.session_state["auth_key"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
-    pwd = st.text_input("Access Key", type="password")
-    if st.button("Unlock Dashboard"):
-        if pwd == "Gayan2026":
-            st.session_state["auth_key"] = True
-            st.rerun()
-        else: st.error("Invalid Key")
+    # Using a form to capture the "Enter" key press
+    with st.form("login_form"):
+        pwd = st.text_input("Access Key", type="password")
+        submit = st.form_submit_button("Unlock Dashboard")
+        if submit:
+            if pwd == "Gayan2026":
+                st.session_state["auth_key"] = True
+                st.rerun()
+            else:
+                st.error("Invalid Key")
     st.stop()
 
 # --- 3. SIDEBAR CONFIG ---
@@ -49,7 +43,7 @@ with st.sidebar:
     
     hotel_name = st.text_input("Property Identity", "Wyndham Garden Salalah")
     h_total = st.number_input("Total Inventory Baseline", 1, 5000, 237)
-    cu = st.selectbox("Currency", sorted(["OMR", "AED", "SAR", "QAR", "USD", "EUR", "LKR", "INR"]))
+    cu = st.selectbox("Currency", sorted(["OMR", "AED", "SAR", "QAR", "USD", "EUR", "GBP", "LKR", "INR"]))
     
     st.divider()
     st.write("### 📊 Financial Parameters")
@@ -65,7 +59,12 @@ with st.sidebar:
     
     m_map = {"RO": 0.0, "BB": m_bb, "HB": m_bb + m_dn, "FB": m_bb + (m_dn * 2), "SAI": m_sai, "AI": m_ai}
     
-    if st.button("🔒 Logout"):
+    st.divider()
+    # NEW: Content Reset Button
+    if st.button("🔄 Clear All Content"):
+        st.rerun()
+        
+    if st.button("🔒 Secure Logout"):
         st.session_state["auth_key"] = False
         st.rerun()
 
@@ -84,10 +83,7 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0.
     unit_w = base_w + (anc_net / (total_rooms * nights))
     total_w = unit_w * total_rooms * nights
     gross = adr * total_rooms * nights
-    
-    # FIXED: Parenthesis closed correctly here
     eff = (total_w / gross * 100) if gross > 0 else 0
-    
     if unit_w < (hurdle * 0.8) or unit_w <= 0: l, c, b, d = "DILUTIVE", "#FFFFFF", "#e74c3c", "🚩 REJECT: Below standards."
     elif unit_w < hurdle: l, c, b, d = "MARGINAL", "#2c3e50", "#f1c40f", "⚠️ FILL ONLY: Low efficiency."
     else: l, c, b, d = "OPTIMIZED", "#FFFFFF", "#27ae60", "💎 ACCEPT: Wealth generator."
@@ -104,7 +100,7 @@ with col_p3: st.markdown("<div class='pillar-box'><h4>3. Efficiency Indexing</h4
 
 st.markdown(f"""
 <div class='definition-box'>
-    <b>The Yield Equilibrium Framework:</b> Moving beyond 'Gross ADR' to calculate the <b>Real Bankable Wealth</b> by stripping taxes, commissions, and variable meal allocations.
+    <b>The Yield Equilibrium Framework:</b> Calculating <b>Real Bankable Wealth</b> by stripping taxes, commissions, and variable meal allocations to protect bottom-line efficiency.
 </div>
 """, unsafe_allow_html=True)
 
@@ -143,10 +139,4 @@ def draw_seg(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
 
 draw_seg("1. Direct / FIT Portfolio", "fit", 65, 40, "#3498db")
 draw_seg("2. OTA Channels", "ota", 60, 35, "#2ecc71", is_ota=True)
-draw_seg("3. Corporate / Government", "corp", 55, 38, "#34495e")
-draw_seg("4. Corporate Groups", "cgrp", 50, 30, "#9b59b6", is_grp=True)
-draw_seg("5. Group Tour & Travels", "tnt", 45, 25, "#e67e22", is_grp=True)
-
-# Final Footer
-final_w = sum(r['total'] for r in all_res)
-st.markdown(f"<div style='background-color:#2c3e50; padding:30px; border-radius:15px; text-align:center;'><h2 style='color:white; margin:0;'>Total Portfolio Bottom Line</h2><h1 style='color:#27ae60; margin:0; font-size:3.5rem;'>{cu} {final_w:,.2f}</h1></div>", unsafe_allow_html=True)
+draw_seg("3. Corporate / Government", "corp", 55, 38,

@@ -11,18 +11,25 @@ st.markdown("""
         font-weight: 800;
         color: #2c3e50;
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 5px;
         text-transform: uppercase;
         letter-spacing: 2px;
         border-bottom: 5px solid #3498db;
-        padding-bottom: 10px;
+        padding-bottom: 5px;
+    }
+    .framework-subtitle {
+        text-align: center;
+        color: #7f8c8d;
+        font-style: italic;
+        font-size: 1.1rem;
+        margin-bottom: 30px;
     }
     [data-testid="stMetricValue"] { font-size: 1.8rem !important; }
     .stMetric {background:#fff; border:1px solid #eee; padding:15px; border-radius:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
     .card {padding:12px; border-radius:10px; margin-bottom:10px; border-left:12px solid; font-weight:bold; color: #2c3e50;}
     .dominance-warn {color: #d35400; font-weight: bold; border: 2px solid #d35400; padding: 8px; border-radius: 5px; text-align: center; background: #fff5f0;}
     .pillar-box {background:#f8f9fa; padding:15px; border-radius:10px; border-top:4px solid #2c3e50; min-height: 180px; margin-bottom: 20px;}
-    .stNumberInput input { font-size: 1.1rem !important; font-weight: bold !important; color: #2c3e50 !important; }
+    .coach-note {padding: 10px; border-radius: 8px; font-size: 0.9rem; margin-top: 10px; border: 1px dashed #ccc;}
     .copyright-text {font-size: 0.75rem; color: #95a5a6; text-align: center; margin-top: 50px;}
     </style>
 """, unsafe_allow_html=True)
@@ -43,23 +50,16 @@ def check_password():
     return True
 
 if check_password():
-    # --- 3. SIDEBAR CONTROLS ---
     with st.sidebar:
         st.title("👨‍💼 Architect")
         st.subheader("Gayan Nugawela")
         st.caption("Revenue management specialist- SME")
         st.divider()
-        
         st.header("⚙️ Global Architecture")
         h_nm = st.text_input("Hotel Name", "Wyndham Garden Salalah")
         h_cp = st.number_input("Total Inventory", 1, 1000, 158)
         
-        currencies = [
-            "OMR", "AED", "SAR", "QAR", "BHD", "KWD", "JOD", "EGP", "ILS",
-            "EUR", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "TRY",
-            "USD", "LKR", "INR", "PKR", "BDT", "JPY", "CNY", "SGD", "HKD",
-            "THB", "MYR", "IDR", "KRW", "VND", "PHP"
-        ]
+        currencies = ["OMR", "AED", "SAR", "QAR", "BHD", "KWD", "JOD", "EGP", "EUR", "GBP", "USD", "LKR", "INR", "JPY", "CNY", "SGD", "THB"]
         cu = st.selectbox("Currency", sorted(currencies))
         
         st.divider()
@@ -79,17 +79,19 @@ if check_password():
         
         m_map = {"RO": 0.0, "BB": mc_bb, "HB": mc_hb, "FB": mc_fb, "SAI": mc_sai, "AI": mc_ai}
 
-        # --- COPYRIGHT SECTION ---
         st.divider()
-        st.markdown("""
-            <div class='copyright-text'>
-                © 2026 Gayan Nugawela<br>
-                <b>Yield Equilibrium™ Framework</b><br>
-                All Rights Reserved.
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown("<div class='copyright-text'>© 2026 Gayan Nugawela<br><b>Yield Equilibrium™ Framework</b><br>All Rights Reserved.</div>", unsafe_allow_html=True)
 
-    # --- 4. CALCULATION ENGINE ---
+    # --- 3. DYNAMIC COACHING LOGIC ---
+    def get_coach_note(status, impact):
+        if status == "DILUTIVE":
+            return "❌ **Strategy Note:** This business is consuming more value than it provides. High friction costs (meals/fees) are eating the margin. Recommend rejecting or renegotiating ADR higher."
+        elif status == "MARGINAL":
+            return "⚠️ **Strategy Note:** This is 'Filler' business. It covers costs but doesn't build wealth. Accept only if occupancy is low and no higher-yield FIT demand exists."
+        else: # OPTIMIZED
+            return "✅ **Strategy Note:** Pure Wealth. This segment respects the market floor and provides maximum net liquidity. Protect this inventory at all costs."
+
+    # --- 4. ENGINE ---
     def run_calculation(rms, adr, nts, mix, cp, fl, ev_rev=0):
         t_rms = sum(rms)
         if t_rms <= 0: return {"u": 0, "tp": 0, "s": "N/A", "c": "#ccc", "impact": 0, "risk": False}
@@ -97,7 +99,6 @@ if check_password():
         inv_impact = (t_rms / h_cp) * 100
         eff_h = fl * 1.25 if inv_impact >= 50.0 else fl
         if nts >= 5: eff_h *= 0.90
-        
         nt_rev = (adr * t_rms) / tx
         fb_cost = sum(q * m_map[p] * (pax / t_rms) for p, q in mix.items())
         dp = ((nt_rev - fb_cost - ((nt_rev-fb_cost)*cp)) - (p01 * t_rms)) + ((ev_rev * pax) / tx / t_rms)
@@ -135,14 +136,21 @@ if check_password():
             if (sgl + dbl + tpl) > 0:
                 st.metric("Wealth / Room", f"{cu} {res['u']:,.2f}")
                 st.markdown(f"<h3 style='color:{res['c']}; text-align:center;'>{res['s']}</h3>", unsafe_allow_html=True)
+                
+                # --- NEW: DYNAMIC DESCRIPTION FOR GM ---
+                note = get_coach_note(res['s'], res['impact'])
+                st.markdown(f"<div class='coach-note'>{note}</div>", unsafe_allow_html=True)
+                
                 if res['risk']: st.markdown(f"<div class='dominance-warn'>⚠️ DOMINANCE RISK: {res['impact']:.1f}%</div>", unsafe_allow_html=True)
                 st.divider()
                 st.write(f"Total Wealth: **{res['tp']:,.0f}**")
             else: st.info("Input Inventory")
         return res
 
-    # --- 5. DASHBOARD TOP ---
+    # --- 5. MAIN DASHBOARD ---
     st.markdown("<h1 class='main-title'>Yield Equilibrium</h1>", unsafe_allow_html=True)
+    st.markdown("<div class='framework-subtitle'>A Strategic Decision Engine for stripping Gross Revenue into pure Net Wealth while balancing Inventory Risk.</div>", unsafe_allow_html=True)
+    
     st.header(f"🧳 Portfolio Audit: {h_nm}")
     r1 = seg("OTA Segment", "#2ecc71", "#e8f5e9", "ot", 60, 35, op_comm)
     st.divider()
@@ -152,12 +160,11 @@ if check_password():
     st.divider()
     r4 = seg("MICE & Groups", "#2c3e50", "#eceff1", "gc", 55, 30, 0.0, is_group=True)
 
-    # --- 6. PORTFOLIO WEALTH ---
     st.divider()
     total_w = sum(r['tp'] for r in [r1, r2, r3, r4] if r)
     st.metric(f"Total Portfolio Wealth ({cu})", f"{total_w:,.0f}")
 
-    # --- 7. THE 03 PILLARS ---
+    # --- PILLARS ---
     st.divider()
     st.subheader("🏛️ The 03 Pillars of Yield Equilibrium")
     p1, p2, p3 = st.columns(3)

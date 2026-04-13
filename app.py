@@ -33,15 +33,13 @@ with st.sidebar:
     st.caption("Revenue management specialist- SME")
     st.divider()
     
-    # 1. Added Hotel Name field
     hotel_name = st.text_input("Hotel Name", "Wyndham Garden Salalah")
     h_total = st.number_input("Total Inventory Baseline", 1, 5000, 237)
     
-    # 2. Expanded Global Currency List
     curr_list = sorted([
-        "OMR", "AED", "SAR", "QAR", "BHD", "KWD", "JOD", "EGP", # Middle East
-        "EUR", "GBP", "CHF", "USD", "SEK", "NOK", "DKK", # Europe/Global
-        "LKR", "INR", "THB", "SGD", "MYR", "CNY", "JPY", "IDR", "KRW", "VND" # Asia
+        "OMR", "AED", "SAR", "QAR", "BHD", "KWD", "JOD", "EGP",
+        "EUR", "GBP", "CHF", "USD", "SEK", "NOK", "DKK",
+        "LKR", "INR", "THB", "SGD", "MYR", "CNY", "JPY", "IDR", "KRW", "VND"
     ])
     cu = st.selectbox("Currency", curr_list)
     
@@ -61,8 +59,8 @@ with st.sidebar:
         st.session_state["auth_key"] = False
         st.rerun()
 
-# --- 4. ENGINE ---
-def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0, tr_pax=0):
+# --- 4. ENGINE (FIXED TRANSPORTATION LOGIC) ---
+def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0, trans_flat=0):
     total_rooms = sum(rooms)
     if total_rooms <= 0: return None
     
@@ -71,25 +69,30 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0,
     util = (total_rooms / h_total) * 100
     hurdle = floor * 1.25 if util >= 20.0 else floor
     
-    net_rev = adr / tx
+    unit_net = adr / tx
     meal_cost = sum((qty/total_rooms) * m_map[p] * pax_per_room for p, qty in meal_plan.items())
     
-    base_w = ((net_rev - meal_cost - ((net_rev - meal_cost) * commission)) - p01)
-    ancillary_w = ((ev_pax * pax_per_room) / tx) + ((tr_pax * pax_per_room) / tx)
-    unit_w = base_w + ancillary_w
+    # Base wealth from room
+    base_w = ((unit_net - meal_cost - ((unit_net - meal_cost) * commission)) - p01)
     
-    total_w = unit_w * total_rooms * nights
+    # Ancillary: Event is per pax, Transportation is now FLAT (one-time fee)
+    ancillary_total_net = ((ev_pax * pax_total) / tx) + (trans_flat / tx)
+    ancillary_unit_w = ancillary_total_net / (total_rooms * nights)
+    
+    unit_wealth = base_w + ancillary_unit_w
+    
+    total_wealth = unit_wealth * total_rooms * nights
     gross_total = adr * total_rooms * nights
-    eff = (total_w / gross_total * 100) if gross_total > 0 else 0
+    eff = (total_wealth / gross_total * 100) if gross_total > 0 else 0
     
-    if unit_w < (hurdle * 0.8) or unit_w <= 0:
+    if unit_wealth < (hurdle * 0.8) or unit_wealth <= 0:
         label, color, bg, desc = "DILUTIVE", "#FFFFFF", "#e74c3c", "REJECT: Zero wealth contribution."
-    elif unit_w < hurdle:
+    elif unit_wealth < hurdle:
         label, color, bg, desc = "MARGINAL", "#2c3e50", "#f1c40f", "FILL ONLY: Low efficiency asset use."
     else:
         label, color, bg, desc = "OPTIMIZED", "#FFFFFF", "#27ae60", "ACCEPT: High-efficiency generator."
         
-    return {"u": unit_w, "label": label, "color": color, "bg": bg, "total": total_w, "util": util, "eff": eff, "desc": desc}
+    return {"u": unit_wealth, "label": label, "color": color, "bg": bg, "total": total_wealth, "util": util, "eff": eff, "desc": desc}
 
 # --- 5. RENDER DASHBOARD ---
 st.markdown(f"<h1 class='main-title'>Yield Equilibrium: {hotel_name}</h1>", unsafe_allow_html=True)
@@ -99,12 +102,10 @@ def render_segment(title, key, d_adr, d_fl, color, is_ota=False, is_group=False)
     st.markdown(f"<div class='card' style='border-left-color:{color}'>{title}</div>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1.5, 1.2])
     with c1:
-        # 3. Renamed to Occupancy
         st.write("**Occupancy**")
         s, d, t = st.number_input("SGL",0,key=key+"s"), st.number_input("DBL",0,key=key+"d"), st.number_input("TPL",0,key=key+"t")
         n = st.number_input("Nights", 1, key=key+"n")
     with c2:
-        # 4. Renamed to Meal Basis
         st.write("**Meal Basis**")
         mc = st.columns(3)
         mix = {"RO": mc[0].number_input("RO",0,key=key+"ro"), "BB": mc[0].number_input("BB",0,key=key+"bb"),
@@ -114,43 +115,8 @@ def render_segment(title, key, d_adr, d_fl, color, is_ota=False, is_group=False)
         pc = st.columns(2)
         adr_v = pc[0].number_input("Gross ADR", 0.0, 5000.0, d_adr, key=key+"adr")
         fl_v = pc[1].number_input("Market Floor", 0.0, 2000.0, d_fl, key=key+"fl")
-        ev_v, tr_v = 0.0, 0.0
+        ev_v, tr_flat = 0.0, 0.0
         if is_group:
             gc = st.columns(2)
-            ev_v = gc[0].number_input("Event /Pax", 0.0, key=key+"ev")
-            tr_v = gc[1].number_input("Trans /Pax", 0.0, key=key+"tr")
-            
-    res = calculate_wealth([s,d,t], adr_v, n, mix, (ota_comm if is_ota else 0.0), fl_v, ev_v, tr_v)
-    all_res.append(res)
-    
-    with c3:
-        if res:
-            st.metric("Net Wealth / Room", f"{cu} {res['u']:,.2f}")
-            st.markdown(f"<div class='status-box' style='background-color:{res['bg']}; color:{res['color']}'>{res['label']}</div>", unsafe_allow_html=True)
-            st.caption(f"**Directive:** {res['desc']}")
-            st.write(f"Utilization: **{res['util']:.1f}%** | Efficiency: **{res['eff']:.1f}%**")
-            st.write(f"Segment Wealth: **{res['total']:,.0f}**")
-        else: st.info("Awaiting inventory...")
-    st.divider()
-
-# RENDER SEGMENTS
-render_segment("1. Direct / FIT Portfolio", "fit", 65.0, 40.0, "#3498db")
-render_segment("2. OTA Channels", "ota", 60.0, 35.0, "#2ecc71", is_ota=True)
-render_segment("3. Corporate / Government", "corp", 55.0, 38.0, "#34495e")
-render_segment("4. Corporate Groups", "cgrp", 50.0, 30.0, "#9b59b6", is_group=True)
-render_segment("5. Group Tour & Travels", "tnt", 45.0, 25.0, "#e67e22", is_group=True)
-
-# --- 6. FOOTER ---
-total_w = sum(r['total'] for r in all_res if r)
-st.markdown(f"""
-    <div style="background-color:#2c3e50; padding:30px; border-radius:15px; text-align:center; margin-bottom:40px;">
-        <h2 style="color:white; margin:0;">Total Portfolio Bottom Line Contribution</h2>
-        <h1 style="color:#27ae60; margin:0; font-size:3.5rem;">{cu} {total_w:,.2f}</h1>
-    </div>
-""", unsafe_allow_html=True)
-
-st.header("The 03 Pillars of Yield Equilibrium")
-p1, p2, p3 = st.columns(3)
-p1.markdown("<div class='pillar-box'><h3>1. Wealth Stripping</h3><p>Revealing net liquidity by removing taxes, OTA commissions, and variable operating costs.</p></div>", unsafe_allow_html=True)
-p2.markdown("<div class='pillar-box'><h3>2. Capacity Sensitivity</h3><p>Raising yield requirements as utilization hits >20% to prevent FIT displacement.</p></div>", unsafe_allow_html=True)
-p3.markdown("<div class='pillar-box'><h3>3. Efficiency Indexing</h3><p>Measuring the % of gross revenue that is pure profit to define survival and peak goals.</p></div>", unsafe_allow_html=True)
+            ev_v = gc[0].number_input("Event Rate /Pax", 0.0, key=key+"ev")
+            # UPDATED:

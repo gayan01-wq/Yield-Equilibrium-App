@@ -50,4 +50,30 @@ with st.sidebar:
     m_hb = st.number_input("HB", 0.0, 500.0, 8.0)
     m_fb = st.number_input("FB", 0.0, 500.0, 14.0)
     m_ai = st.number_input("AI", 0.0, 500.0, 27.0)
-    m_map = {"RO": 0.0, "
+    
+    # FIXED: Closed all strings correctly here
+    m_map = {"RO": 0.0, "BB": m_bb, "HB": m_hb, "FB": m_fb, "AI": m_ai}
+    
+    if st.button("🔒 Logout"):
+        st.session_state["auth"] = False
+        st.rerun()
+
+# --- 4. ENGINE LOGIC ---
+def get_wealth(rooms, adr, nights, meal_plan, commission, floor_price):
+    total_rooms = sum(rooms)
+    if total_rooms <= 0: return None
+    
+    pax_per_room = (rooms[0]*1 + rooms[1]*2 + rooms[2]*3) / total_rooms
+    utilization = (total_rooms / h_total) * 100
+    hurdle = floor_price * 1.25 if utilization >= 20.0 else floor_price
+    
+    unit_net = adr / tx
+    unit_meal = sum((qty/total_rooms) * m_map[plan] * pax_per_room for plan, qty in meal_plan.items())
+    unit_wealth = ((unit_net - unit_meal - ((unit_net - unit_meal) * commission)) - p01)
+    
+    total_wealth = unit_wealth * total_rooms * nights
+    gross_total = adr * total_rooms * nights
+    eff = (total_wealth / gross_total * 100) if gross_total > 0 else 0
+    
+    if unit_wealth < (hurdle * 0.8) or unit_wealth <= 0:
+        label, color, bg = "

@@ -79,23 +79,4 @@ st.caption(f"{hotel_name.upper()} • STRATEGIC PORTFOLIO ANALYTICS")
 st.info(f"**The Yield Equilibrium Framework:** Calculating Real Bankable Wealth for {hotel_name} by stripping taxes, commissions, and per-pax meal allocations.")
 
 col_p1, col_p2, col_p3 = st.columns(3)
-col_p1.metric("Pillar 1", "Wealth Stripping")
-col_p2.metric("Pillar 2", "Capacity Sensitivity")
-col_p3.metric("Pillar 3", "Efficiency Indexing")
-
-st.divider()
-
-all_results = []
-
-def draw_seg(title, key, d_adr, d_fl, is_ota=False, is_grp=False):
-    st.subheader(title)
-    c1, c2, c3 = st.columns([1, 1.5, 1.2])
-    with c1:
-        st.write("**Occupancy**")
-        s = st.number_input("SGL Rooms", 0, key=key+"s")
-        d = st.number_input("DBL Rooms", 0, key=key+"d")
-        t = st.number_input("TPL Rooms", 0, key=key+"t")
-        n = st.number_input("Stay Nights", 1, key=key+"n")
-    with c2:
-        st.write("**Meal Mix**")
-        mc =
+col_p1.

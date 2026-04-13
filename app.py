@@ -43,16 +43,18 @@ with st.sidebar:
     cu = st.selectbox("Currency", curr_list)
     
     st.divider()
-    st.write("### Statutory & Operating Costs")
+    st.write("### Statutory & Costs")
     p01 = st.number_input("P01 Fixed Fee", 0.0, 100.0, 6.90)
     tx = st.number_input("Tax Divisor", 1.0, 2.5, 1.2327, format="%.4f")
     ota_comm = st.slider("OTA Commission %", 0, 50, 18) / 100
     
-    m_bb = st.number_input("BB Cost", value=2.0)
-    m_hb = st.number_input("HB Cost", value=8.0)
-    m_fb = st.number_input("FB Cost", value=14.0)
-    m_ai = st.number_input("AI Cost", value=27.0)
-    m_map = {"RO": 0.0, "BB": m_bb, "HB": m_hb, "FB": m_fb, "AI": m_ai}
+    st.write("### Meal Basis Allocation")
+    m_bb = st.number_input("BB Allocation", value=2.0)
+    m_hb = st.number_input("HB Allocation", value=8.0)
+    m_fb = st.number_input("FB Allocation", value=14.0)
+    m_sai = st.number_input("SAI Allocation", value=20.0)
+    m_ai = st.number_input("AI Allocation", value=27.0)
+    m_map = {"RO": 0.0, "BB": m_bb, "HB": m_hb, "FB": m_fb, "SAI": m_sai, "AI": m_ai}
     
     if st.button("Logout"):
         st.session_state["auth_key"] = False
@@ -71,79 +73,21 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0.
     unit_net = adr / tx
     meal_cost = sum((qty/total_rooms) * m_map[p] * pax_per_room for p, qty in meal_plan.items())
     
-    # Base wealth per room
     base_w = ((unit_net - meal_cost - ((unit_net - meal_cost) * commission)) - p01)
     
-    # Ancillary: Event per pax, Trans as flat group fee
+    # Ancillary: Event is per pax, Trans is a flat group fee
     anc_net_total = ((ev_pax * pax_total) / tx) + (trans_flat / tx)
     unit_w = base_w + (anc_net_total / (total_rooms * nights))
     
     total_w = unit_w * total_rooms * nights
-    # Fixed Math Logic for Efficiency
     gross_rev = adr * total_rooms * nights
     eff = (total_w / gross_rev * 100) if gross_rev > 0 else 0
     
-    if unit_w < (hurdle * 0.8) or unit_w <= 0: 
-        label, color, bg = "DILUTIVE", "#FFFFFF", "#e74c3c"
-    elif unit_w < hurdle: 
-        label, color, bg = "MARGINAL", "#2c3e50", "#f1c40f"
-    else: 
-        label, color, bg = "OPTIMIZED", "#FFFFFF", "#27ae60"
+    if unit_w < (hurdle * 0.8) or unit_w <= 0: label, color, bg = "DILUTIVE", "#FFFFFF", "#e74c3c"
+    elif unit_w < hurdle: label, color, bg = "MARGINAL", "#2c3e50", "#f1c40f"
+    else: label, color, bg = "OPTIMIZED", "#FFFFFF", "#27ae60"
         
     return {"u": unit_w, "l": label, "c": color, "b": bg, "total": total_w, "util": util, "eff": eff}
 
 # --- 5. RENDER DASHBOARD ---
-st.markdown(f"<h1 class='main-title'>Yield Equilibrium: {hotel_name}</h1>", unsafe_allow_html=True)
-all_res = []
-
-def draw_seg(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
-    st.markdown(f"<div class='card' style='border-left-color:{color}'>{title}</div>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 1.5, 1.2])
-    with c1:
-        st.write("**Occupancy**")
-        s = st.number_input("SGL", 0, key=key+"s")
-        d = st.number_input("DBL", 0, key=key+"d")
-        t = st.number_input("TPL", 0, key=key+"t")
-        n = st.number_input("Nights", 1, key=key+"n")
-    with c2:
-        st.write("**Meal Basis**")
-        mc = st.columns(3)
-        mix = {"RO": mc[0].number_input("RO", 0, key=key+"ro"), "BB": mc[0].number_input("BB", 0, key=key+"bb"),
-               "HB": mc[1].number_input("HB", 0, key=key+"hb"), "FB": mc[1].number_input("FB", 0, key=key+"fb"),
-               "AI": mc[2].number_input("AI", 0, key=key+"ai")}
-        st.write("---")
-        adr_v = st.number_input("Gross ADR", 0.0, 5000.0, float(d_adr), key=key+"adr")
-        fl_v = st.number_input("Market Floor", 0.0, 5000.0, float(d_fl), key=key+"fl")
-        ev_rate, tr_flat = 0.0, 0.0
-        if is_grp:
-            gc = st.columns(2)
-            ev_rate = gc[0].number_input("Event Rate /Pax", 0.0, key=key+"ev")
-            tr_flat = gc[1].number_input("Trans. Fixed Fee", 0.0, key=key+"tr")
-            
-    res = calculate_wealth([s,d,t], adr_v, n, mix, (ota_comm if is_ota else 0.0), fl_v, ev_rate, tr_flat)
-    if res: all_res.append(res)
-    with c3:
-        if res:
-            st.metric("Net Wealth / Room", f"{cu} {res['u']:,.2f}")
-            st.markdown(f"<div class='status-box' style='background-color:{res['b']}; color:{res['c']}'>{res['l']}</div>", unsafe_allow_html=True)
-            st.write(f"Utilization: **{res['util']:.1f}%** | Efficiency: **{res['eff']:.1f}%**")
-            st.write(f"Segment Wealth: **{res['total']:,.0f}**")
-        else: st.info("Awaiting input...")
-    st.divider()
-
-# RENDERING THE 5 PORTFOLIO SEGMENTS
-draw_seg("1. Direct / FIT Portfolio", "fit", 65.0, 40.0, "#3498db")
-draw_seg("2. OTA Channels", "ota", 60.0, 35.0, "#2ecc71", is_ota=True)
-draw_seg("3. Corporate / Government", "corp", 55.0, 38.0, "#34495e")
-draw_seg("4. Corporate Groups", "cgrp", 50.0, 30.0, "#9b59b6", is_grp=True)
-draw_seg("5. Group Tour & Travels", "tnt", 45.0, 25.0, "#e67e22", is_grp=True)
-
-# FOOTER TOTALS
-final_w = sum(r['total'] for r in all_res)
-st.markdown(f"<div style='background-color:#2c3e50; padding:30px; border-radius:15px; text-align:center;'><h2 style='color:white; margin:0;'>Total Portfolio Bottom Line</h2><h1 style='color:#27ae60; margin:0; font-size:3.5rem;'>{cu} {final_w:,.2f}</h1></div>", unsafe_allow_html=True)
-
-st.header("The 03 Pillars of Yield Equilibrium")
-p1, p2, p3 = st.columns(3)
-p1.info("**1. Wealth Stripping:** Removing distribution friction and variable costs to see net liquidity.")
-p2.warning("**2. Capacity Sensitivity:** Raising hurdles at >20% occupancy to protect FIT yield.")
-p3.success("**3. Efficiency Indexing:** Measuring the percentage of gross revenue that is actual profit.")
+st.markdown(f"<h1 class='main-title'>Yield

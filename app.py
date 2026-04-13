@@ -6,7 +6,6 @@ st.set_page_config(layout="wide", page_title="Yield Equilibrium", initial_sideba
 
 st.markdown("""
     <style>
-    /* Main Title Styling */
     .main-title {
         font-size: 3rem !important;
         font-weight: 800;
@@ -18,20 +17,13 @@ st.markdown("""
         border-bottom: 5px solid #3498db;
         padding-bottom: 10px;
     }
-    
-    /* Metric Font Adjustment */
     [data-testid="stMetricValue"] { font-size: 1.8rem !important; }
     .stMetric {background:#fff; border:1px solid #eee; padding:15px; border-radius:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
-    
-    /* Card Styling */
     .card {padding:12px; border-radius:10px; margin-bottom:10px; border-left:12px solid; font-weight:bold; color: #2c3e50;}
-    
-    /* Warning & Pillars */
     .dominance-warn {color: #d35400; font-weight: bold; border: 2px solid #d35400; padding: 8px; border-radius: 5px; text-align: center; background: #fff5f0;}
     .pillar-box {background:#f8f9fa; padding:15px; border-radius:10px; border-top:4px solid #2c3e50; min-height: 180px; margin-bottom: 20px;}
-    
-    /* Tax Divisor Box Adjustment */
     .stNumberInput input { font-size: 1.1rem !important; font-weight: bold !important; color: #2c3e50 !important; }
+    .copyright-text {font-size: 0.75rem; color: #95a5a6; text-align: center; margin-top: 50px;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -72,7 +64,6 @@ if check_password():
         
         st.divider()
         st.header("📊 Statutory & Costs")
-        # Column adjustment for Tax Divisor visibility
         c_side1, c_side2 = st.columns([1, 1.2]) 
         p01 = c_side1.number_input("P01 Fee", 0., 100., 6.90)
         tx = c_side2.number_input("Tax Div", 1.0000, 2.5000, 1.2327, format="%.4f", step=0.0001)
@@ -87,6 +78,16 @@ if check_password():
         mc_ai = st.number_input("AI Cost", 0.0, 500.0, 27.0)
         
         m_map = {"RO": 0.0, "BB": mc_bb, "HB": mc_hb, "FB": mc_fb, "SAI": mc_sai, "AI": mc_ai}
+
+        # --- COPYRIGHT SECTION ---
+        st.divider()
+        st.markdown("""
+            <div class='copyright-text'>
+                © 2026 Gayan Nugawela<br>
+                <b>Yield Equilibrium™ Framework</b><br>
+                All Rights Reserved.
+            </div>
+        """, unsafe_allow_html=True)
 
     # --- 4. CALCULATION ENGINE ---
     def run_calculation(rms, adr, nts, mix, cp, fl, ev_rev=0):

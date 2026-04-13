@@ -17,7 +17,7 @@ def check_password():
 if check_password():
     st.set_page_config(layout="wide", page_title="Yield Equilibrium")
     
-    # Custom CSS for styling
+    # Custom CSS
     st.markdown("""
         <style>
         .stMetric {background:#fff; border:1px solid #eee; padding:10px; border-radius:10px}
@@ -49,26 +49,34 @@ if check_password():
         op = st.slider("OTA Comm %", 0, 50, 18) / 100
         cu = st.selectbox("Currency", ["OMR", "AED", "SAR", "THB", "EUR", "GBP", "USD"])
 
-    st.title("🏨 Yield Equilibrium Center")
+    # --- NEW: HEADER WITH REFRESH BUTTON ---
+    col_title, col_btn = st.columns([4, 1])
+    with col_title:
+        st.title("🏨 Yield Equilibrium Center")
+    with col_btn:
+        st.write("") # Spacer
+        if st.button("🔄 Clear Audit Data"):
+            # This loops through all segment keys and resets them
+            for key in st.session_state.keys():
+                if any(kp in key for kp in ["ot", "di", "wh", "co", "gt", "gc"]):
+                    # Reset numerical values to default 0 or 1 for nights
+                    if "n" in key: st.session_state[key] = 1
+                    else: st.session_state[key] = 0.0 if isinstance(st.session_state[key], float) else 0
+            st.rerun()
 
     def run(rms, adr, nts, mix, cp, fl, ev_rev=0, total_tr_cost=0):
         t_rms = sum(rms)
         if t_rms <= 0: return None
         pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
         gross_total = (adr * t_rms * nts) + (ev_rev * pax * nts)
-        
         nt_rev = (adr * t_rms) / tx
         fb_cost = sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
         ev_w = (ev_rev * pax) / tx
         cm = (nt_rev - fb_cost) * cp
-        
         dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
         tp = (dp * t_rms * nts) - (total_tr_cost / tx)
         u = tp / (t_rms * nts)
-        
-        # Calculate impact for displacement audit
         inv_impact = (t_rms / h_cp) * 100
-        
         af = fl * 0.75 if nts > 7 else fl
         fric = (1 - (tp / gross_total)) * 100 if gross_total > 0 else 0
         
@@ -94,14 +102,9 @@ if check_password():
         with c2:
             st.write("Meal Basis")
             ca, cb, cc = st.columns(3)
-            q = {
-                "RO": ca.number_input("RO", 0, key=kp+"ro"),
-                "BB": ca.number_input("BB", 0, key=kp+"b"),
-                "HB": cb.number_input("HB", 0, key=kp+"h"),
-                "FB": cb.number_input("FB", 0, key=kp+"f"),
-                "SAI": cc.number_input("SAI", 0, key=kp+"sa"),
-                "AI": cc.number_input("AI", 0, key=kp+"ai")
-            }
+            q = {"RO": ca.number_input("RO", 0, key=kp+"ro"), "BB": ca.number_input("BB", 0, key=kp+"b"),
+                 "HB": cb.number_input("HB", 0, key=kp+"h"), "FB": cb.number_input("FB", 0, key=kp+"f"),
+                 "SAI": cc.number_input("SAI", 0, key=kp+"sa"), "AI": cc.number_input("AI", 0, key=kp+"ai")}
             if is_group:
                 cx, cy = st.columns(2)
                 ev_r = cx.number_input("Event/Pax", 0.0, key=kp+"ev")
@@ -115,11 +118,7 @@ if check_password():
             with c4:
                 st.metric("Wealth (Stay/Room)", f"{cu} {res['u']:.2f}")
                 st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
-                
-                # SME logic: Display inventory % only for group segments
-                if is_group:
-                    st.write(f"Inventory Impact: **{res['impact']:.1f}%**")
-                
+                if is_group: st.write(f"Inventory Impact: **{res['impact']:.1f}%**")
                 st.write(f"Pax: **{res['pax']}**")
                 st.write(f"{res['fric_lb']}: **{res['fric']:.1f}%**")
                 st.caption("(Tax + Comm + Meals + Fees)")
@@ -140,29 +139,4 @@ if check_password():
 
     if active_res:
         total_wealth = sum(v['tp'] for v in active_res.values())
-        st.metric(f"Total Portfolio Wealth ({cu})", f"{total_wealth:,.2f}")
-        
-        st.subheader("📊 Yield Equilibrium Breakdown")
-        col_chart, col_text = st.columns([2, 1])
-        
-        with col_chart:
-            chart_data = pd.DataFrame({
-                "Segment": active_res.keys(),
-                "Wealth Contribution": [v['tp'] for v in active_res.values()]
-            })
-            st.bar_chart(chart_data.set_index("Segment"))
-
-        with col_text:
-            st.markdown("### 🔍 The SME Insight")
-            st.markdown(f"""
-            **Yield Equilibrium Logic:**
-            1. **Tax Stripping:** Gross ADR divided by **{tx}**.
-            2. **Ancillary Weight:** Event revenue acts as a **Yield Multiplier**.
-            3. **Variable Drag:** Meals and **P01 ({p01})** stripped.
-            4. **Friction Scaling:** Efficiency labeled by deduction %.
-            5. **Status:** Based on **Market Hurdle** vs Net Wealth.
-            6. **Inventory Impact:** Contribution to property occupancy (Groups Only).
-            """)
-
-    if st.button("🔒 Log Out"):
-        st.session_state["auth"] = False
+        st.metric(f"Total Portfolio Wealth ({cu})", f"{total_wealth

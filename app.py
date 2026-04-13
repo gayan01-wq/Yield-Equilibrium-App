@@ -48,11 +48,11 @@ if check_password():
         st.divider()
         # --- UPDATED MEAL ALLOCATION SECTION ---
         st.header("🍽️ Meal Cost Allocation")
-        mc_bb = st.number_input("BB Cost", 0.0, 500.0, 2.0)
-        mc_hb = st.number_input("HB Cost", 0.0, 500.0, 8.0)
-        mc_fb = st.number_input("FB Cost", 0.0, 500.0, 14.0)
-        mc_sai = st.number_input("SAI Cost", 0.0, 500.0, 22.0)
-        mc_ai = st.number_input("AI Cost", 0.0, 500.0, 27.0)
+        mc_bb = st.number_input("BB ", 0.0, 500.0, 2.0)
+        mc_hb = st.number_input("HB ", 0.0, 500.0, 8.0)
+        mc_fb = st.number_input("FB ", 0.0, 500.0, 14.0)
+        mc_sai = st.number_input("SAI ", 0.0, 500.0, 22.0)
+        mc_ai = st.number_input("AI ", 0.0, 500.0, 27.0)
         
         m_map = {
             "RO": 0.0, 
@@ -139,7 +139,7 @@ if check_password():
     st.divider()
     seg("Wholesale", "#e67e22", "#fff3e0", "wh", 45, 25, 0.2)
     st.divider()
-    seg("MICE & Groups", "#2c3e50", "#eceff1", "gc", 55, 30, 0.0, is_group=True)
+    seg("MICE & Group Tour", "#2c3e50", "#eceff1", "gc", 55, 30, 0.0, is_group=True)
 
     if st.button("🔒 Log Out"):
         st.session_state["auth"] = False

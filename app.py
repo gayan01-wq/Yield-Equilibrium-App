@@ -3,11 +3,11 @@ import streamlit as st
 # --- 1. CONFIG ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium")
 
-# --- 2. AUTHENTICATION ---
+# --- 2. AUTHENTICATION (REBUILT FOR STABILITY) ---
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
 
-if not st.session_state["auth"]:
+def login():
     st.title("Yield Equilibrium")
     st.write("Strategic Decision Support System")
     pwd = st.text_input("Access Key", type="password")
@@ -17,9 +17,12 @@ if not st.session_state["auth"]:
             st.rerun()
         else:
             st.error("Invalid Key")
+
+if not st.session_state["auth"]:
+    login()
     st.stop()
 
-# --- 3. SIDEBAR ---
+# --- 3. SIDEBAR (Only visible after login) ---
 with st.sidebar:
     st.title("Architect")
     st.subheader("Gayan Nugawela")
@@ -57,8 +60,6 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor_price, eve
     
     pax_count = (rooms[0]*1 + rooms[1]*2 + rooms[2]*3)
     occ_percent = (total_rooms / h_total) * 100
-    
-    # 50% Dominance Logic
     hurdle = floor_price * 1.25 if occ_percent >= 50.0 else floor_price
     if nights >= 5: hurdle *= 0.90
     
@@ -66,36 +67,4 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor_price, eve
     net_revenue = (adr * total_rooms) / tx
     meals_total = sum(v * m_map[k] * (pax_count / total_rooms) for k, v in meal_plan.items())
     
-    wealth_per_room = ((net_revenue - meals_total - ((net_revenue - meals_total) * commission)) - (p01 * total_rooms)) + ((event_rev * pax_count) / tx / total_rooms)
-    total_wealth = wealth_per_room * total_rooms * nights
-    unit_wealth = total_wealth / (total_rooms * nights)
-    
-    if unit_wealth < (hurdle * 0.8) or total_wealth <= 0:
-        status, color = "DILUTIVE", "red"
-    elif unit_wealth < hurdle:
-        status, color = "MARGINAL", "orange"
-    else:
-        status, color = "OPTIMIZED", "green"
-        
-    return {"u": unit_wealth, "label": status, "color": color, "total": total_wealth, "gross": gross_total, "qty": total_rooms, "impact": occ_percent}
-
-def show_segment(title, key, start_adr, start_fl, comm_val, is_group=False):
-    st.header(title)
-    col1, col2, col3 = st.columns([1, 2, 1.2])
-    
-    with col1:
-        st.write("**Inventory**")
-        s = st.number_input("SGL Rooms", 0, key=key+"s")
-        # FIXED: Corrected brackets on line 88
-        d = st.number_input("DBL Rooms", 0, key=key+"d")
-        t = st.number_input("TPL Rooms", 0, key=key+"t")
-        n = st.number_input("Nights Stay", 1, key=key+"n")
-        
-    with col2:
-        st.write("**Meal Mix & Price**")
-        m_cols = st.columns(3)
-        meal_mix = {
-            "RO": m_cols[0].number_input("RO", 0, key=key+"ro"),
-            "BB": m_cols[0].number_input("BB", 0, key=key+"bb"),
-            "HB": m_cols[1].number_input("HB", 0, key=key+"hb"),
-            "FB": m_cols[1].number_
+    wealth_per_room = ((net_revenue - meals_total - ((net_revenue - meals_total) * commission)) - (p01 * total_rooms))

@@ -11,6 +11,8 @@ st.markdown("""
     .card {padding:12px; border-radius:10px; margin-bottom:10px; border-left:12px solid; font-weight:bold; color: #2c3e50;}
     .dominance-warn {color: #d35400; font-weight: bold; border: 2px solid #d35400; padding: 8px; border-radius: 5px; text-align: center; background: #fff5f0;}
     .pillar-box {background:#f8f9fa; padding:15px; border-radius:10px; border-top:4px solid #2c3e50; min-height: 180px; margin-bottom: 20px;}
+    /* Ensure number inputs don't cut off long decimals */
+    .stNumberInput input { font-size: 0.9rem !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -39,12 +41,21 @@ if check_password():
         st.header("⚙️ Global Architecture")
         h_nm = st.text_input("Hotel Name", "Wyndham Garden Salalah")
         h_cp = st.number_input("Total Inventory", 1, 1000, 158)
-        cu = st.selectbox("Currency", ["OMR", "AED", "SAR", "USD", "LKR"])
+        
+        # Expanded Global Currencies
+        currencies = [
+            "OMR", "AED", "SAR", "QAR", "BHD", "KWD", "JOD", "EGP", "ILS",  # ME
+            "EUR", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "TRY",        # Europe
+            "USD", "LKR", "INR", "PKR", "BDT", "JPY", "CNY", "SGD", "HKD", # Asia
+            "THB", "MYR", "IDR", "KRW", "VND", "PHP"                       # Asia
+        ]
+        cu = st.selectbox("Currency", sorted(currencies))
         
         st.divider()
         st.header("📊 Statutory & Costs")
         c_side1, c_side2 = st.columns(2)
         p01 = c_side1.number_input("P01 Fee", 0., 100., 6.90)
+        # Fixed Display for 1.2327
         tx = c_side2.number_input("Tax Div", 1.0000, 2.5000, 1.2327, format="%.4f", step=0.0001)
         op_comm = st.slider("OTA Comm %", 0, 50, 18) / 100
         
@@ -129,11 +140,3 @@ if check_password():
     # --- 7. THE 03 PILLARS ---
     st.divider()
     st.subheader("🏛️ The 03 Pillars of Yield Equilibrium")
-    p1, p2, p3 = st.columns(3)
-    p1.markdown("<div class='pillar-box'><h4>1. Cold Wealth Stripping</h4><p>Isolating net liquidity by removing taxes, commissions, and variable room costs. This is the only revenue that truly lands in the bank.</p></div>", unsafe_allow_html=True)
-    p2.markdown("<div class='pillar-box'><h4>2. Friction Indexing</h4><p>Measuring the % of revenue 'lost' to overhead (Meals, Fees, Trans). Lower friction identifies the highest quality segments.</p></div>", unsafe_allow_html=True)
-    p3.markdown("<div class='pillar-box'><h4>3. Displacement Hurdle</h4><p>Calculating the Market Hurdle against Net Wealth to ensure high-volume groups do not displace high-yield individual travelers.</p></div>", unsafe_allow_html=True)
-
-    if st.button("🔒 Log Out"):
-        st.session_state["auth"] = False
-        st.rerun()

@@ -44,10 +44,10 @@ with st.sidebar:
     tx = st.number_input("Tax Divisor", value=1.2327, format="%.4f")
     ota_comm = st.slider("OTA Commission %", 0, 50, 18) / 100
     st.write("### 🍽️ Meal Allocations (Per Pax)")
-    m_bb = st.number_input("Breakfast (BB) Allocation", value=2.0)
-    m_dn = st.number_input("Dinner (DN) Allocation", value=6.0)
-    m_sai = st.number_input("SAI Full Allocation", value=20.0)
-    m_ai = st.number_input("AI Full Allocation", value=27.0)
+    m_bb = st.number_input("Breakfast (BB)", value=2.0)
+    m_dn = st.number_input("Dinner (DN)", value=6.0)
+    m_sai = st.number_input("SAI Full", value=20.0)
+    m_ai = st.number_input("AI Full", value=27.0)
     
     m_map = {"RO": 0.0, "BB": m_bb, "HB": m_bb+m_dn, "FB": m_bb+(m_dn*2), "SAI": m_sai, "AI": m_ai}
     
@@ -65,42 +65,4 @@ def calculate_wealth(rooms, adr, nights, meal_mix, comm, floor, ev_pax=0.0, tr_f
     hurdle = floor * 1.25 if util >= 20.0 else floor
     unit_net = adr / tx
     meal_c = sum((qty_m/qty) * m_map[p] * pax_per_room for p, qty_m in meal_mix.items())
-    base_w = ((unit_net - meal_c - ((unit_net - meal_c) * comm)) - p01)
-    anc_w = ((ev_pax * pax_total) / tx) + (tr_flat / tx)
-    unit_w = base_w + (anc_w / (qty * nights))
-    total_w = unit_w * qty * nights
-    eff = (total_w / (adr * qty * nights) * 100) if adr > 0 else 0
-    if unit_w < (hurdle * 0.8) or unit_w <= 0: l, c, b, d = "DILUTIVE", "#FFFFFF", "#e74c3c", "🚩 REJECT: Below floor standards."
-    elif unit_w < hurdle: l, c, b, d = "MARGINAL", "#2c3e50", "#f1c40f", "⚠️ FILL ONLY: Low efficiency."
-    else: l, c, b, d = "OPTIMIZED", "#FFFFFF", "#27ae60", "💎 ACCEPT: High-efficiency generator."
-    return {"u": unit_w, "l": l, "c": c, "b": b, "total": total_w, "util": util, "eff": eff, "desc": d}
-
-# --- 5. RENDER HEADER & PILLARS ---
-st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
-st.markdown(f"<p class='sub-header'>{hotel_name.upper()} • STRATEGIC ANALYTICS</p>", unsafe_allow_html=True)
-
-st.markdown("""
-<div class='definition-box'>
-    <b>The Yield Equilibrium Framework:</b> Calculating <b>Real Bankable Wealth</b> by stripping taxes, 
-    commissions, and per-pax meal allocations to protect bottom-line efficiency.
-</div>
-""", unsafe_allow_html=True)
-
-p_col1, p_col2, p_col3 = st.columns(3)
-with p_col1: st.info("**1. Wealth Stripping**\n\nIsolating net liquidity by stripping taxes and variable costs.")
-with p_col2: st.warning("**2. Capacity Sensitivity**\n\nDynamic yield hurdles that increase as occupancy hits 20%.")
-with p_col3: st.success("**3. Efficiency Indexing**\n\nCalculating real conversion of Top-Line to Bottom-Line.")
-
-st.divider()
-
-# --- 6. RENDER SEGMENTS ---
-all_results = []
-def draw_seg(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
-    st.markdown("<div class='card' style='border-left-color:" + color + "'>" + title + "</div>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 1.5, 1.2])
-    with c1:
-        st.write("**Occupancy**")
-        s, d, t, n = st.number_input("SGL",0,key=key+"s"), st.number_input("DBL",0,key=key+"d"), st.number_input("TPL",0,key=key+"t"), st.number_input("Nights",1,key=key+"n")
-    with c2:
-        st.write("**Meal Mix**")
-        mc = st.columns(3)
+    base

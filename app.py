@@ -34,7 +34,7 @@ if check_password():
         
         st.title("⚙️ Global Settings")
         h_nm = st.text_input("Hotel", "Wyndham Garden Salalah")
-        h_cp = st.number_input("Total Inventory", 1, 1000, 158)
+        h_cp = st.number_input("Total Inventory", 1, 1000, 237)
         
         st.header("🍽️ Meals (Net)")
         b = st.number_input("BB", 0., 500., 2.)

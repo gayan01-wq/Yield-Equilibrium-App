@@ -17,13 +17,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. AUTHENTICATION (Enter-Key Enabled) ---
+# --- 2. AUTHENTICATION (Hardened) ---
 if "auth_key" not in st.session_state:
     st.session_state["auth_key"] = False
 
 if not st.session_state["auth_key"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
-    # Using a form to capture the "Enter" key press
     with st.form("login_form"):
         pwd = st.text_input("Access Key", type="password")
         submit = st.form_submit_button("Unlock Dashboard")
@@ -60,7 +59,6 @@ with st.sidebar:
     m_map = {"RO": 0.0, "BB": m_bb, "HB": m_bb + m_dn, "FB": m_bb + (m_dn * 2), "SAI": m_sai, "AI": m_ai}
     
     st.divider()
-    # NEW: Content Reset Button
     if st.button("🔄 Clear All Content"):
         st.rerun()
         
@@ -139,4 +137,10 @@ def draw_seg(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
 
 draw_seg("1. Direct / FIT Portfolio", "fit", 65, 40, "#3498db")
 draw_seg("2. OTA Channels", "ota", 60, 35, "#2ecc71", is_ota=True)
-draw_seg("3. Corporate / Government", "corp", 55, 38,
+# FIXED: Line 142 meticulously closed
+draw_seg("3. Corporate / Government", "corp", 55, 38, "#34495e")
+draw_seg("4. Corporate Groups", "cgrp", 50, 30, "#9b59b6", is_grp=True)
+draw_seg("5. Group Tour & Travels", "tnt", 45, 25, "#e67e22", is_grp=True)
+
+final_w = sum(r['total'] for r in all_res)
+st.markdown(f"<div style='background-color:#2c3e50; padding:30px; border-radius:15px; text-align:center;'><h2 style='color:white; margin:0;'>Total Portfolio Bottom Line</h2><h1 style='color:#27ae60; margin:0; font-size:3.5rem;'>{cu} {final_w:,.2f}</h1></div>", unsafe_allow_html=True)

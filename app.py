@@ -6,7 +6,7 @@ st.set_page_config(layout="wide", page_title="Yield Equilibrium", initial_sideba
 
 st.markdown("""
     <style>
-    /* Metric Font Adjustment - Prevents dots (...) on large OMR amounts */
+    /* Metric Font Adjustment */
     [data-testid="stMetricValue"] {
         font-size: 1.8rem !important;
         overflow-wrap: break-word;
@@ -15,13 +15,13 @@ st.markdown("""
     .stMetric {background:#fff; border:1px solid #eee; padding:15px; border-radius:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
     .card {padding:12px; border-radius:10px; margin-bottom:10px; border-left:12px solid; font-weight:bold; font-size: 1.1em; color: #2c3e50;}
     
-    /* THE PRICING FRAME - Cleaned up without the extra placeholder box */
-    .pricing-container {
-        border: 3px double #3498db;
+    /* CLEANED PRICING FRAME - No extra boxes */
+    .pricing-frame {
+        border: 2px solid #3498db;
         padding: 15px;
-        border-radius: 12px;
+        border-radius: 10px;
         background-color: #f8fbff;
-        margin: 15px 0px;
+        margin-top: 15px;
     }
     
     .dominance-warn {color: #d35400; font-weight: bold; border: 2px solid #d35400; padding: 8px; border-radius: 5px; display: block; margin-top: 5px; text-align: center; background: #fff5f0;}
@@ -111,9 +111,9 @@ if check_password():
                  "HB": cb.number_input("HB", 0, key=kp+"h"), "FB": cb.number_input("FB", 0, key=kp+"f"),
                  "SAI": cc.number_input("SAI", 0, key=kp+"sa"), "AI": cc.number_input("AI", 0, key=kp+"ai")}
             
-            # --- THE CLEANED PRICING CONTAINER ---
-            st.markdown('<div class="pricing-container">', unsafe_allow_html=True)
-            st.markdown("<div class='section-head' style='border-bottom: 1px solid #3498db; color: #3498db;'>Pricing Frame</div>", unsafe_allow_html=True)
+            # THE PRICING FRAME
+            st.markdown('<div class="pricing-frame">', unsafe_allow_html=True)
+            st.markdown("<div class='section-head' style='border-bottom: 1px solid #3498db; color: #3498db; margin-bottom:15px;'>Pricing Logic</div>", unsafe_allow_html=True)
             r_col, h_col = st.columns(2)
             with r_col: ad = st.number_input("Gross ADR", 0.0, 5000.0, float(ad_d), key=kp+"a")
             with h_col: fl = st.number_input("Market Floor", 0.0, 2000.0, float(fl_d), key=kp+"fl")
@@ -130,21 +130,4 @@ if check_password():
                 st.markdown(f"<h3 style='color:{res['c']}; margin:0; text-align:center;'>{res['s']}</h3>", unsafe_allow_html=True)
                 if res['risk']:
                     st.markdown(f"<div class='dominance-warn'>⚠️ SEGMENT DOMINANCE RISK<br>{res['impact']:.1f}% Concentration</div>", unsafe_allow_html=True)
-                st.divider()
-                st.write(f"Total Wealth: **{res['tp']:,.0f}**")
-                st.write(f"Inventory Used: **{res['impact']:.1f}%**")
-            else: st.info("Input Inventory")
-        return res
-
-    st.header(f"🧳 Strategic Portfolio Audit: {h_nm}")
-    r1 = seg("OTA Segment", "#2ecc71", "#e8f5e9", "ot", 60, 35, op_comm)
-    st.divider()
-    r2 = seg("Direct / FIT", "#2980b9", "#ebf5fb", "di", 65, 40, 0.0)
-    st.divider()
-    r3 = seg("Wholesale", "#e67e22", "#fff3e0", "wh", 45, 25, 0.2)
-    st.divider()
-    r4 = seg("MICE & Groups", "#2c3e50", "#eceff1", "gc", 55, 30, 0.0, is_group=True)
-
-    if st.button("🔒 Securely Log Out"):
-        st.session_state["auth"] = False
-        st.rerun()
+                st

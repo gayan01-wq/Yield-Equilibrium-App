@@ -5,10 +5,11 @@ st.set_page_config(layout="wide", page_title="Yield Equilibrium")
 
 st.markdown("""
     <style>
-    .main-title { font-size: 3rem !important; font-weight: 800; color: #2c3e50; text-align: center; border-bottom: 5px solid #3498db; padding-bottom: 10px; margin-bottom: 20px; }
+    .main-title { font-size: 3rem !important; font-weight: 800; color: #2c3e50; text-align: center; border-bottom: 5px solid #3498db; padding-bottom: 10px; margin-bottom: 10px; }
+    .definition-box { background-color: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #3498db; margin-bottom: 25px; text-align: center; font-style: italic; }
     .card { padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 10px solid; font-weight: bold; background-color: #fcfcfc; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
     .status-box { padding: 20px; border-radius: 15px; text-align: center; font-size: 1.5rem; font-weight: bold; margin: 10px 0; border: 1px solid rgba(0,0,0,0.1); }
-    .pillar-box { background-color: #f1f4f9; padding: 25px; border-radius: 12px; border-top: 5px solid #3498db; min-height: 250px; }
+    .pillar-box { background-color: #f1f4f9; padding: 25px; border-radius: 12px; border-top: 5px solid #3498db; min-height: 220px; margin-bottom: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -35,12 +36,7 @@ with st.sidebar:
     
     hotel_name = st.text_input("Hotel Name", "Wyndham Garden Salalah")
     h_total = st.number_input("Total Inventory Baseline", 1, 5000, 237)
-    
-    curr_list = sorted([
-        "OMR", "AED", "SAR", "QAR", "BHD", "KWD", "USD", "EUR", "GBP", 
-        "LKR", "INR", "THB", "SGD", "JPY", "CNY"
-    ])
-    cu = st.selectbox("Currency", curr_list)
+    cu = st.selectbox("Currency", sorted(["OMR", "AED", "SAR", "QAR", "USD", "EUR", "GBP", "LKR", "INR", "THB", "SGD"]))
     
     st.divider()
     st.write("### Statutory & Costs")
@@ -49,10 +45,8 @@ with st.sidebar:
     ota_comm = st.slider("OTA Commission %", 0, 50, 18) / 100
     
     st.write("### Meal Basis Allocation")
-    m_bb = st.number_input("BB Allocation", value=2.0)
-    m_hb = st.number_input("HB Allocation", value=8.0)
-    m_fb = st.number_input("FB Allocation", value=14.0)
-    m_sai = st.number_input("SAI Allocation", value=20.0)
+    m_bb, m_hb = st.number_input("BB Allocation", value=2.0), st.number_input("HB Allocation", value=8.0)
+    m_fb, m_sai = st.number_input("FB Allocation", value=14.0), st.number_input("SAI Allocation", value=20.0)
     m_ai = st.number_input("AI Allocation", value=27.0)
     m_map = {"RO": 0.0, "BB": m_bb, "HB": m_hb, "FB": m_fb, "SAI": m_sai, "AI": m_ai}
     
@@ -64,7 +58,6 @@ with st.sidebar:
 def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0.0, trans_flat=0.0):
     total_rooms = sum(rooms)
     if total_rooms <= 0: return None
-    
     pax_total = (rooms[0]*1 + rooms[1]*2 + rooms[2]*3)
     pax_per_room = pax_total / total_rooms
     util = (total_rooms / h_total) * 100
@@ -72,75 +65,85 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0.
     
     unit_net = adr / tx
     meal_cost = sum((qty/total_rooms) * m_map[p] * pax_per_room for p, qty in meal_plan.items())
-    
     base_w = ((unit_net - meal_cost - ((unit_net - meal_cost) * commission)) - p01)
-    
-    # Ancillary: Event is per pax, Trans is a flat group fee
-    anc_net_total = ((ev_pax * pax_total) / tx) + (trans_flat / tx)
-    unit_w = base_w + (anc_net_total / (total_rooms * nights))
+    anc_net = ((ev_pax * pax_total) / tx) + (trans_flat / tx)
+    unit_w = base_w + (anc_net / (total_rooms * nights))
     
     total_w = unit_w * total_rooms * nights
-    gross_rev = adr * total_rooms * nights
-    eff = (total_w / gross_rev * 100) if gross_rev > 0 else 0
+    gross = adr * total_rooms * nights
+    eff = (total_w / gross * 100) if gross > 0 else 0
     
-    if unit_w < (hurdle * 0.8) or unit_w <= 0: label, color, bg = "DILUTIVE", "#FFFFFF", "#e74c3c"
-    elif unit_w < hurdle: label, color, bg = "MARGINAL", "#2c3e50", "#f1c40f"
-    else: label, color, bg = "OPTIMIZED", "#FFFFFF", "#27ae60"
+    if unit_w < (hurdle * 0.8) or unit_w <= 0:
+        l, c, b, d = "DILUTIVE", "#FFFFFF", "#e74c3c", "🚩 **REJECT:** Wealth contribution is below floor standards or negative."
+    elif unit_w < hurdle:
+        l, c, b, d = "MARGINAL", "#2c3e50", "#f1c40f", "⚠️ **FILL ONLY:** Low asset efficiency. Accept only during low demand."
+    else:
+        l, c, b, d = "OPTIMIZED", "#FFFFFF", "#27ae60", "💎 **ACCEPT:** High-efficiency wealth generator. Priority booking."
         
-    return {"u": unit_w, "l": label, "c": color, "b": bg, "total": total_w, "util": util, "eff": eff}
+    return {"u": unit_w, "l": l, "c": c, "b": b, "total": total_w, "util": util, "eff": eff, "desc": d}
 
-# --- 5. RENDER DASHBOARD ---
-# FIXED: Sealed the f-string correctly
+# --- 5. RENDER MAIN TOPIC & PILLARS ---
 st.markdown(f"<h1 class='main-title'>Yield Equilibrium: {hotel_name}</h1>", unsafe_allow_html=True)
-all_res = []
 
+st.markdown("""
+<div class='definition-box'>
+    <b>Yield Equilibrium:</b> The precise point where a hotel's inventory utilization matches its maximum net profit potential, 
+    balancing volume against the true 'bankable' wealth after all taxes, commissions, and costs are stripped away.
+</div>
+""", unsafe_allow_html=True)
+
+col_p1, col_p2, col_p3 = st.columns(3)
+with col_p1:
+    st.markdown("<div class='pillar-box'><h3>Pillar 1: Wealth Stripping</h3>Isolating 'Cold Wealth' by removing taxes, OTA friction, and variable meal allocations.</div>", unsafe_allow_html=True)
+with col_p2:
+    st.markdown("<div class='pillar-box'><h3>Pillar 2: Capacity Sensitivity</h3>Raising profit hurdles automatically when a deal exceeds 20% inventory to prevent FIT displacement.</div>", unsafe_allow_html=True)
+with col_p3:
+    st.markdown("<div class='pillar-box'><h3>Pillar 3: Efficiency Indexing</h3>Measuring the percentage of Gross Revenue that successfully converts into pure Bottom-Line Wealth.</div>", unsafe_allow_html=True)
+
+st.divider()
+
+# --- 6. RENDER SEGMENTS ---
+all_res = []
 def draw_seg(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
     st.markdown(f"<div class='card' style='border-left-color:{color}'>{title}</div>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1.5, 1.2])
     with c1:
         st.write("**Occupancy**")
-        s = st.number_input("SGL", 0, key=key+"s")
-        d = st.number_input("DBL", 0, key=key+"d")
-        t = st.number_input("TPL", 0, key=key+"t")
+        s, d, t = st.number_input("SGL",0,key=key+"s"), st.number_input("DBL",0,key=key+"d"), st.number_input("TPL",0,key=key+"t")
         n = st.number_input("Nights", 1, key=key+"n")
     with c2:
         st.write("**Meal Basis Mix**")
         mc = st.columns(3)
-        mix = {
-            "RO": mc[0].number_input("RO", 0, key=key+"ro"),
-            "BB": mc[0].number_input("BB", 0, key=key+"bb"),
-            "HB": mc[1].number_input("HB", 0, key=key+"hb"),
-            "FB": mc[1].number_input("FB", 0, key=key+"fb"),
-            "SAI": mc[2].number_input("SAI", 0, key=key+"sai"),
-            "AI": mc[2].number_input("AI", 0, key=key+"ai")
-        }
+        mix = {"RO": mc[0].number_input("RO",0,key=key+"ro"), "BB": mc[0].number_input("BB",0,key=key+"bb"),
+               "HB": mc[1].number_input("HB",0,key=key+"hb"), "FB": mc[1].number_input("FB",0,key=key+"fb"),
+               "SAI": mc[2].number_input("SAI",0,key=key+"sai"), "AI": mc[2].number_input("AI",0,key=key+"ai")}
         st.write("---")
         adr_v = st.number_input("Gross ADR", 0.0, 5000.0, float(d_adr), key=key+"adr")
         fl_v = st.number_input("Market Floor", 0.0, 5000.0, float(d_fl), key=key+"fl")
-        ev_rate, tr_flat = 0.0, 0.0
+        ev, tr = 0.0, 0.0
         if is_grp:
             gc = st.columns(2)
-            ev_rate = gc[0].number_input("Event Rate /Pax", 0.0, key=key+"ev")
-            tr_flat = gc[1].number_input("Trans. Fixed Fee", 0.0, key=key+"tr")
+            ev = gc[0].number_input("Event Rate/Pax", 0.0, key=key+"ev")
+            tr = gc[1].number_input("Trans. Fixed Fee", 0.0, key=key+"tr")
             
-    res = calculate_wealth([s,d,t], adr_v, n, mix, (ota_comm if is_ota else 0.0), fl_v, ev_rate, tr_flat)
-    if res: all_res.append(res)
-    with c3:
-        if res:
+    res = calculate_wealth([s,d,t], adr_v, n, mix, (ota_comm if is_ota else 0.0), fl_v, ev, tr)
+    if res:
+        all_res.append(res)
+        with c3:
             st.metric("Net Wealth / Room", f"{cu} {res['u']:,.2f}")
             st.markdown(f"<div class='status-box' style='background-color:{res['b']}; color:{res['c']}'>{res['l']}</div>", unsafe_allow_html=True)
+            st.info(res['desc'])
             st.write(f"Utilization: **{res['util']:.1f}%** | Efficiency: **{res['eff']:.1f}%**")
             st.write(f"Segment Wealth: **{res['total']:,.0f}**")
-        else: st.info("Awaiting input...")
+    else: st.info("Awaiting input...")
     st.divider()
 
-# PORTFOLIO SEGMENTS
-draw_seg("1. Direct / FIT Portfolio", "fit", 65.0, 40.0, "#3498db")
-draw_seg("2. OTA Channels", "ota", 60.0, 35.0, "#2ecc71", is_ota=True)
-draw_seg("3. Corporate / Government", "corp", 55.0, 38.0, "#34495e")
-draw_seg("4. Corporate Groups", "cgrp", 50.0, 30.0, "#9b59b6", is_grp=True)
-draw_seg("5. Group Tour & Travels", "tnt", 45.0, 25.0, "#e67e22", is_grp=True)
+draw_seg("1. Direct / FIT Portfolio", "fit", 65, 40, "#3498db")
+draw_seg("2. OTA Channels", "ota", 60, 35, "#2ecc71", is_ota=True)
+draw_seg("3. Corporate / Government", "corp", 55, 38, "#34495e")
+draw_seg("4. Corporate Groups", "cgrp", 50, 30, "#9b59b6", is_grp=True)
+draw_seg("5. Group Tour & Travels", "tnt", 45, 25, "#e67e22", is_grp=True)
 
-# Footer Totals
+# Footer
 final_w = sum(r['total'] for r in all_res)
 st.markdown(f"<div style='background-color:#2c3e50; padding:30px; border-radius:15px; text-align:center;'><h2 style='color:white; margin:0;'>Total Portfolio Bottom Line</h2><h1 style='color:#27ae60; margin:0; font-size:3.5rem;'>{cu} {final_w:,.2f}</h1></div>", unsafe_allow_html=True)

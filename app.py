@@ -1,24 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-# --- 1. SETTINGS & STYLING (MUST BE FIRST) ---
-st.set_page_config(
-    layout="wide", 
-    page_title="Yield Equilibrium Center", 
-    initial_sidebar_state="expanded"  # Forces sidebar to be visible
-)
-
-st.markdown("""
-    <style>
-    .stMetric {background:#ffffff; border:1px solid #dfe6e9; padding:15px; border-radius:12px;}
-    .card {padding:12px; border-radius:10px; margin-bottom:12px; border-left:10px solid; font-weight:bold;}
-    .status-box {padding:10px; border-radius:8px; margin-top:5px; font-weight:bold; text-align:center;}
-    /* Ensure sidebar is visible and styled */
-    section[data-testid="stSidebar"] { background-color: #f0f2f6; min-width: 300px; }
-    </style>
-""", unsafe_allow_html=True)
-
-# --- 2. AUTHENTICATION ---
+# --- PASSWORD PROTECTION ---
 def check_password():
     if "auth" not in st.session_state:
         st.session_state["auth"] = False
@@ -26,114 +9,161 @@ def check_password():
         st.title("🏨 Yield Equilibrium Center")
         pwd = st.text_input("Access Key", type="password")
         if st.button("Unlock") or (pwd == "Gayan2026"): 
-            if pwd == "Gayan2026":
-                st.session_state["auth"] = True
-                st.rerun()
-            elif pwd != "": st.error("Invalid Key")
+            st.session_state["auth"] = True
+            st.rerun()
         return False
     return True
 
 if check_password():
-    # --- 3. SIDEBAR: GLOBAL ARCHITECTURE ---
+    st.set_page_config(layout="wide", page_title="Yield Equilibrium")
+    
+    # Custom CSS for styling
+    st.markdown("""
+        <style>
+        .stMetric {background:#fff; border:1px solid #eee; padding:10px; border-radius:10px}
+        .card {padding:8px; border-radius:8px; margin-bottom:5px; border-left:8px solid; font-weight:bold}
+        .pillar-box {background:#f8f9fa; padding:15px; border-radius:10px; border-top:4px solid #2c3e50}
+        </style>
+    """, unsafe_allow_html=True)
+    
     with st.sidebar:
         st.title("👨‍💼 Architect")
         st.subheader("Gayan Nugawela")
-        st.caption("MBA | CRME | CHRM | RevOps")
+        st.write("MBA | CRME | CHRM | RevOps")
+        st.caption("Revenue Management Expert & SME")
         st.divider()
         
-        st.header("⚙️ Property Settings")
-        h_inv = st.number_input("Total Inventory", 1, 1000, 158)
-        tax_div = st.number_input("Tax Divisor", 1.0, 2.5, 1.2327, format="%.4f")
-        ota_comm = st.slider("OTA Commission %", 0, 50, 18) / 100
-        currency = st.selectbox("Currency", ["OMR", "AED", "USD", "LKR", "SAR"])
+        st.title("⚙️ Global Settings")
+        h_nm = st.text_input("Hotel", "Wyndham Garden Salalah")
+        h_cp = st.number_input("Total Inventory", 1, 1000, 158)
         
-        st.divider()
-        st.header("🍽️ Meal Costs (Net)")
-        # Fixed logic for Salalah Market
-        m_map = {
-            "RO": 0.0, "BB": 2.0, "HB": 8.0, 
-            "FB": 14.0, "SAI": 22.0, "AI": 27.0
-        }
-        st.write("RO: 0.0 | BB: 2.0 | HB: 8.0")
-        st.write("FB: 14.0 | SAI: 22.0 | AI: 27.0")
+        st.header("🍽️ Meals (Net)")
+        b = st.number_input("BB", 0., 500., 2.)
+        l = st.number_input("LN", 0., 500., 6.)
+        d = st.number_input("DN", 0., 500., 6.)
+        s = st.number_input("SAI", 0., 500., 8.)
+        a = st.number_input("AI", 0., 500., 15.)
+        m = {"RO":0, "BB":b, "HB":b+d, "FB":b+l+d, "SAI":b+l+d+s, "AI":b+l+d+s+a}
         
-        st.divider()
-        st.subheader("📈 Density Logic")
-        st.info("20% Density Rule Active")
-        risk_premium = 0.15 # 15% displacement risk
+        p01 = st.number_input("P01 Fee", 0., 100., 6.9)
+        tx = st.number_input("Tax Div", 1., 2., 1.2327, format="%.4f")
+        op = st.slider("OTA Comm %", 0, 50, 18) / 100
+        
+        # --- GLOBAL CURRENCY INTEGRATION ---
+        cu = st.selectbox("Currency", [
+            "OMR", "AED", "SAR", "KWD", "BHD", "QAR", "JOD", "EGP", 
+            "LKR", "INR", "THB", "SGD", "MYR", "CNY", "JPY", "KRW", "IDR", "PKR", "BDT",
+            "USD", "EUR", "GBP", "CHF", "AUD"
+        ])
 
-    # --- 4. THE CORE ENGINE ---
-    def calculate_wealth(rms, adr, nts, mq, comm, hurdle, ev_p=0):
+    # --- HEADER WITH REFRESH BUTTON ---
+    col_title, col_btn = st.columns([4, 1])
+    with col_title:
+        st.title("🏨 Yield Equilibrium Center")
+    with col_btn:
+        st.write("") 
+        if st.button("🔄 Clear Audit Data"):
+            for key in list(st.session_state.keys()):
+                if any(kp in key for kp in ["ot", "di", "wh", "co", "gt", "gc"]):
+                    if "n" in key: st.session_state[key] = 1
+                    else: st.session_state[key] = 0.0 if isinstance(st.session_state[key], float) else 0
+            st.rerun()
+
+    def run(rms, adr, nts, mix, cp, fl, ev_rev=0, total_tr_cost=0):
         t_rms = sum(rms)
         if t_rms <= 0: return None
-        
-        pax = float(rms[0]*1 + rms[1]*2 + rms[2]*3)
-        density = (t_rms / h_inv) * 100
-        
-        # Apply 20% Density Rule
-        applied_hurdle = hurdle
-        density_msg = "✅ Stable Flow"
-        if density >= 20.0:
-            applied_hurdle = hurdle * (1 + risk_premium)
-            density_msg = "🚨 HIGH DENSITY RISK"
+        pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
+        gross_total = (adr * t_rms * nts) + (ev_rev * pax * nts)
+        nt_rev = (adr * t_rms) / tx
+        fb_cost = sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
+        ev_w = (ev_rev * pax) / tx
+        cm = (nt_rev - fb_cost) * cp
+        dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
+        tp = (dp * t_rms * nts) - (total_tr_cost / tx)
+        u = tp / (t_rms * nts)
+        inv_impact = (t_rms / h_cp) * 100
+        af = fl * 0.75 if nts > 7 else fl
+        fric = (1 - (tp / gross_total)) * 100 if gross_total > 0 else 0
+        if fric < 26: fric_lb, fric_cl = "Net Contribution", "#27ae60"
+        elif 26 <= fric < 38: fric_lb, fric_cl = "Yield Dilution", "#f39c12"
+        else: fric_lb, fric_cl = "Revenue Erosion", "#e74c3c"
+        if u < af: lb, cl = "DILUTIVE", "#e74c3c"
+        elif af <= u < (af + 5): lb, cl = "MARGINAL", "#f1c40f"
+        else: lb, cl = "OPTIMIZED", "#27ae60"
+        return {"u": u, "s": lb, "c": cl, "tp": tp, "pax": pax, "fric": fric, "fric_lb": fric_lb, "impact": inv_impact}
 
-        net_adr = adr / tax_div
-        fb_cost = sum(qty * m_map[plan] * (pax / t_rms) for plan, qty in mq.items())
-        p01 = 6.9
-        
-        wpr = (net_adr - fb_cost - (net_adr * comm) - p01) + ((ev_p * pax) / (tax_div * t_rms))
-        total_w = wpr * t_rms * nts
-        
-        if wpr < applied_hurdle: status, color = "DILUTIVE", "#e74c3c"
-        elif wpr < (applied_hurdle + 5): status, color = "MARGINAL", "#f1c40f"
-        else: status, color = "OPTIMIZED", "#27ae60"
-        
-        return {"wpr": wpr, "total": total_w, "status": status, "color": color, "density": density, "msg": density_msg, "hurdle": applied_hurdle}
-
-    # --- 5. UI COMPONENT ---
-    def render_segment(name, color, bg, pref, def_adr, def_hurdle, comm, is_group=False):
-        st.markdown(f"<div class='card' style='background:{bg}; border-left-color:{color};'>{name}</div>", unsafe_allow_html=True)
-        c1, c2, c3 = st.columns([1, 2, 1.5])
-        
+    def seg(nm, cl, bg, kp, ad_d, fl_d, cp, is_group=False):
+        st.markdown(f"<div class='card' style='background:{bg};border-left-color:{cl}'>{nm}</div>", unsafe_allow_html=True)
+        c1, c2, c3, c4 = st.columns([1, 2.8, 1, 1.2])
+        ev_r, tr_c = 0.0, 0.0
         with c1:
-            r = [st.number_input("SGL", 0, key=pref+"s"), st.number_input("DBL", 0, key=pref+"d"), st.number_input("TPL", 0, key=pref+"t")]
-            nts = st.number_input("Nights", 1, key=pref+"n")
+            sgl = st.number_input("SGL", 0, key=kp+"s")
+            dbl = st.number_input("DBL", 0, key=kp+"d")
+            tpl = st.number_input("TPL", 0, key=kp+"t")
+            nt = st.number_input("Nights", 1, 365, key=kp+"n")
         with c2:
-            st.write("Meal Plan Allocation")
-            m_cols = st.columns(3)
-            mq = {
-                "RO": m_cols[0].number_input("RO", 0, key=pref+"ro"), "BB": m_cols[0].number_input("BB", 0, key=pref+"bb"),
-                "HB": m_cols[1].number_input("HB", 0, key=pref+"hb"), "FB": m_cols[1].number_input("FB", 0, key=pref+"fb"),
-                "SAI": m_cols[2].number_input("SAI", 0, key=pref+"sa"), "AI": m_cols[2].number_input("AI", 0, key=pref+"ai")
-            }
-            adr = st.number_input("Gross ADR", 0.0, key=pref+"adr", value=float(def_adr))
-            ev_p = st.number_input("Event Rev/Pax", 0.0, key=pref+"ev") if is_group else 0.0
-        
-        res = calculate_wealth(r, adr, nts, mq, comm, def_hurdle, ev_p)
-        
+            st.write("Meal Basis")
+            ca, cb, cc = st.columns(3)
+            q = {"RO": ca.number_input("RO", 0, key=kp+"ro"), "BB": ca.number_input("BB", 0, key=kp+"b"),
+                 "HB": cb.number_input("HB", 0, key=kp+"h"), "FB": cb.number_input("FB", 0, key=kp+"f"),
+                 "SAI": cc.number_input("SAI", 0, key=kp+"sa"), "AI": cc.number_input("AI", 0, key=kp+"ai")}
+            if is_group:
+                cx, cy = st.columns(2)
+                ev_r = cx.number_input("Event/Pax", 0.0, key=kp+"ev")
+                tr_c = cy.number_input("Trans Cost", 0.0, key=kp+"tr")
         with c3:
-            if res:
-                st.metric("Wealth Per Room", f"{currency} {res['wpr']:.2f}")
-                st.markdown(f"<div class='status-box' style='background:{res['color']}; color:white;'>{res['status']}</div>", unsafe_allow_html=True)
-                st.write(f"Impact: **{res['density']:.1f}%**")
-                st.caption(res['msg'])
-            else: st.info("Enter counts")
+            ad = st.number_input("Rate", 0., 5000., float(ad_d), key=kp+"a")
+            fl = st.number_input("Market Hurdle", 0., 2000., float(fl_d), key=kp+"fl")
+        
+        res = run([sgl, dbl, tpl], ad, nt, q, cp, fl, ev_r, tr_c)
+        if res:
+            with c4:
+                st.metric("Wealth (Stay/Room)", f"{cu} {res['u']:.2f}")
+                st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
+                if is_group: st.write(f"Inventory Impact: **{res['impact']:.1f}%**")
+                st.write(f"Pax: **{res['pax']}**")
+                st.write(f"{res['fric_lb']}: **{res['fric']:.1f}%**")
+                st.caption("(Tax + Comm + Meals + Fees)")
+                st.write(f"Stay Wealth (Total): **{res['tp']:,.0f}**")
         return res
 
-    # --- 6. MAIN DASHBOARD ---
-    st.title("🏨 Yield Equilibrium Master")
+    st.header(f"🧳 Strategic Audit: {h_nm}")
+    r1 = seg("OTA Segment", "#2ecc71", "#e8f5e9", "ot", 60, 35, op)
+    r2 = seg("Direct/FIT", "#2980b9", "#e3f2fd", "di", 65, 40, 0.0)
+    r3 = seg("Wholesale", "#e67e22", "#fff3e0", "wh", 45, 25, 0.2)
+    r4 = seg("Corporate", "#8e44ad", "#f3e5f5", "co", 58, 32, 0.0)
+    r5 = seg("Group Tour & Travels", "#d35400", "#fbe9e7", "gt", 40, 20, 0.15, is_group=True)
+    r6 = seg("Group Corporate (MICE)", "#2c3e50", "#eceff1", "gc", 55, 30, 0.0, is_group=True)
     
-    # Segment Rows
-    s1 = render_segment("OTA Segment", "#2ecc71", "#e8f5e9", "ot", 65, 40, ota_comm)
     st.divider()
-    s2 = render_segment("Corporate / FIT", "#3498db", "#ebf5fb", "corp", 60, 45, 0.0)
-    st.divider()
-    s3 = render_segment("Wholesale / Leisure", "#f39c12", "#fef9e7", "whl", 45, 25, 0.15)
-    st.divider()
-    s4 = render_segment("MICE & Groups", "#2c3e50", "#eceff1", "gr", 50, 35, 0.0, is_group=True)
+    all_res = {"OTA": r1, "Direct": r2, "Wholesale": r3, "Corporate": r4, "Group T&T": r5, "MICE": r6}
+    active_res = {k: v for k, v in all_res.items() if v}
 
-    # --- 7. FOOTER ---
-    st.divider()
+    if active_res:
+        total_wealth = sum(v['tp'] for v in active_res.values())
+        st.metric(f"Total Portfolio Wealth ({cu})", f"{total_wealth:,.2f}")
+        
+        st.subheader("📊 Yield Equilibrium Breakdown")
+        col_chart, col_text = st.columns([2, 1])
+        with col_chart:
+            chart_data = pd.DataFrame({"Segment": active_res.keys(), "Wealth Contribution": [v['tp'] for v in active_res.values()]})
+            st.bar_chart(chart_data.set_index("Segment"))
+        with col_text:
+            st.markdown("### 🔍 The SME Insight")
+            st.markdown(f"**Yield Equilibrium Logic:**\n1. **Tax Stripping:** Gross ADR divided by **{tx}**.\n2. **Ancillary Weight:** Yield Multiplier applied.\n3. **Variable Drag:** Meals & **P01 ({p01})** stripped.")
+
+        # --- 🏛️ THE 03 MAIN PILLARS SECTION ---
+        st.divider()
+        st.subheader("🏛️ The 03 Pillars of Yield Equilibrium")
+        p1, p2, p3 = st.columns(3)
+        with p1:
+            st.markdown("<div class='pillar-box'><h4>1. Cold Wealth Stripping</h4><p>Isolating net liquidity by removing statutory taxes, third-party commissions, and variable room costs. This is the only revenue that truly lands in the bank.</p></div>", unsafe_allow_html=True)
+        with p2:
+            st.markdown("<div class='pillar-box'><h4>2. Friction Indexing</h4><p>Measuring the % of revenue 'lost' to overhead (Meals, Fees, Trans). Lower friction identifies the highest quality segments, regardless of the Top-line ADR.</p></div>", unsafe_allow_html=True)
+        with p3:
+            st.markdown("<div class='pillar-box'><h4>3. Displacement Hurdle</h4><p>Calculating the Market Hurdle against Net Wealth to ensure high-volume groups do not displace high-yield individual travelers. Balance is the key to equilibrium.</p></div>", unsafe_allow_html=True)
+
     if st.button("🔒 Log Out"):
         st.session_state["auth"] = False
         st.rerun()
+

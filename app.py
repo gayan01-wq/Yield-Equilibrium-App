@@ -59,7 +59,7 @@ cm = (nt_rev - fb_cost) * cp
 dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
 tp = (dp * t_rms * nts) - (total_tr_cost / tx)
 u = tp / (t_rms * nts)
-# --- ADDITION: Logic for Inventory Contribution % ---
+# ADDITION: Calculating Inventory Contribution %
 inv_impact = (t_rms / h_cp) * 100
 af = fl * 0.75 if nts &gt; 7 else fl
 fric = (1 - (tp / gross_total)) * 100 if gross_total &gt; 0 else 0
@@ -107,7 +107,7 @@ with c4:
 st.metric(&quot;Wealth (Stay/Room)&quot;, f&quot;{cu} {res[&#39;u&#39;]:.2f}&quot;)
 st.markdown(f&quot;&lt;b style=&#39;color:{res[&#39;c&#39;]}&#39;&gt;{res[&#39;s&#39;]}&lt;/b&gt;&quot;,
 unsafe_allow_html=True)
-# --- ADDITION: Only show inventory % for group business ---
+# Addition: Strategic Group Impact %
 if is_group:
 st.write(f&quot;Inventory Impact: **{res[&#39;impact&#39;]:.1f}%**&quot;)
 st.write(f&quot;Pax: **{res[&#39;pax&#39;]}**&quot;)

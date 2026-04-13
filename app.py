@@ -17,6 +17,7 @@ def check_password():
 if check_password():
     st.set_page_config(layout="wide", page_title="Yield Equilibrium")
     
+    # Custom CSS for styling
     st.markdown("""
         <style>
         .stMetric {background:#fff; border:1px solid #eee; padding:10px; border-radius:10px}
@@ -33,7 +34,6 @@ if check_password():
         
         st.title("⚙️ Global Settings")
         h_nm = st.text_input("Hotel", "Wyndham Garden Salalah")
-        # Global Inventory for % Calculation
         h_cp = st.number_input("Total Inventory", 1, 1000, 158)
         
         st.header("🍽️ Meals (Net)")
@@ -49,4 +49,6 @@ if check_password():
         op = st.slider("OTA Comm %", 0, 50, 18) / 100
         cu = st.selectbox("Currency", ["OMR", "AED", "SAR", "THB", "EUR", "GBP", "USD"])
 
-    st.title("🏨 Yield Equilibrium Center
+    st.title("🏨 Yield Equilibrium Center")
+
+    def run(rms, adr, nts, mix, cp, fl, ev_

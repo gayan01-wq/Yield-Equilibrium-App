@@ -56,7 +56,7 @@ if check_password():
     with col_btn:
         st.write("") 
         if st.button("🔄 Clear Audit Data"):
-            # Resets transaction keys without touching global sidebar settings
+            # Resets transaction keys without touching global settings
             for key in list(st.session_state.keys()):
                 if any(kp in key for kp in ["ot", "di", "wh", "co", "gt", "gc"]):
                     if "n" in key:
@@ -69,4 +69,16 @@ if check_password():
         t_rms = sum(rms)
         if t_rms <= 0: return None
         pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
-        gross_total = (adr * t_
+        gross_total = (adr * t_rms * nts) + (ev_rev * pax * nts)
+        
+        nt_rev = (adr * t_rms) / tx
+        fb_cost = sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
+        ev_w = (ev_rev * pax) / tx
+        cm = (nt_rev - fb_cost) * cp
+        
+        dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
+        tp = (dp * t_rms * nts) - (total_tr_cost / tx)
+        u = tp / (t_rms * nts)
+        
+        # Logic for Inventory Contribution %
+        inv_impact = (t_rms / h

@@ -6,7 +6,7 @@ st.set_page_config(layout="wide", page_title="Yield Equilibrium")
 st.markdown("""
     <style>
     .main-title { font-size: 3.5rem !important; font-weight: 900; color: #1e3799; text-align: center; margin-bottom: 0px; }
-    .sub-header { font-size: 1.2rem; text-align: center; color: #4a69bd; font-weight: 600; margin-bottom: 20px; }
+    .sub-header { font-size: 1.2rem; text-align: center; color: #4a69bd; font-weight: 600; margin-bottom: 20px; letter-spacing: 1px; }
     .definition-box { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-radius: 15px; border-left: 8px solid #1e3799; margin-bottom: 30px; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); }
     [data-testid="stSidebar"] { background-color: #f1f4f9; border-right: 2px solid #3498db; }
     .sidebar-name { font-size: 1.4rem; font-weight: 800; color: #1e3799; margin-bottom: 0px; }
@@ -87,18 +87,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 p_col1, p_col2, p_col3 = st.columns(3)
-with p_col1:
-    st.info("**1. Wealth Stripping**\n\nIsolating net liquidity by stripping taxes and variable costs.")
-with p_col2:
-    st.warning("**2. Capacity Sensitivity**\n\nDynamic yield hurdles that increase as occupancy hits 20%.")
-with p_col3:
-    st.success("**3. Efficiency Indexing**\n\nCalculating real conversion of Top-Line to Bottom-Line.")
+with p_col1: st.info("**1. Wealth Stripping**\n\nIsolating net liquidity by stripping taxes and variable costs.")
+with p_col2: st.warning("**2. Capacity Sensitivity**\n\nDynamic yield hurdles that increase as occupancy hits 20%.")
+with p_col3: st.success("**3. Efficiency Indexing**\n\nCalculating real conversion of Top-Line to Bottom-Line.")
 
 st.divider()
 
 # --- 6. RENDER SEGMENTS ---
 all_results = []
-# FIXED: Function definition line meticulously closed
 def draw_seg(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
     st.markdown("<div class='card' style='border-left-color:" + color + "'>" + title + "</div>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1.5, 1.2])
@@ -108,4 +104,3 @@ def draw_seg(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
     with c2:
         st.write("**Meal Mix**")
         mc = st.columns(3)
-        mix = {"RO": mc[0].number_input("RO",0,key=key+"ro"), "BB": mc[0].number_input("BB",0,key=key+"bb"), "HB": mc[1].number_input("HB",0,key=key+"hb"), "FB": mc[1].number_input("FB",0,key=key+"fb"), "SAI": mc[2].number_input("SAI",0,key=key+"sai"), "AI": mc[2].number_input("AI",0,key=key+"ai")}

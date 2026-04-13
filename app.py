@@ -69,12 +69,4 @@ if check_password():
         t_rms = sum(rms)
         if t_rms <= 0: return None
         pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
-        gross_total = (adr * t_rms * nts) + (ev_rev * pax * nts)
-        
-        nt_rev = (adr * t_rms) / tx
-        fb_cost = sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
-        ev_w = (ev_rev * pax) / tx
-        cm = (nt_rev - fb_cost) * cp
-        
-        dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
-        tp = (dp * t_
+        gross_total = (adr

@@ -44,7 +44,6 @@ with st.sidebar:
     tx = st.number_input("Tax Divisor", value=1.2327, format="%.4f")
     ota_comm = st.slider("OTA Commission %", 0, 50, 18) / 100
     st.write("### 🍽️ Meal Allocations (Per Pax)")
-    # FIXED: Parentheses meticulously checked here
     m_bb = st.number_input("Breakfast (BB) Allocation", value=2.0)
     m_dn = st.number_input("Dinner (DN) Allocation", value=6.0)
     m_sai = st.number_input("SAI Full Allocation", value=20.0)
@@ -76,7 +75,7 @@ def calculate_wealth(rooms, adr, nights, meal_mix, comm, floor, ev_pax=0.0, tr_f
     else: l, c, b, d = "OPTIMIZED", "#FFFFFF", "#27ae60", "💎 ACCEPT: High-efficiency generator."
     return {"u": unit_w, "l": l, "c": c, "b": b, "total": total_w, "util": util, "eff": eff, "desc": d}
 
-# --- 5. RENDER STRATEGY ---
+# --- 5. RENDER HEADER & PILLARS ---
 st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
 st.markdown(f"<p class='sub-header'>{hotel_name.upper()} • STRATEGIC ANALYTICS</p>", unsafe_allow_html=True)
 
@@ -87,4 +86,18 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-p1, p2
+# FIXED: Pillar Column Logic correctly implemented
+p_col1, p_col2, p_col3 = st.columns(3)
+with p_col1:
+    st.info("**1. Wealth Stripping**\n\nIsolating net liquidity by stripping taxes and variable costs.")
+with p_col2:
+    st.warning("**2. Capacity Sensitivity**\n\nDynamic yield hurdles that increase as occupancy hits 20%.")
+with p_col3:
+    st.success("**3. Efficiency Indexing**\n\nCalculating real conversion of Top-Line to Bottom-Line.")
+
+st.divider()
+
+# --- 6. RENDER SEGMENTS ---
+all_results = []
+def draw_seg(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
+    st.markdown(f"<div class='card' style

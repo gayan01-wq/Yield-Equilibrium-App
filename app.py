@@ -94,4 +94,29 @@ if check_password():
         elif af <= u < (af + 5): lb, cl = "MARGINAL", "#f1c40f"
         else: lb, cl = "OPTIMIZED", "#27ae60"
         
-        return {"u": u, "s":
+        return {"u": u, "s": lb, "c": cl, "tp": tp, "pax": pax, "fric": fric, "fric_lb": fric_lb, "impact": inv_impact}
+
+    def seg(nm, cl, bg, kp, ad_d, fl_d, cp, is_group=False):
+        st.markdown(f"<div class='card' style='background:{bg};border-left-color:{cl}'>{nm}</div>", unsafe_allow_html=True)
+        c1, c2, c3, c4 = st.columns([1, 2.8, 1, 1.2])
+        ev_r, tr_c = 0.0, 0.0
+        with c1:
+            sgl = st.number_input("SGL", 0, key=kp+"s")
+            dbl = st.number_input("DBL", 0, key=kp+"d")
+            tpl = st.number_input("TPL", 0, key=kp+"t")
+            nt = st.number_input("Nights", 1, 365, key=kp+"n")
+        with c2:
+            st.write("Meal Basis")
+            ca, cb, cc = st.columns(3)
+            q = {
+                "RO": ca.number_input("RO", 0, key=kp+"ro"),
+                "BB": ca.number_input("BB", 0, key=kp+"b"),
+                "HB": cb.number_input("HB", 0, key=kp+"h"),
+                "FB": cb.number_input("FB", 0, key=kp+"f"),
+                "SAI": cc.number_input("SAI", 0, key=kp+"sa"),
+                "AI": cc.number_input("AI", 0, key=kp+"ai")
+            }
+            if is_group:
+                cx, cy = st.columns(2)
+                ev_r = cx.number_input("Event/Pax", 0.0, key=kp+"ev")
+                tr_c = cy.number_input("Trans

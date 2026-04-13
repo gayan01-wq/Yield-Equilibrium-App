@@ -65,4 +65,16 @@ if check_password():
                         st.session_state[key] = 0.0 if isinstance(st.session_state[key], float) else 0
             st.rerun()
 
-    def run(rms, adr, nts, mix, cp, fl, ev_rev=0, total_
+    def run(rms, adr, nts, mix, cp, fl, ev_rev=0, total_tr_cost=0):
+        t_rms = sum(rms)
+        if t_rms <= 0: return None
+        pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
+        gross_total = (adr * t_rms * nts) + (ev_rev * pax * nts)
+        
+        nt_rev = (adr * t_rms) / tx
+        fb_cost = sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
+        ev_w = (ev_rev * pax) / tx
+        cm = (nt_rev - fb_cost) * cp
+        
+        dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
+        tp = (dp * t_

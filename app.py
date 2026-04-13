@@ -6,7 +6,7 @@ st.set_page_config(layout="wide", page_title="Yield Equilibrium", initial_sideba
 
 st.markdown("""
     <style>
-    /* Metric Font Adjustment to prevent dots (...) */
+    /* Metric Font Adjustment - Prevents dots (...) on large OMR amounts */
     [data-testid="stMetricValue"] {
         font-size: 1.8rem !important;
         overflow-wrap: break-word;
@@ -14,6 +14,16 @@ st.markdown("""
     }
     .stMetric {background:#fff; border:1px solid #eee; padding:15px; border-radius:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
     .card {padding:12px; border-radius:10px; margin-bottom:10px; border-left:12px solid; font-weight:bold; font-size: 1.1em; color: #2c3e50;}
+    
+    /* THE PRICING FRAME - Distinct background and border */
+    .pricing-container {
+        border: 3px double #3498db;
+        padding: 15px;
+        border-radius: 12px;
+        background-color: #f8fbff;
+        margin: 15px 0px;
+    }
+    
     .dominance-warn {color: #d35400; font-weight: bold; border: 2px solid #d35400; padding: 8px; border-radius: 5px; display: block; margin-top: 5px; text-align: center; background: #fff5f0;}
     .section-head {color: #34495e; font-size: 0.85em; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #eee; letter-spacing: 1px;}
     </style>
@@ -57,9 +67,10 @@ if check_password():
         st.header("🍽️ Meal Costs (Net)")
         b = st.number_input("BB Cost", 0., 500., 2.0)
         d_cost = st.number_input("DN Cost", 0., 500., 6.0)
+        # Using the standard Salalah supplement scaling
         m_map = {"RO": 0.0, "BB": b, "HB": b+d_cost, "FB": b+12.0, "SAI": b+14.0, "AI": b+21.0}
 
-    # --- CORE ENGINE: 50% DOMINANCE LOGIC ---
+    # --- CORE REVENUE ENGINE ---
     def run_calculation(rms, adr, nts, mix, cp, fl, ev_rev=0, total_tr_cost=0):
         t_rms = sum(rms)
         if t_rms <= 0: return None
@@ -71,17 +82,20 @@ if check_password():
         effective_hurdle = fl
         dominance_risk = False
         if inv_impact >= 50.0:
-            effective_hurdle = fl * 1.25 # 25% Premium for Segment Dominance
+            effective_hurdle = fl * 1.25 # 25% Premium for Dominance Concentration
             dominance_risk = True
             
-        if nts >= 5: effective_hurdle *= 0.90
+        if nts >= 5: effective_hurdle *= 0.90 # Efficiency discount for LOS
 
         nt_rev = (adr * t_rms) / tx
         fb_cost = sum(q * m_map[p] * (pax / t_rms) for p, q in mix.items())
+        
+        # Final Net wealth math (Tax -> Comm -> Meals -> Fees -> Ancillary)
         dp = ((nt_rev - fb_cost - ((nt_rev-fb_cost)*cp)) - (p01 * t_rms)) + ((ev_rev * pax) / tx / t_rms)
         tp = (dp * t_rms * nts) - (total_tr_cost / tx)
         u = tp / (t_rms * nts)
         
+        # Safeguard against loss situations
         if u < (effective_hurdle * 0.8) or tp <= 0: lb, cl = "DILUTIVE", "#e74c3c"
         elif u < effective_hurdle: lb, cl = "MARGINAL", "#f1c40f"
         else: lb, cl = "OPTIMIZED", "#27ae60"
@@ -90,7 +104,7 @@ if check_password():
 
     def seg(nm, cl, bg, kp, ad_d, fl_d, cp, is_group=False):
         st.markdown(f"<div class='card' style='background:{bg};border-left-color:{cl}'>{nm}</div>", unsafe_allow_html=True)
-        # Increased C3 width to 1.5 to prevent dots (...)
+        # Optimized Ratios for PC Wealth Window visibility
         c1, c2, c3 = st.columns([1.3, 2.2, 1.5])
         
         with c1:
@@ -105,9 +119,16 @@ if check_password():
                  "HB": cb.number_input("HB", 0, key=kp+"h"), "FB": cb.number_input("FB", 0, key=kp+"f"),
                  "SAI": cc.number_input("SAI", 0, key=kp+"sa"), "AI": cc.number_input("AI", 0, key=kp+"ai")}
             
+            # --- THE FRAMED PRICING SECTION ---
+            st.markdown('<div class="pricing-container">', unsafe_allow_html=True)
+            st.markdown("<div class='section-head' style='border-bottom: 1px solid #3498db; color: #3498db;'>Pricing Frame</div>", unsafe_allow_html=True)
             r_col, h_col = st.columns(2)
-            ad = r_col.number_input("Gross ADR", 0.0, 5000.0, float(ad_d), key=kp+"a")
-            fl = h_col.number_input("Market Floor", 0.0, 2000.0, float(fl_d), key=kp+"fl")
+            with r_col:
+                ad = st.number_input("Gross ADR", 0.0, 5000.0, float(ad_d), key=kp+"a")
+            with h_col:
+                fl = st.number_input("Market Floor", 0.0, 2000.0, float(fl_d), key=kp+"fl")
+            st.markdown('</div>', unsafe_allow_html=True)
+            
             ev_r = st.number_input("Event Rev/Pax", 0.0, key=kp+"ev") if is_group else 0.0
         
         res = run_calculation([sgl, dbl, tpl], ad, nt, q, cp, fl, ev_r)
@@ -115,6 +136,7 @@ if check_password():
         with c3:
             st.markdown("<div class='section-head'>Wealth Result</div>", unsafe_allow_html=True)
             if res:
+                # Metric formatted with comma for thousands (312,083)
                 st.metric("Wealth / Room", f"{cu} {res['u']:,.2f}")
                 st.markdown(f"<h3 style='color:{res['c']}; margin:0; text-align:center;'>{res['s']}</h3>", unsafe_allow_html=True)
                 
@@ -136,3 +158,7 @@ if check_password():
     r3 = seg("Wholesale", "#e67e22", "#fff3e0", "wh", 45, 25, 0.2)
     st.divider()
     r4 = seg("MICE & Groups", "#2c3e50", "#eceff1", "gc", 55, 30, 0.0, is_group=True)
+
+    if st.button("🔒 Securely Log Out"):
+        st.session_state["auth"] = False
+        st.rerun()

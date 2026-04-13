@@ -123,7 +123,7 @@ if check_password():
 
     # --- 6. PORTFOLIO WEALTH ---
     st.divider()
-    total_w = sum(r['tp'] for r in [r1, r2, r3, r4])
+    total_w = sum(r['tp'] for r in [r1, r2, r3, r4] if r)
     st.metric(f"Total Portfolio Wealth ({cu})", f"{total_w:,.0f}")
 
     # --- 7. THE 03 PILLARS ---
@@ -131,4 +131,9 @@ if check_password():
     st.subheader("🏛️ The 03 Pillars of Yield Equilibrium")
     p1, p2, p3 = st.columns(3)
     p1.markdown("<div class='pillar-box'><h4>1. Cold Wealth Stripping</h4><p>Isolating net liquidity by removing taxes, commissions, and variable room costs. This is the only revenue that truly lands in the bank.</p></div>", unsafe_allow_html=True)
-    p2.markdown("<div class='pillar-box'><h4>2
+    p2.markdown("<div class='pillar-box'><h4>2. Friction Indexing</h4><p>Measuring the % of revenue 'lost' to overhead (Meals, Fees, Trans). Lower friction identifies the highest quality segments.</p></div>", unsafe_allow_html=True)
+    p3.markdown("<div class='pillar-box'><h4>3. Displacement Hurdle</h4><p>Calculating the Market Hurdle against Net Wealth to ensure high-volume groups do not displace high-yield individual travelers.</p></div>", unsafe_allow_html=True)
+
+    if st.button("🔒 Log Out"):
+        st.session_state["auth"] = False
+        st.rerun()

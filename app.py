@@ -22,6 +22,7 @@ if check_password():
         <style>
         .stMetric {background:#fff; border:1px solid #eee; padding:10px; border-radius:10px}
         .card {padding:8px; border-radius:8px; margin-bottom:5px; border-left:8px solid; font-weight:bold}
+        .pillar-box {background:#f8f9fa; padding:15px; border-radius:10px; border-top:4px solid #2c3e50}
         </style>
     """, unsafe_allow_html=True)
     
@@ -34,7 +35,7 @@ if check_password():
         
         st.title("⚙️ Global Settings")
         h_nm = st.text_input("Hotel", "Wyndham Garden Salalah")
-        h_cp = st.number_input("Total Inventory", 1, 1000, 237)
+        h_cp = st.number_input("Total Inventory", 1, 1000, 158)
         
         st.header("🍽️ Meals (Net)")
         b = st.number_input("BB", 0., 500., 2.)
@@ -47,7 +48,13 @@ if check_password():
         p01 = st.number_input("P01 Fee", 0., 100., 6.9)
         tx = st.number_input("Tax Div", 1., 2., 1.2327, format="%.4f")
         op = st.slider("OTA Comm %", 0, 50, 18) / 100
-        cu = st.selectbox("Currency", ["OMR", "AED", "SAR", "THB", "EUR", "GBP", "USD"])
+        
+        # --- GLOBAL CURRENCY INTEGRATION ---
+        cu = st.selectbox("Currency", [
+            "OMR", "AED", "SAR", "KWD", "BHD", "QAR", "JOD", "EGP", 
+            "LKR", "INR", "THB", "SGD", "MYR", "CNY", "JPY", "KRW", "IDR", "PKR", "BDT",
+            "USD", "EUR", "GBP", "CHF", "AUD"
+        ])
 
     # --- HEADER WITH REFRESH BUTTON ---
     col_title, col_btn = st.columns([4, 1])
@@ -56,13 +63,10 @@ if check_password():
     with col_btn:
         st.write("") 
         if st.button("🔄 Clear Audit Data"):
-            # Resets transaction keys without touching global settings
             for key in list(st.session_state.keys()):
                 if any(kp in key for kp in ["ot", "di", "wh", "co", "gt", "gc"]):
-                    if "n" in key:
-                        st.session_state[key] = 1
-                    else:
-                        st.session_state[key] = 0.0 if isinstance(st.session_state[key], float) else 0
+                    if "n" in key: st.session_state[key] = 1
+                    else: st.session_state[key] = 0.0 if isinstance(st.session_state[key], float) else 0
             st.rerun()
 
     def run(rms, adr, nts, mix, cp, fl, ev_rev=0, total_tr_cost=0):
@@ -70,30 +74,22 @@ if check_password():
         if t_rms <= 0: return None
         pax = (rms[0]*1 + rms[1]*2 + rms[2]*3)
         gross_total = (adr * t_rms * nts) + (ev_rev * pax * nts)
-        
         nt_rev = (adr * t_rms) / tx
         fb_cost = sum(q * m[p] * (pax / t_rms) for p, q in mix.items())
         ev_w = (ev_rev * pax) / tx
         cm = (nt_rev - fb_cost) * cp
-        
         dp = ((nt_rev - fb_cost - cm) - (p01 * t_rms)) + (ev_w / t_rms)
         tp = (dp * t_rms * nts) - (total_tr_cost / tx)
         u = tp / (t_rms * nts)
-        
-        # Logic for Inventory Contribution %
         inv_impact = (t_rms / h_cp) * 100
-        
         af = fl * 0.75 if nts > 7 else fl
         fric = (1 - (tp / gross_total)) * 100 if gross_total > 0 else 0
-        
-        if fric < 26: fric_lb = "Net Contribution"
-        elif 26 <= fric < 38: fric_lb = "Yield Dilution"
-        else: fric_lb = "Revenue Erosion"
-        
+        if fric < 26: fric_lb, fric_cl = "Net Contribution", "#27ae60"
+        elif 26 <= fric < 38: fric_lb, fric_cl = "Yield Dilution", "#f39c12"
+        else: fric_lb, fric_cl = "Revenue Erosion", "#e74c3c"
         if u < af: lb, cl = "DILUTIVE", "#e74c3c"
         elif af <= u < (af + 5): lb, cl = "MARGINAL", "#f1c40f"
         else: lb, cl = "OPTIMIZED", "#27ae60"
-        
         return {"u": u, "s": lb, "c": cl, "tp": tp, "pax": pax, "fric": fric, "fric_lb": fric_lb, "impact": inv_impact}
 
     def seg(nm, cl, bg, kp, ad_d, fl_d, cp, is_group=False):
@@ -108,14 +104,9 @@ if check_password():
         with c2:
             st.write("Meal Basis")
             ca, cb, cc = st.columns(3)
-            q = {
-                "RO": ca.number_input("RO", 0, key=kp+"ro"),
-                "BB": ca.number_input("BB", 0, key=kp+"b"),
-                "HB": cb.number_input("HB", 0, key=kp+"h"),
-                "FB": cb.number_input("FB", 0, key=kp+"f"),
-                "SAI": cc.number_input("SAI", 0, key=kp+"sa"),
-                "AI": cc.number_input("AI", 0, key=kp+"ai")
-            }
+            q = {"RO": ca.number_input("RO", 0, key=kp+"ro"), "BB": ca.number_input("BB", 0, key=kp+"b"),
+                 "HB": cb.number_input("HB", 0, key=kp+"h"), "FB": cb.number_input("FB", 0, key=kp+"f"),
+                 "SAI": cc.number_input("SAI", 0, key=kp+"sa"), "AI": cc.number_input("AI", 0, key=kp+"ai")}
             if is_group:
                 cx, cy = st.columns(2)
                 ev_r = cx.number_input("Event/Pax", 0.0, key=kp+"ev")
@@ -129,11 +120,7 @@ if check_password():
             with c4:
                 st.metric("Wealth (Stay/Room)", f"{cu} {res['u']:.2f}")
                 st.markdown(f"<b style='color:{res['c']}'>{res['s']}</b>", unsafe_allow_html=True)
-                
-                # Condition: Only show inventory impact for groups
-                if is_group:
-                    st.write(f"Inventory Impact: **{res['impact']:.1f}%**")
-                
+                if is_group: st.write(f"Inventory Impact: **{res['impact']:.1f}%**")
                 st.write(f"Pax: **{res['pax']}**")
                 st.write(f"{res['fric_lb']}: **{res['fric']:.1f}%**")
                 st.caption("(Tax + Comm + Meals + Fees)")
@@ -158,25 +145,23 @@ if check_password():
         
         st.subheader("📊 Yield Equilibrium Breakdown")
         col_chart, col_text = st.columns([2, 1])
-        
         with col_chart:
-            chart_data = pd.DataFrame({
-                "Segment": active_res.keys(),
-                "Wealth Contribution": [v['tp'] for v in active_res.values()]
-            })
+            chart_data = pd.DataFrame({"Segment": active_res.keys(), "Wealth Contribution": [v['tp'] for v in active_res.values()]})
             st.bar_chart(chart_data.set_index("Segment"))
-
         with col_text:
             st.markdown("### 🔍 The SME Insight")
-            st.markdown(f"""
-            **Yield Equilibrium Logic:**
-            1. **Tax Stripping:** Gross ADR divided by **{tx}**.
-            2. **Ancillary Weight:** Event revenue acts as a **Yield Multiplier**.
-            3. **Variable Drag:** Meals and **P01 ({p01})** stripped.
-            4. **Friction Scaling:** Efficiency labeled by deduction %.
-            5. **Status:** Based on **Market Hurdle** vs Net Wealth.
-            6. **Inventory Impact:** Contribution to property occupancy (Groups Only).
-            """)
+            st.markdown(f"**Yield Equilibrium Logic:**\n1. **Tax Stripping:** Gross ADR divided by **{tx}**.\n2. **Ancillary Weight:** Yield Multiplier applied.\n3. **Variable Drag:** Meals & **P01 ({p01})** stripped.")
+
+        # --- 🏛️ THE 03 MAIN PILLARS SECTION ---
+        st.divider()
+        st.subheader("🏛️ The 03 Pillars of Yield Equilibrium")
+        p1, p2, p3 = st.columns(3)
+        with p1:
+            st.markdown("<div class='pillar-box'><h4>1. Cold Wealth Stripping</h4><p>Isolating net liquidity by removing statutory taxes, third-party commissions, and variable room costs. This is the only revenue that truly lands in the bank.</p></div>", unsafe_allow_html=True)
+        with p2:
+            st.markdown("<div class='pillar-box'><h4>2. Friction Indexing</h4><p>Measuring the % of revenue 'lost' to overhead (Meals, Fees, Trans). Lower friction identifies the highest quality segments, regardless of the Top-line ADR.</p></div>", unsafe_allow_html=True)
+        with p3:
+            st.markdown("<div class='pillar-box'><h4>3. Displacement Hurdle</h4><p>Calculating the Market Hurdle against Net Wealth to ensure high-volume groups do not displace high-yield individual travelers. Balance is the key to equilibrium.</p></div>", unsafe_allow_html=True)
 
     if st.button("🔒 Log Out"):
         st.session_state["auth"] = False

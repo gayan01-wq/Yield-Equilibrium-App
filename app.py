@@ -98,4 +98,14 @@ st.divider()
 
 # --- 6. RENDER SEGMENTS ---
 all_results = []
-def draw_seg(title, key, d_adr
+# FIXED: Function definition line meticulously closed
+def draw_seg(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
+    st.markdown("<div class='card' style='border-left-color:" + color + "'>" + title + "</div>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1, 1.5, 1.2])
+    with c1:
+        st.write("**Occupancy**")
+        s, d, t, n = st.number_input("SGL",0,key=key+"s"), st.number_input("DBL",0,key=key+"d"), st.number_input("TPL",0,key=key+"t"), st.number_input("Nights",1,key=key+"n")
+    with c2:
+        st.write("**Meal Mix**")
+        mc = st.columns(3)
+        mix = {"RO": mc[0].number_input("RO",0,key=key+"ro"), "BB": mc[0].number_input("BB",0,key=key+"bb"), "HB": mc[1].number_input("HB",0,key=key+"hb"), "FB": mc[1].number_input("FB",0,key=key+"fb"), "SAI": mc[2].number_input("SAI",0,key=key+"sai"), "AI": mc[2].number_input("AI",0,key=key+"ai")}

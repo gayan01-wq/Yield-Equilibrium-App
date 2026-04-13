@@ -1,6 +1,6 @@
 import streamlit as st
 
-# --- 1. SETTINGS & STYLING ---
+# --- 1. SETTINGS & PREMIUM STYLING ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium")
 
 st.markdown("""
@@ -25,7 +25,7 @@ if not st.session_state["unlocked"]:
         else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR ---
+# --- 3. SIDEBAR (Architect Panel) ---
 with st.sidebar:
     st.header("Gayan Nugawela")
     st.caption("Strategic Revenue Architect")
@@ -66,15 +66,33 @@ def calculate_wealth(rooms, adr, nights, meal_mix, comm, floor, ev_pax=0.0, tr_f
     total_w = unit_w * qty * nights
     eff = (total_w / (adr * qty * nights) * 100) if adr > 0 else 0
     
-    if unit_w < (hurdle * 0.8) or unit_w <= 0: l, c, d = "DILUTIVE", "#e74c3c", "🚩 REJECT: Below standards."
-    elif unit_w < hurdle: l, c, d = "MARGINAL", "#f39c12", "⚠️ FILL ONLY: Low efficiency."
-    else: l, c, d = "OPTIMIZED", "#27ae60", "💎 ACCEPT: Wealth generator."
+    if unit_w < (hurdle * 0.8) or unit_w <= 0: l, c, d = "DILUTIVE", "#e74c3c", "🚩 REJECT: Wealth contribution is below floor standards."
+    elif unit_w < hurdle: l, c, d = "MARGINAL", "#f39c12", "⚠️ FILL ONLY: Low asset efficiency."
+    else: l, c, d = "OPTIMIZED", "#27ae60", "💎 ACCEPT: High-efficiency wealth generator."
     
-    # FIXED: Dictionary now correctly closed with }
     return {"u": unit_w, "l": l, "c": c, "total": total_w, "util": util, "eff": eff, "desc": d}
 
 # --- 5. RENDER CONTENT ---
 st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
 st.caption(f"{hotel_name.upper()} • STRATEGIC PORTFOLIO ANALYTICS")
 
-st.info(f"**The Yield Equilibrium Framework:** Calculating
+# FIXED: Line 80 is now correctly sealed with a closing quotation mark
+st.info(f"**The Yield Equilibrium Framework:** Calculating Real Bankable Wealth for {hotel_name} by stripping taxes, commissions, and per-pax meal allocations to protect bottom-line efficiency.")
+
+col_p1, col_p2, col_p3 = st.columns(3)
+col_p1.metric("Pillar 1", "Wealth Stripping")
+col_p2.metric("Pillar 2", "Capacity Sensitivity")
+col_p3.metric("Pillar 3", "Efficiency Indexing")
+
+st.divider()
+
+def draw_seg(title, key, d_adr, d_fl, is_ota=False, is_grp=False):
+    st.subheader(title)
+    c1, c2, c3 = st.columns([1, 1.5, 1.2])
+    with c1:
+        st.write("**Occupancy**")
+        s, d, t, n = st.number_input("SGL",0,key=key+"s"), st.number_input("DBL",0,key=key+"d"), st.number_input("TPL",0,key=key+"t"), st.number_input("Nights",1,key=key+"n")
+    with c2:
+        st.write("**Meal Mix**")
+        mc = st.columns(3)
+        mix = {"

@@ -1,12 +1,12 @@
 import streamlit as st
 import pandas as pd
 
-# --- CONFIG & THEME ---
+# --- 1. CONFIG & THEME ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
-    /* Metric Font Adjustment */
+    /* Metric Font Adjustment - Full visibility for OMR */
     [data-testid="stMetricValue"] {
         font-size: 1.8rem !important;
         overflow-wrap: break-word;
@@ -14,22 +14,20 @@ st.markdown("""
     }
     .stMetric {background:#fff; border:1px solid #eee; padding:15px; border-radius:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
     .card {padding:12px; border-radius:10px; margin-bottom:10px; border-left:12px solid; font-weight:bold; font-size: 1.1em; color: #2c3e50;}
+    .dominance-warn {color: #d35400; font-weight: bold; border: 2px solid #d35400; padding: 8px; border-radius: 5px; display: block; margin-top: 5px; text-align: center; background: #fff5f0;}
+    .section-head {color: #34495e; font-size: 0.85em; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #eee; letter-spacing: 1px;}
     
-    /* CLEANED PRICING FRAME - No extra boxes */
-    .pricing-frame {
+    /* Clean, stable Pricing Frame */
+    .price-border {
         border: 2px solid #3498db;
         padding: 15px;
         border-radius: 10px;
         background-color: #f8fbff;
-        margin-top: 15px;
     }
-    
-    .dominance-warn {color: #d35400; font-weight: bold; border: 2px solid #d35400; padding: 8px; border-radius: 5px; display: block; margin-top: 5px; text-align: center; background: #fff5f0;}
-    .section-head {color: #34495e; font-size: 0.85em; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #eee; letter-spacing: 1px;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- PASSWORD PROTECTION ---
+# --- 2. PASSWORD PROTECTION ---
 def check_password():
     if "auth" not in st.session_state:
         st.session_state["auth"] = False
@@ -69,7 +67,7 @@ if check_password():
         d_cost = st.number_input("DN Cost", 0., 500., 6.0)
         m_map = {"RO": 0.0, "BB": b, "HB": b+d_cost, "FB": b+12.0, "SAI": b+14.0, "AI": b+21.0}
 
-    # --- CORE REVENUE ENGINE ---
+    # --- 3. CORE REVENUE ENGINE ---
     def run_calculation(rms, adr, nts, mix, cp, fl, ev_rev=0, total_tr_cost=0):
         t_rms = sum(rms)
         if t_rms <= 0: return None
@@ -95,6 +93,7 @@ if check_password():
         
         return {"u": u, "s": lb, "c": cl, "tp": tp, "impact": inv_impact, "risk": dominance_risk}
 
+    # --- 4. UI SEGMENT COMPONENT ---
     def seg(nm, cl, bg, kp, ad_d, fl_d, cp, is_group=False):
         st.markdown(f"<div class='card' style='background:{bg};border-left-color:{cl}'>{nm}</div>", unsafe_allow_html=True)
         c1, c2, c3 = st.columns([1.3, 2.2, 1.5])
@@ -111,23 +110,10 @@ if check_password():
                  "HB": cb.number_input("HB", 0, key=kp+"h"), "FB": cb.number_input("FB", 0, key=kp+"f"),
                  "SAI": cc.number_input("SAI", 0, key=kp+"sa"), "AI": cc.number_input("AI", 0, key=kp+"ai")}
             
-            # THE PRICING FRAME
-            st.markdown('<div class="pricing-frame">', unsafe_allow_html=True)
-            st.markdown("<div class='section-head' style='border-bottom: 1px solid #3498db; color: #3498db; margin-bottom:15px;'>Pricing Logic</div>", unsafe_allow_html=True)
+            # --- THE PRICING FRAME (REBUILT FOR STABILITY) ---
+            st.markdown('<div class="price-border">', unsafe_allow_html=True)
+            st.markdown("<div style='color:#3498db; font-weight:bold; font-size:0.8em; margin-bottom:10px;'>PRICING FRAME</div>", unsafe_allow_html=True)
             r_col, h_col = st.columns(2)
             with r_col: ad = st.number_input("Gross ADR", 0.0, 5000.0, float(ad_d), key=kp+"a")
             with h_col: fl = st.number_input("Market Floor", 0.0, 2000.0, float(fl_d), key=kp+"fl")
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            ev_r = st.number_input("Event Rev/Pax", 0.0, key=kp+"ev") if is_group else 0.0
-        
-        res = run_calculation([sgl, dbl, tpl], ad, nt, q, cp, fl, ev_r)
-        
-        with c3:
-            st.markdown("<div class='section-head'>Wealth Result</div>", unsafe_allow_html=True)
-            if res:
-                st.metric("Wealth / Room", f"{cu} {res['u']:,.2f}")
-                st.markdown(f"<h3 style='color:{res['c']}; margin:0; text-align:center;'>{res['s']}</h3>", unsafe_allow_html=True)
-                if res['risk']:
-                    st.markdown(f"<div class='dominance-warn'>⚠️ SEGMENT DOMINANCE RISK<br>{res['impact']:.1f}% Concentration</div>", unsafe_allow_html=True)
-                st
+            st.markdown('</div>', unsafe_allow_

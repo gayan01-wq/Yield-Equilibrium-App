@@ -1,15 +1,22 @@
 import streamlit as st
 
-# --- 1. SETTINGS ---
+# --- 1. SETTINGS & STYLING ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium")
+
+st.markdown("""
+    <style>
+    .main-title { font-size: 3rem !important; font-weight: 900; color: #1e3799; text-align: center; margin-bottom: 0px; }
+    .status-btn { padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 1.2rem; color: white; margin: 10px 0; }
+    [data-testid="stSidebar"] { background-color: #f1f4f9; border-right: 2px solid #3498db; }
+    </style>
+""", unsafe_allow_html=True)
 
 # --- 2. AUTHENTICATION ---
 if "unlocked" not in st.session_state:
     st.session_state["unlocked"] = False
 
 if not st.session_state["unlocked"]:
-    st.title("EQUILIBRIUM ENGINE")
-    st.subheader("Wyndham Garden Salalah • Strategic Analytics")
+    st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     pwd = st.text_input("Enter Access Key", type="password")
     if st.button("Unlock Dashboard"):
         if pwd == "Gayan2026":
@@ -18,7 +25,7 @@ if not st.session_state["unlocked"]:
         else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR (Architect Panel) ---
+# --- 3. SIDEBAR ---
 with st.sidebar:
     st.header("Gayan Nugawela")
     st.caption("Strategic Revenue Architect")
@@ -58,7 +65,16 @@ def calculate_wealth(rooms, adr, nights, meal_mix, comm, floor, ev_pax=0.0, tr_f
     unit_w = base_w + (anc_w / (qty * nights))
     total_w = unit_w * qty * nights
     eff = (total_w / (adr * qty * nights) * 100) if adr > 0 else 0
-    if unit_w < (hurdle * 0.8) or unit_w <= 0: l, c, d = "DILUTIVE", "red", "REJECT: Below standards."
-    elif unit_w < hurdle: l, c, d = "MARGINAL", "orange", "FILL ONLY: Low efficiency."
-    else: l, c, d = "OPTIMIZED", "green", "ACCEPT: Wealth generator."
-    return {"u": unit_w, "l": l, "c": c, "total": total_w,
+    
+    if unit_w < (hurdle * 0.8) or unit_w <= 0: l, c, d = "DILUTIVE", "#e74c3c", "🚩 REJECT: Below standards."
+    elif unit_w < hurdle: l, c, d = "MARGINAL", "#f39c12", "⚠️ FILL ONLY: Low efficiency."
+    else: l, c, d = "OPTIMIZED", "#27ae60", "💎 ACCEPT: Wealth generator."
+    
+    # FIXED: Dictionary now correctly closed with }
+    return {"u": unit_w, "l": l, "c": c, "total": total_w, "util": util, "eff": eff, "desc": d}
+
+# --- 5. RENDER CONTENT ---
+st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
+st.caption(f"{hotel_name.upper()} • STRATEGIC PORTFOLIO ANALYTICS")
+
+st.info(f"**The Yield Equilibrium Framework:** Calculating

@@ -6,13 +6,32 @@ st.set_page_config(layout="wide", page_title="Yield Equilibrium", initial_sideba
 
 st.markdown("""
     <style>
+    /* Main Title Styling */
+    .main-title {
+        font-size: 3rem !important;
+        font-weight: 800;
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 30px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        border-bottom: 5px solid #3498db;
+        padding-bottom: 10px;
+    }
+    
+    /* Metric Font Adjustment */
     [data-testid="stMetricValue"] { font-size: 1.8rem !important; }
     .stMetric {background:#fff; border:1px solid #eee; padding:15px; border-radius:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+    
+    /* Card Styling */
     .card {padding:12px; border-radius:10px; margin-bottom:10px; border-left:12px solid; font-weight:bold; color: #2c3e50;}
+    
+    /* Warning & Pillars */
     .dominance-warn {color: #d35400; font-weight: bold; border: 2px solid #d35400; padding: 8px; border-radius: 5px; text-align: center; background: #fff5f0;}
     .pillar-box {background:#f8f9fa; padding:15px; border-radius:10px; border-top:4px solid #2c3e50; min-height: 180px; margin-bottom: 20px;}
-    /* Ensure number inputs don't cut off long decimals */
-    .stNumberInput input { font-size: 0.9rem !important; }
+    
+    /* Tax Divisor Box Adjustment */
+    .stNumberInput input { font-size: 1.1rem !important; font-weight: bold !important; color: #2c3e50 !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -21,7 +40,7 @@ def check_password():
     if "auth" not in st.session_state:
         st.session_state["auth"] = False
     if not st.session_state["auth"]:
-        st.title("🏨 Yield Equilibrium Center")
+        st.markdown("<h1 class='main-title'>Yield Equilibrium</h1>", unsafe_allow_html=True)
         pwd = st.text_input("Access Key", type="password")
         if st.button("Unlock") or (pwd == "Gayan2026"): 
             if pwd == "Gayan2026":
@@ -38,24 +57,24 @@ if check_password():
         st.subheader("Gayan Nugawela")
         st.caption("Revenue management specialist- SME")
         st.divider()
+        
         st.header("⚙️ Global Architecture")
         h_nm = st.text_input("Hotel Name", "Wyndham Garden Salalah")
         h_cp = st.number_input("Total Inventory", 1, 1000, 158)
         
-        # Expanded Global Currencies
         currencies = [
-            "OMR", "AED", "SAR", "QAR", "BHD", "KWD", "JOD", "EGP", "ILS",  # ME
-            "EUR", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "TRY",        # Europe
-            "USD", "LKR", "INR", "PKR", "BDT", "JPY", "CNY", "SGD", "HKD", # Asia
-            "THB", "MYR", "IDR", "KRW", "VND", "PHP"                       # Asia
+            "OMR", "AED", "SAR", "QAR", "BHD", "KWD", "JOD", "EGP", "ILS",
+            "EUR", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "TRY",
+            "USD", "LKR", "INR", "PKR", "BDT", "JPY", "CNY", "SGD", "HKD",
+            "THB", "MYR", "IDR", "KRW", "VND", "PHP"
         ]
         cu = st.selectbox("Currency", sorted(currencies))
         
         st.divider()
         st.header("📊 Statutory & Costs")
-        c_side1, c_side2 = st.columns(2)
+        # Column adjustment for Tax Divisor visibility
+        c_side1, c_side2 = st.columns([1, 1.2]) 
         p01 = c_side1.number_input("P01 Fee", 0., 100., 6.90)
-        # Fixed Display for 1.2327
         tx = c_side2.number_input("Tax Div", 1.0000, 2.5000, 1.2327, format="%.4f", step=0.0001)
         op_comm = st.slider("OTA Comm %", 0, 50, 18) / 100
         
@@ -77,11 +96,13 @@ if check_password():
         inv_impact = (t_rms / h_cp) * 100
         eff_h = fl * 1.25 if inv_impact >= 50.0 else fl
         if nts >= 5: eff_h *= 0.90
+        
         nt_rev = (adr * t_rms) / tx
         fb_cost = sum(q * m_map[p] * (pax / t_rms) for p, q in mix.items())
         dp = ((nt_rev - fb_cost - ((nt_rev-fb_cost)*cp)) - (p01 * t_rms)) + ((ev_rev * pax) / tx / t_rms)
         tp = (dp * t_rms * nts)
         u = tp / (t_rms * nts)
+        
         if u < (eff_h * 0.8) or tp <= 0: lb, cl = "DILUTIVE", "#e74c3c"
         elif u < eff_h: lb, cl = "MARGINAL", "#f1c40f"
         else: lb, cl = "OPTIMIZED", "#27ae60"
@@ -92,9 +113,7 @@ if check_password():
         c1, c2, c3 = st.columns([1.3, 2.2, 1.5])
         with c1:
             st.caption("Stay Dynamics")
-            sgl = st.number_input("SGL", 0, key=kp+"s")
-            dbl = st.number_input("DBL", 0, key=kp+"d")
-            tpl = st.number_input("TPL", 0, key=kp+"t")
+            sgl, dbl, tpl = st.number_input("SGL",0,key=kp+"s"), st.number_input("DBL",0,key=kp+"d"), st.number_input("TPL",0,key=kp+"t")
             nt = st.number_input("Nights", 1, key=kp+"n")
         with c2:
             st.caption("Meal Plan Allocation")
@@ -118,11 +137,11 @@ if check_password():
                 if res['risk']: st.markdown(f"<div class='dominance-warn'>⚠️ DOMINANCE RISK: {res['impact']:.1f}%</div>", unsafe_allow_html=True)
                 st.divider()
                 st.write(f"Total Wealth: **{res['tp']:,.0f}**")
-            else:
-                st.info("Input Inventory")
+            else: st.info("Input Inventory")
         return res
 
-    # --- 5. DASHBOARD LAYOUT ---
+    # --- 5. DASHBOARD TOP ---
+    st.markdown("<h1 class='main-title'>Yield Equilibrium</h1>", unsafe_allow_html=True)
     st.header(f"🧳 Portfolio Audit: {h_nm}")
     r1 = seg("OTA Segment", "#2ecc71", "#e8f5e9", "ot", 60, 35, op_comm)
     st.divider()
@@ -140,3 +159,11 @@ if check_password():
     # --- 7. THE 03 PILLARS ---
     st.divider()
     st.subheader("🏛️ The 03 Pillars of Yield Equilibrium")
+    p1, p2, p3 = st.columns(3)
+    p1.markdown("<div class='pillar-box'><h4>1. Cold Wealth Stripping</h4><p>Isolating net liquidity by removing taxes, commissions, and variable room costs. This is the only revenue that truly lands in the bank.</p></div>", unsafe_allow_html=True)
+    p2.markdown("<div class='pillar-box'><h4>2. Friction Indexing</h4><p>Measuring the % of revenue lost to overhead (Meals, Fees, Trans). Lower friction identifies high-quality segments.</p></div>", unsafe_allow_html=True)
+    p3.markdown("<div class='pillar-box'><h4>3. Displacement Hurdle</h4><p>Calculating Market Hurdle against Net Wealth to ensure high-volume groups do not displace high-yield individual travelers.</p></div>", unsafe_allow_html=True)
+
+    if st.button("🔒 Securely Log Out"):
+        st.session_state["auth"] = False
+        st.rerun()

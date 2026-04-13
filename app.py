@@ -48,8 +48,10 @@ with st.sidebar:
     tx = st.number_input("Tax Divisor", 1.0, 2.5, 1.2327, format="%.4f")
     ota_comm = st.slider("OTA Commission %", 0, 50, 18) / 100
     
-    m_bb, m_hb = st.number_input("BB Cost", 2.0), st.number_input("HB Cost", 8.0)
-    m_fb, m_ai = st.number_input("FB Cost", 14.0), st.number_input("AI Cost", 27.0)
+    m_bb = st.number_input("BB Cost", value=2.0)
+    m_hb = st.number_input("HB Cost", value=8.0)
+    m_fb = st.number_input("FB Cost", value=14.0)
+    m_ai = st.number_input("AI Cost", value=27.0)
     m_map = {"RO": 0.0, "BB": m_bb, "HB": m_hb, "FB": m_fb, "AI": m_ai}
     
     if st.button("Logout"):
@@ -57,7 +59,7 @@ with st.sidebar:
         st.rerun()
 
 # --- 4. ENGINE ---
-def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0, trans_flat=0):
+def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0.0, trans_flat=0.0):
     total_rooms = sum(rooms)
     if total_rooms <= 0: return None
     
@@ -70,40 +72,10 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0,
     meal_cost = sum((qty/total_rooms) * m_map[p] * pax_per_room for p, qty in meal_plan.items())
     
     base_w = ((unit_net - meal_cost - ((unit_net - meal_cost) * commission)) - p01)
-    # Ancillary logic: Event is per pax, Trans is a flat group fee
+    
+    # Ancillary math: Event is per pax, Trans is a flat group fee
     anc_net = ((ev_pax * pax_total) / tx) + (trans_flat / tx)
     unit_w = base_w + (anc_net / (total_rooms * nights))
     
     total_w = unit_w * total_rooms * nights
-    eff = (total_w / (adr * total_rooms * nights) * 100) if adr > 0 else 0
-    
-    if unit_w < (hurdle * 0.8) or unit_w <= 0: label, color, bg = "DILUTIVE", "#FFFFFF", "#e74c3c"
-    elif unit_w < hurdle: label, color, bg = "MARGINAL", "#2c3e50", "#f1c40f"
-    else: label, color, bg = "OPTIMIZED", "#FFFFFF", "#27ae60"
-        
-    return {"u": unit_w, "l": label, "c": color, "b": bg, "total": total_w, "util": util, "eff": eff}
-
-# --- 5. RENDER ---
-st.markdown(f"<h1 class='main-title'>Yield Equilibrium: {hotel_name}</h1>", unsafe_allow_html=True)
-all_res = []
-
-def draw_seg(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
-    st.markdown(f"<div class='card' style='border-left-color:{color}'>{title}</div>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 1.5, 1.2])
-    with c1:
-        st.write("**Occupancy**")
-        s, d, t = st.number_input("SGL", 0, key=key+"s"), st.number_input("DBL", 0, key=key+"d"), st.number_input("TPL", 0, key=key+"t")
-        n = st.number_input("Nights", 1, key=key+"n")
-    with c2:
-        st.write("**Meal Basis**")
-        mc = st.columns(3)
-        mix = {"RO": mc[0].number_input("RO",0,key=key+"ro"), "BB": mc[0].number_input("BB",0,key=key+"bb"),
-               "HB": mc[1].number_input("HB",0,key=key+"hb"), "FB": mc[1].number_input("FB",0,key=key+"fb"),
-               "AI": mc[2].number_input("AI",0,key=key+"ai")}
-        st.write("---")
-        adr_v = st.number_input("Gross ADR", 0.0, 5000.0, float(d_adr), key=key+"adr")
-        fl_v = st.number_input("Market Floor", 0.0, 2000.0, float(d_fl), key=key+"fl")
-        ev, tr = 0.0, 0.0
-        if is_grp:
-            gc = st.columns(2)
-            ev = gc[0].number_input("Event Rate /Pax", 0.
+    eff = (total_w / (adr * total_rooms * nights) * 100) if ad

@@ -5,7 +5,7 @@ st.set_page_config(layout="wide", page_title="Yield Equilibrium")
 
 st.markdown("""
     <style>
-    .main-title { font-size: 3rem !important; font-weight: 800; color: #2c3e50; text-align: center; border-bottom: 5px solid #3498db; padding-bottom: 10px; margin-bottom: 10px; }
+    .main-title { font-size: 2rem !important; font-weight: 500; color: #2c3e50; text-align: center; border-bottom: 5px solid #3498db; padding-bottom: 10px; margin-bottom: 10px; }
     .definition-box { background-color: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #3498db; margin-bottom: 25px; text-align: center; font-style: italic; }
     .card { padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 10px solid; font-weight: bold; background-color: #fcfcfc; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
     .status-box { padding: 20px; border-radius: 15px; text-align: center; font-size: 1.5rem; font-weight: bold; margin: 10px 0; border: 1px solid rgba(0,0,0,0.1); }

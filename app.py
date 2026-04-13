@@ -98,26 +98,4 @@ def draw_seg(title, key, d_adr, d_fl, is_ota=False, is_grp=False):
         n = st.number_input("Stay Nights", 1, key=key+"n")
     with c2:
         st.write("**Meal Mix**")
-        mc = st.columns(3)
-        mix = {
-            "RO": mc[0].number_input("RO", 0, key=key+"ro"),
-            "BB": mc[0].number_input("BB", 0, key=key+"bb"),
-            "HB": mc[1].number_input("HB", 0, key=key+"hb"),
-            "FB": mc[1].number_input("FB", 0, key=key+"fb"),
-            "SAI": mc[2].number_input("SAI", 0, key=key+"sai"),
-            "AI": mc[2].number_input("AI", 0, key=key+"ai")
-        }
-        st.write("---")
-        adr_v = st.number_input("Gross ADR", value=float(d_adr), key=key+"adr")
-        fl_v = st.number_input("Market Floor", value=float(d_fl), key=key+"fl")
-        ev, tr = 0.0, 0.0
-        if is_grp:
-            gc = st.columns(2)
-            ev = gc[0].number_input("Event/Pax", 0.0, key=key+"ev")
-            tr = gc[1].number_input("Trans. Fee", 0.0, key=key+"tr")
-            
-    res = calculate_wealth([s,d,t], adr_v, n, mix, (ota_comm if is_ota else 0.0), fl_v, ev, tr)
-    if res:
-        all_results.append(res)
-        with c3:
-            # FIXED: Line 124 meticulously closed
+        mc =

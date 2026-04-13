@@ -37,12 +37,4 @@ with st.sidebar:
     st.markdown("<p class='sidebar-tag'>Strategic Revenue Architect</p>", unsafe_allow_html=True)
     st.divider()
     hotel_name = st.text_input("Property Identity", "Wyndham Garden Salalah")
-    h_total = st.number_input("Total Inventory Baseline", 1, 5000, 237)
-    cu = st.selectbox("Currency Selection", sorted(["OMR", "AED", "SAR", "QAR", "USD", "EUR", "LKR", "INR", "THB", "SGD"]))
-    st.divider()
-    st.write("### 📊 Financial Parameters")
-    p01 = st.number_input("P01 Fixed Fee", value=6.90)
-    tx = st.number_input("Tax Divisor", value=1.2327, format="%.4f")
-    ota_comm = st.slider("OTA Commission %", 0, 50, 18) / 100
-    st.write("### 🍽️ Meal Allocations (Per Pax)")
-    m_bb, m_dn = st.number_
+    h_total = st.number_input("Total

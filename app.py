@@ -79,9 +79,4 @@ def calculate_wealth(rooms, adr, nights, meal_plan, commission, floor, ev_pax=0.
     hurdle = floor * 1.25 if util >= 20.0 else floor
     unit_net = adr / tx
     meal_cost = sum((qty/total_rooms) * m_map[p] * pax_per_room for p, qty in meal_plan.items())
-    base_w = ((unit_net - meal_cost - ((unit_net - meal_cost) * commission)) - p01)
-    anc_net = ((ev_pax * pax_total) / tx) + (trans_flat / tx)
-    unit_w = base_w + (anc_net / (total_rooms * nights))
-    total_w = unit_w * total_rooms * nights
-    gross = adr * total_rooms * nights
-    eff = (total
+    base_w =

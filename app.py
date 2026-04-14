@@ -10,7 +10,6 @@ st.markdown("""
     .status-box { padding: 15px; border-radius: 12px; text-align: center; font-size: 1.3rem; font-weight: bold; margin-bottom: 10px; }
     .exposure-bar { padding: 10px; border-radius: 8px; font-weight: bold; text-align: center; color: white; margin-top: 5px; line-height: 1.2; }
     [data-testid="stSidebar"] { background-color: #f1f4f9; border-right: 1px solid #ddd; }
-    .stNumberInput { margin-bottom: -10px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -88,7 +87,7 @@ all_r = []
 
 def draw_s(title, key, d_adr, d_fl, color, is_ota=False):
     st.markdown(f"<div class='card' style='border-left-color:{color}'>{title}</div>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 1.3, 1.2]) # Corrected ratio for grouping
+    c1, c2, c3 = st.columns([1, 1.3, 1.2])
     
     with c1:
         st.write("**Occupancy**")
@@ -106,4 +105,24 @@ def draw_s(title, key, d_adr, d_fl, color, is_ota=False):
         fl_v = st.number_input("Mkt Floor", value=float(d_fl), key=key+"f")
         mx = {"RO": ro, "BB": bb, "HB": hb}
     
-    res =
+    # This was the fixed line:
+    res = calc_w([s,d,t], adr_v, n, mx, (ota_p if is_ota else 0.0), fl_v)
+    
+    if res:
+        all_r.append(res)
+        with c3:
+            st.metric("Net Wealth / Room", f"{cu} {res['u']:,.2f}")
+            st.markdown(f"<div class='status-box' style='background:{res['b']}; color:white'>{res['l']}</div>", unsafe_allow_html=True)
+            e_col = "#e74c3c" if res['crit'] else "#27ae60"
+            st.markdown(f"<div class='exposure-bar' style='background:{e_col}'>{res['trn']} Room Nights<br>Total Wealth: {cu} {res['tot']:,.0f}</div>", unsafe_allow_html=True)
+    else:
+        with c3: st.info("Input inventory to see analytics...")
+    st.divider()
+
+draw_s("1. Direct FIT Portfolio", "fit", 65, 40, "#3498db")
+draw_s("2. OTA Channels", "ota", 60, 35, "#2ecc71", is_ota=True)
+draw_s("3. Corporate & Government", "corp", 55, 38, "#34495e")
+
+if all_r:
+    fw = sum(r['tot'] for r in all_r)
+    st.markdown(f"<div style='background:#1e3799; padding:25px; border-radius:15px; text-align:center; color:white;'><h3>Portfolio Total Bottom Line</h3><h1 style='font-size:3.5rem; margin:0;'>{cu} {fw:,.2f}</h1></div>", unsafe_allow_html=True)

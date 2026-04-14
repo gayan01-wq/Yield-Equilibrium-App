@@ -65,41 +65,19 @@ with st.sidebar:
     
     m_map = {"RO": 0.0, "BB": m_bb, "HB": m_bb+m_dn, "FB": m_bb+m_ln+m_dn, "SAI": m_sai, "AI": m_ai}
 
-# --- 5. ENGINE WITH SAFETY ---
+# --- 5. ENGINE ---
 def calc_w(rms, adr, n, meals, comm, fl, ev=0.0, tr=0.0):
     tot_rms = sum(rms)
     if tot_rms <= 0: return None
-    
     pax_total = (rms[0]*1 + rms[1]*2 + rms[2]*3)
     pax_r = pax_total / tot_rms
     util = (tot_rms / h_total) * 100
     hurdle = fl * 1.25 if util >= 20.0 else fl
     u_net = adr / tx
-    
     m_sum = 0.0
     for p, q in meals.items():
         if p in m_map and q > 0:
             m_sum += (q / tot_rms) * m_map[p] * pax_r
-            
     unit_w = (u_net - m_sum - ((u_net - m_sum) * comm) - p01) + ((ev*pax_total + tr)/(tot_rms*n*tx))
     tot_w = unit_w * tot_rms * n
-    
-    if unit_w < (hurdle * 0.8) or unit_w <= 0: l, b = "DILUTIVE", "#e74c3c"
-    elif unit_w < hurdle: l, b = "MARGINAL", "#f1c40f"
-    else: l, b = "OPTIMIZED", "#27ae60"
-    
-    return {"u": unit_w, "l": l, "b": b, "tot": tot_w, "trn": tot_rms*n, "crit": unit_w < hurdle}
-
-# --- 6. RENDER ---
-st.markdown(f"<h1 class='main-title'>{hotel_identity.upper()}</h1>", unsafe_allow_html=True)
-all_final_results = [] # Renamed for total clarity
-
-def draw_s(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
-    st.markdown(f"<div class='card' style='border-left-color:{color}'>{title}</div>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 1.8, 1.2]) 
-    
-    with c1:
-        st.write("**Occupancy**")
-        s = st.number_input("SGL", 0, key=key+"s")
-        d = st.number_input("DBL", 0, key=key+"d")
-        t = st.number_input("TPL", 0, key
+    if unit_w < (hurdle * 0.8) or unit_w

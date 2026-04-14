@@ -20,11 +20,17 @@ if not st.session_state["auth_key"]:
             else: st.error("Wrong Key")
     st.stop()
 
-# --- 3. RESET ---
+# --- 3. HARD RESET FUNCTION ---
 def reset_dashboard():
     for k in list(st.session_state.keys()):
+        # Targeted reset for all segment inputs
         if any(x in k for x in ["fit", "ota", "corp", "cgrp", "tnt"]):
-            st.session_state[k] = 1 if "n" in k else 0
+            if "n" in k:
+                st.session_state[k] = 1 # Reset nights to 1
+            elif "a" in k or "f" in k:
+                pass # Keep ADR and Floor as they are defaults
+            else:
+                st.session_state[k] = 0 # Empty all occupancy and meal inputs
     st.rerun()
 
 # --- 4. SIDEBAR ---
@@ -32,16 +38,4 @@ with st.sidebar:
     st.write("### Strategic Architect")
     c_out, c_res = st.columns(2)
     if c_out.button("🔒 Logout"):
-        st.session_state["auth_key"] = False
-        st.rerun()
-    if c_res.button("🔄 Reset"): 
-        reset_dashboard()
-    st.divider()
-    h_name = st.text_input("Hotel", "Wyndham Garden Salalah")
-    h_total = st.number_input("Total Rooms", 1, 5000, 237)
-    cu = st.selectbox("Currency", ["OMR", "USD", "AED", "SAR", "LKR"])
-    p01 = st.number_input("P01 Fee", 0.0, 100.0, 6.90)
-    tx = st.number_input("Tax Divisor", 1.0, 2.5, 1.2327)
-    ota_p = st.slider("OTA %", 0, 50, 18) / 100
-    m_bb = st.number_input("BB Cost", value=2.0)
-    m_dn = st.number_input("DN Cost", value=6.0)
+        st.

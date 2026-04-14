@@ -85,4 +85,23 @@ def draw_s(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
     with c1: s,d,t,n = st.number_input("SGL",0,key=key+"s"), st.number_input("DBL",0,key=key+"d"), st.number_input("TPL",0,key=key+"t"), st.number_input("Nights",1,key=key+"n")
     with c2:
         mc = st.columns(3)
-        mx = {"RO":mc[0].number_input("RO",0
+        mx = {"RO":mc[0].number_input("RO",0,key=key+"ro"),"BB":mc[0].number_input("BB",0,key=key+"bb"),"HB":mc[1].number_input("HB",0,key=key+"hb"),"FB":mc[1].number_input("FB",0,key=key+"fb"),"SAI":mc[2].number_input("SAI",0,key=key+"sai"),"AI":mc[2].number_input("AI",0,key=key+"ai")}
+        adr_v, fl_v = st.number_input("Gross ADR",value=float(d_adr),key=key+"a"), st.number_input("Mkt Floor",value=float(d_fl),key=key+"f")
+        ev, tr = (st.number_input("Event",0.0,key=key+"ev"), st.number_input("Trans",0.0,key=key+"tr")) if is_grp else (0.0, 0.0)
+    res = calc_w([s,d,t], adr_v, n, mx, (ota_p if is_ota else 0.0), fl_v, ev, tr)
+    if res:
+        with c3:
+            st.metric("Net Wealth", f"{cu} {res['u']:,.2f}")
+            st.markdown(f"<div class='status-box' style='background:{res['b']}'>{res['l']}</div><div class='insight-box'>{res['msg']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='exposure-bar' style='background:{'#e74c3c' if res['crit'] else '#27ae60'}'>{res['rn']} RNs</div>", unsafe_allow_html=True)
+            st.session_state[key+"_tot"] = res['tot']
+    st.divider()
+
+draw_s("1. FIT Portfolio", "fit", 65, 40, "#3498db")
+draw_s("2. OTA Channels", "ota", 60, 35, "#2ecc71", True)
+draw_s("3. Corporate/Gov", "corp", 55, 38, "#34495e")
+draw_s("4. Corporate Groups", "cgrp", 50, 30, "#9b59b6", False, True)
+draw_s("5. Tour/Travel", "tnt", 45, 25, "#e67e22", False, True)
+
+tot = sum(st.session_state.get(k+"_tot", 0) for k in ["fit", "ota", "corp", "cgrp", "tnt"])
+st.markdown(f"<div style='background:#1e3799;padding:20px;border-radius:15px;text-align:center;color:white;'><h3>Portfolio Total</h3><h1 style='margin:0;'>{cu} {tot:,.2f}</h1></div>", unsafe_allow_html=True)

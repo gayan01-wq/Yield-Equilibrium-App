@@ -46,21 +46,4 @@ with st.sidebar:
         for k in list(st.session_state.keys()):
             if any(seg in k for seg in ["fit", "ota", "corp", "cgrp", "tnt"]):
                 if k.endswith("n"): st.session_state[k] = 1
-                elif k.endswith("a") or k.endswith("f"): pass
-                else: st.session_state[k] = 0
-        st.rerun()
-
-    # CRISIS TOGGLE
-    st.divider()
-    crisis_active = st.toggle("🚨 ACTIVATE CRISIS MODE", value=False)
-
-    st.divider()
-    st.markdown(f"<p style='font-size: 1.4rem; font-weight: 800; color: #1e3799; margin-bottom: 0px;'>Gayan Nugawela</p>", unsafe_allow_html=True)
-    st.caption("Strategic Revenue Architect")
-    
-    st.divider()
-    hotel_id = st.text_input("Property", "Wyndham Garden Salalah")
-    h_total = st.number_input("Total Inventory", 1, 5000, 237)
-    cu = st.selectbox("Currency", ["OMR", "USD", "AED", "SAR", "LKR"])
-    st.divider()
-    p01, tx = st.number_input("P01 Fee", value=6.90), st.number_input("Tax Divisor", value=1.2327, format
+                elif k.endswith("a

@@ -1,6 +1,6 @@
 import streamlit as st
 
-# --- 1. CONFIG & PREMIUM STYLE ---
+# --- 1. CONFIG & STYLE ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium")
 
 st.markdown("""
@@ -30,7 +30,6 @@ if not st.session_state["auth"]:
 
 # --- 3. HARD RESET LOGIC ---
 def reset_db():
-    # Only reset the occupancy and nights, keep ADR/Floor/Sidebar values
     targets = ["fit", "ota", "corp", "cgrp", "tnt"]
     for k in list(st.session_state.keys()):
         if any(x in k for x in targets):
@@ -66,10 +65,10 @@ with st.sidebar:
     
     m_map = {"RO": 0.0, "BB": m_bb, "HB": m_bb+m_dn, "FB": m_bb+m_ln+m_dn, "SAI": m_sai, "AI": m_ai}
 
-# --- 5. ENGINE WITH SAFETY GUARD ---
+# --- 5. ENGINE WITH SAFETY ---
 def calc_w(rms, adr, n, meals, comm, fl, ev=0.0, tr=0.0):
     tot_rms = sum(rms)
-    if tot_rms <= 0: return None # Safety exit: Prevents division by zero
+    if tot_rms <= 0: return None
     
     pax_total = (rms[0]*1 + rms[1]*2 + rms[2]*3)
     pax_r = pax_total / tot_rms
@@ -93,7 +92,7 @@ def calc_w(rms, adr, n, meals, comm, fl, ev=0.0, tr=0.0):
 
 # --- 6. RENDER ---
 st.markdown(f"<h1 class='main-title'>{hotel_identity.upper()}</h1>", unsafe_allow_html=True)
-all_r = []
+all_final_results = [] # Renamed for total clarity
 
 def draw_s(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
     st.markdown(f"<div class='card' style='border-left-color:{color}'>{title}</div>", unsafe_allow_html=True)
@@ -103,36 +102,4 @@ def draw_s(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
         st.write("**Occupancy**")
         s = st.number_input("SGL", 0, key=key+"s")
         d = st.number_input("DBL", 0, key=key+"d")
-        t = st.number_input("TPL", 0, key=key+"t")
-        n = st.number_input("Nights", 1, key=key+"n")
-        
-    with c2:
-        st.write("**Meal Mix & Rate**")
-        mc = st.columns(3)
-        mx = {
-            "RO": mc[0].number_input("RO", 0, key=key+"ro"),
-            "BB": mc[0].number_input("BB", 0, key=key+"bb"),
-            "HB": mc[1].number_input("HB", 0, key=key+"hb"),
-            "FB": mc[1].number_input("FB", 0, key=key+"fb"),
-            "SAI": mc[2].number_input("SAI", 0, key=key+"sai"),
-            "AI": mc[2].number_input("AI", 0, key=key+"ai")
-        }
-        st.write("---")
-        adr_v = st.number_input("Gross ADR", value=float(d_adr), key=key+"a")
-        fl_v = st.number_input("Mkt Floor", value=float(d_fl), key=key+"f")
-        ev, tr = 0.0, 0.0
-        if is_grp:
-            gc = st.columns(2)
-            ev, tr = gc[0].number_input("Event", 0.0, key=key+"ev"), gc[1].number_input("Trans", 0.0, key=key+"tr")
-    
-    res = calc_w([s,d,t], adr_v, n, mx, (ota_p if is_ota else 0.0), fl_v, ev, tr)
-    
-    if res:
-        all_r.append(res)
-        with c3:
-            st.metric("Net Wealth / Room", f"{cu} {res['u']:,.2f}")
-            st.markdown(f"<div class='status-box' style='background:{res['b']}; color:white'>{res['l']}</div>", unsafe_allow_html=True)
-            e_col = "#e74c3c" if res['crit'] else "#27ae60"
-            st.markdown(f"<div class='exposure-bar' style='background:{e_col}'>{res['trn']} RNs | Total: {res['tot']:,.0f}</div>", unsafe_allow_html=True)
-    else:
-        with c3: st.info("Input inventory to activate analytics...")
+        t = st.number_input("TPL", 0, key

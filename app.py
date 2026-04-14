@@ -30,13 +30,13 @@ if not st.session_state["auth"]:
 
 # --- 3. HARD RESET LOGIC ---
 def reset_db():
-    # Targeted reset for occupancy/nights only
-    reset_list = ["fit", "ota", "corp", "cgrp", "tnt"]
+    # Only clear the occupancy/nights/meals, keep ADR/Floor/Sidebar
+    targets = ["fit", "ota", "corp", "cgrp", "tnt"]
     for k in list(st.session_state.keys()):
-        if any(x in k for x in reset_list):
-            if "n" in k: st.session_state[k] = 1 # Nights back to 1
-            elif "a" in k or "f" in k: pass # Keep ADR and Floor defaults
-            else: st.session_state[k] = 0 # Empty occupancy and meal inputs
+        if any(x in k for x in targets):
+            if "n" in k: st.session_state[k] = 1
+            elif "a" in k or "f" in k: pass 
+            else: st.session_state[k] = 0
     st.rerun()
 
 # --- 4. SIDEBAR ---
@@ -60,32 +60,4 @@ with st.sidebar:
     
     st.write("### 🍽️ Meal Costs")
     m_bb = st.number_input("Breakfast (BB)", value=2.0)
-    m_ln = st.number_input("Lunch (LN)", value=4.0)
-    m_dn = st.number_input("Dinner (DN)", value=6.0)
-    m_sai = st.number_input("SAI Full", value=20.0)
-    m_ai = st.number_input("AI Full", value=27.0)
-    
-    m_map = {
-        "RO": 0.0, "BB": m_bb, "HB": m_bb + m_dn, 
-        "FB": m_bb + m_ln + m_dn, "SAI": m_sai, "AI": m_ai
-    }
-
-# --- 5. ENGINE ---
-def calc_w(rms, adr, n, meals, comm, fl, ev=0.0, tr=0.0):
-    tot_rms = sum(rms)
-    if tot_rms <= 0: return None
-    pax_total = (rms[0]*1 + rms[1]*2 + rms[2]*3)
-    pax_r = pax_total / tot_rms
-    util = (tot_rms / h_total) * 100
-    hurdle = fl * 1.25 if util >= 20.0 else fl
-    u_net = adr / tx
-    
-    m_sum = 0.0
-    for p, q in meals.items():
-        if p in m_map and q > 0:
-            m_sum += (q / tot_rms) * m_map[p] * pax_r
-            
-    unit_w = (u_net - m_sum - ((u_net - m_sum) * comm) - p01) + ((ev*pax_total + tr)/(tot_rms*n*tx))
-    tot_w = unit_w * tot_rms * n
-    
-    if unit_w < (hurdle * 0.8) or unit_w <= 0: l, b = "D
+    m_ln = st.number_input("Lunch (LN)", value=4

@@ -1,7 +1,7 @@
 import streamlit as st
 
 # --- 1. CONFIG & STYLE ---
-st.set_page_config(layout="wide", page_title="Equilibrium Engine")
+st.set_page_config(layout="wide", page_title="Yield Equilibrium")
 
 st.markdown("""
 <style>
@@ -13,8 +13,10 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. AUTH ---
-if "auth" not in st.session_state: st.session_state["auth"] = False
+# --- 2. AUTHENTICATION ---
+if "auth" not in st.session_state: 
+    st.session_state["auth"] = False
+
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     with st.form("login"):
@@ -28,13 +30,13 @@ if not st.session_state["auth"]:
 
 # --- 3. RESET LOGIC ---
 def reset_db():
-    # Targeted reset for segment keys only
-    reset_targets = ["fit", "ota", "corp", "cgrp", "tnt"]
+    # Targeted reset for occupancy/nights, keep ADR/Floor defaults
+    reset_list = ["fit", "ota", "corp", "cgrp", "tnt"]
     for k in list(st.session_state.keys()):
-        if any(x in k for x in reset_targets):
-            if "n" in k: st.session_state[k] = 1 # Reset nights to 1
-            elif "a" in k or "f" in k: pass # Keep ADR and Floor
-            else: st.session_state[k] = 0 # Empty occupancy and meals
+        if any(x in k for x in reset_list):
+            if "n" in k: st.session_state[k] = 1
+            elif "a" in k or "f" in k: pass 
+            else: st.session_state[k] = 0
     st.rerun()
 
 # --- 4. SIDEBAR ---
@@ -107,15 +109,16 @@ def draw_s(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
         n = st.number_input("Nights", 1, key=key+"n")
         
     with c2:
-        st.write("**Meal Basis & Rate**")
-        m_cols = st.columns(3)
-        ro = m_cols[0].number_input("RO", 0, key=key+"ro")
-        bb = m_cols[0].number_input("BB", 0, key=key+"bb")
-        hb = m_cols[1].number_input("HB", 0, key=key+"hb")
-        fb = m_cols[1].number_input("FB", 0, key=key+"fb")
-        sai = m_cols[2].number_input("SAI", 0, key=key+"sai")
-        ai = m_cols[2].number_input("AI", 0, key=key+"ai")
-        
+        st.write("**Meal Mix & Rate**")
+        mc = st.columns(3)
+        mx = {
+            "RO": mc[0].number_input("RO", 0, key=key+"ro"),
+            "BB": mc[0].number_input("BB", 0, key=key+"bb"),
+            "HB": mc[1].number_input("HB", 0, key=key+"hb"),
+            "FB": mc[1].number_input("FB", 0, key=key+"fb"),
+            "SAI": mc[2].number_input("SAI", 0, key=key+"sai"),
+            "AI": mc[2].number_input("AI", 0, key=key+"ai")
+        }
         st.write("---")
         adr_v = st.number_input("Gross ADR", value=float(d_adr), key=key+"a")
         fl_v = st.number_input("Mkt Floor", value=float(d_fl), key=key+"f")
@@ -124,7 +127,6 @@ def draw_s(title, key, d_adr, d_fl, color, is_ota=False, is_grp=False):
             gc = st.columns(2)
             ev = gc[0].number_input("Event/Pax", 0.0, key=key+"ev")
             tr = gc[1].number_input("Trans. Fee", 0.0, key=key+"tr")
-        mx = {"RO":ro, "BB":bb, "HB":hb, "FB":fb, "SAI":sai, "AI":ai}
     
     res = calc_w([s,d,t], adr_v, n, mx, (ota_p if is_ota else 0.0), fl_v, ev, tr)
     

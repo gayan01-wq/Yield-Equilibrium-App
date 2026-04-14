@@ -31,14 +31,17 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. HARD RESET LOGIC ---
+# --- 3. HARD RESET LOGIC (Fixed for Number Inputs) ---
 def reset_db():
     targets = ["fit", "ota", "corp", "cgrp", "tnt"]
-    for k in list(st.session_state.keys()):
+    for k in st.session_state.keys():
         if any(seg in k for seg in targets):
-            if k.endswith("n"): st.session_state[k] = 1 # Nights
-            elif k.endswith("a") or k.endswith("f"): pass # Keep Defaults
-            else: st.session_state[k] = 0 # Reset Occupancy/Meals
+            if k.endswith("n"): # Nights
+                st.session_state[k] = 1
+            elif k.endswith("a") or k.endswith("f"): # ADR and Floor
+                pass # Keep defaults
+            else:
+                st.session_state[k] = 0 # Reset occupancy and meal counts
     st.rerun()
 
 # --- 4. SIDEBAR ---
@@ -66,11 +69,8 @@ with st.sidebar:
     ota_p = st.slider("OTA Comm %", 0, 50, 18) / 100
     
     st.write("### 🍽️ Meal Unit Costs")
-    m_bb = st.number_input("BB", 0.0, 50.0, 2.0)
-    m_ln = st.number_input("LN", 0.0, 50.0, 4.0)
-    m_dn = st.number_input("DN", 0.0, 50.0, 6.0)
-    m_sai = st.number_input("SAI", 0.0, 100.0, 20.0)
-    m_ai = st.number_input("AI", 0.0, 100.0, 27.0)
+    m_bb, m_ln, m_dn = st.number_input("BB", 0.0, 50.0, 2.0), st.number_input("LN", 0.0, 50.0, 4.0), st.number_input("DN", 0.0, 50.0, 6.0)
+    m_sai, m_ai = st.number_input("SAI", 0.0, 100.0, 20.0), st.number_input("AI", 0.0, 100.0, 27.0)
     
     m_map = {"RO": 0.0, "BB": m_bb, "HB": m_bb+m_dn, "FB": m_bb+m_ln+m_dn, "SAI": m_sai, "AI": m_ai}
 
@@ -84,20 +84,21 @@ def calc_w(rms, adr, n, meals, comm, fl, ev=0.0, tr=0.0):
     hurdle = fl * 1.25 if util >= 20.0 else fl
     u_net = adr / tx
     
-    m_cost = 0.0
+    total_meal_cost = 0.0
     for p, qty in meals.items():
-        if qty > 0: m_cost += (qty / tot_rms) * m_map[p] * pax_ratio
+        if qty > 0:
+            total_meal_cost += (qty / tot_rms) * m_map[p] * pax_ratio
             
-    unit_w = (u_net - m_cost - ((u_net - m_cost) * comm) - p01) + ((ev * pax_ratio) / (n * tx)) + (tr / (tot_rms * n * tx))
-    tot_w = unit_w * tot_rms * n
+    unit_w = (u_net - total_meal_cost - ((u_net - total_meal_cost) * comm) - p01) + ((ev * pax_ratio) / (n * tx)) + (tr / (tot_rms * n * tx))
+    total_w = unit_w * tot_rms * n
     
     if unit_w < (hurdle * 0.95): l, b = "DILUTIVE", "#e74c3c"
     elif unit_w < hurdle: l, b = "MARGINAL", "#f1c40f"
     else: l, b = "OPTIMIZED", "#27ae60"
     
-    return {"u": unit_w, "l": l, "b": b, "tot": tot_w, "rn": tot_rms*n, "crit": unit_w < hurdle}
+    return {"u": unit_w, "l": l, "b": b, "tot": total_w, "rn": tot_rms*n, "crit": unit_w < hurdle}
 
-# --- 6. RENDER HEADER & PILLARS ---
+# --- 6. RENDER BEAUTIFIED HEADER & PILLARS ---
 st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM</h1>", unsafe_allow_html=True)
 st.markdown(f"<p class='sub-header'>{hotel_id.upper()} • STRATEGIC PORTFOLIO ANALYTICS</p>", unsafe_allow_html=True)
 

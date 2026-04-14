@@ -1,5 +1,5 @@
 import streamlit as st
-st.set_page_config(layout="wide", page_title="Yield Equilibrium")
+st.set_page_config(layout="wide",page_title="Yield Equilibrium")
 st.markdown("""<style>.block-container{padding-top:1rem!important}.main-title{font-size:2.5rem!important;font-weight:900;color:#1e3799;text-align:center;margin-top:-10px}.sub-header{font-size:1rem;text-align:center;color:#4a69bd;font-weight:600;margin-bottom:5px}.copy-text{text-align:center;font-size:0.75rem;color:#7f8c8d;margin-bottom:15px}.pillar-box{background:#fff;padding:12px;border-radius:10px;border-top:4px solid #1e3799;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,0.05);min-height:100px}.pillar-box h4{color:#1e3799;font-size:0.9rem;margin:0}.card{padding:12px;border-radius:10px;margin-bottom:10px;border-left:10px solid;font-weight:bold;background:#fcfcfc}.pricing-row{background:#f1f4f9;padding:10px;border-radius:8px;margin-top:8px;border:1px solid #1e3799}.pricing-header{background:#1e3799;color:white;padding:3px 10px;border-radius:5px 5px 0 0;font-size:0.8rem;font-weight:bold;margin-bottom:5px}.status-box{padding:12px;border-radius:12px;text-align:center;font-size:1.3rem;font-weight:bold;color:white;margin-bottom:8px}.exposure-bar{padding:8px;border-radius:6px;font-weight:bold;text-align:center;color:#1e3799;background:#ffc107;margin-top:6px;font-size:0.85rem}div.stButton>button:first-child[aria-label="🔄 Empty Data"]{background:#4b6584!important;color:white!important}[data-testid="stSidebar"]{background:#f1f4f9;border-right:2px solid #3498db}</style>""",unsafe_allow_html=True)
 if "auth" not in st.session_state:st.session_state["auth"]=False
 if not st.session_state["auth"]:
@@ -18,7 +18,7 @@ with st.sidebar:
   for k in list(st.session_state.keys()):
    if any(s in k for s in ["fit","ota","corp","cgrp","tnt"]):st.session_state[k]=1 if k.endswith("n") else 0
   st.rerun()
- st.divider();crisis=st.toggle("🚨 ACTIVATE CRISIS MODE",False);st.divider()
+ st.divider();cris=st.toggle("🚨 CRISIS MODE",False);st.divider()
  st.markdown("<p style='font-size:1.1rem;font-weight:800;color:#1e3799;margin:0;'>Gayan Nugawela</p><p style='font-size:0.75rem;'>Strategic Revenue Architect</p>",unsafe_allow_html=True);st.divider()
  hotel=st.text_input("Property","Wyndham Garden Salalah");h_tot=st.number_input("Inventory",1,5000,237)
  curs=["OMR","AED","SAR","KWD","BHD","QAR","EGP","JOD","LKR","INR","THB","SGD","MYR","CNY","JPY","EUR","GBP","USD"]
@@ -31,20 +31,20 @@ def calc_w(rms,adr,n,meals,comm,fl,mice=0.0,trans=0.0):
  if tot_r<=0:return None
  px_r=(rms[0]*1+rms[1]*2+rms[2]*3)/tot_r;u_n=adr/tx;m_c=sum((qty/tot_r)*m_m[p]*px_r for p,qty in meals.items() if qty>0)
  unit_w=(u_n-m_c-((u_n-m_c)*comm)-p01)+((mice*px_r)/(n*tx));total_w=(unit_w*tot_r*n)+(trans/tx);d_u=total_w/(tot_r*n)
- if crisis:
-  if d_u>0:l,b,msg=("<b>ACCEPT</b>","##27ae60",f"<b>CRISIS SURVIVAL:</b> Covers variable costs and contributes {cu} {d_u:,.2f} to fixed overheads.")
-  else:l,b,msg=("<b>REJECT</b>","#e74c3c",f"<b>CASH DRAIN:</b> Business results in a net loss of {cu} {abs(total_w):,.0f}. Stop sale immediately.")
+ if cris:
+  if d_u>0:l,b,msg=("<b>ACCEPT</b>","#27ae60",f"<b>CRISIS SURVIVAL:</b> Covers variable costs and contributes {cu} {d_u:,.2f} to overheads.")
+  else:l,b,msg=("<b>REJECT</b>","#e74c3c",f"<b>CASH DRAIN:</b> Net loss of {cu} {abs(total_w):,.0f}.")
  else:
   hrd=fl*1.25 if (tot_r/h_tot)>=0.2 else fl
-  if d_u<(hrd*0.95):l,b,msg=("<b>DILUTIVE</b>","#e74c3c",f"<b>REJECT:</b> Rate is below floor. Accepting this will lower your ADR without enough volume to justify the cost.")
-  elif d_u<hrd:l,b,msg=("<b>MARGINAL</b>","#ff9800",f"<b>FILL ROOMS:</b> Rate is slightly below target. Only accept if occupancy is low and no FIT displacement is expected.")
-  else:l,b,msg=("<b>OPTIMIZED</b>","#27ae60",f"<b>ACCEPT:</b> High-yield business. This contributes maximum bankable wealth to the property.")
+  if d_u<(hrd*0.95):l,b,msg=("<b>DILUTIVE</b>","#e74c3c",f"<b>REJECT:</b> Rate lowers ADR without enough volume.")
+  elif d_u<hrd:l,b,msg=("<b>MARGINAL</b>","#ff9800",f"<b>FILL ROOMS:</b> Accept only if no FIT displacement.")
+  else:l,b,msg=("<b>OPTIMIZED</b>","#27ae60",f"<b>ACCEPT:</b> High-yield bankable wealth.")
  return {"u":d_u,"l":l,"b":b,"tot":total_w,"rn":tot_r*n,"msg":msg}
 st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM</h1>",unsafe_allow_html=True);st.markdown(f"<p class='sub-header'>{hotel.upper()} • STRATEGIC ANALYTICS</p><p class='copy-text'>© 2026 Gayan Nugawela. All Rights Reserved.</p>",unsafe_allow_html=True)
-cp1,cp2,cp3=st.columns(3)
-with cp1:st.markdown("<div class='pillar-box'><h4>1. Wealth Stripping</h4><p style='font-size:0.8rem;'>Removing taxes and variable costs per pax.</p></div>",unsafe_allow_html=True)
-with cp2:st.markdown("<div class='pillar-box'><h4>2. Capacity Sensitivity</h4><p style='font-size:0.8rem;'>Dynamic hurdles triggered at 20% utilization.</p></div>",unsafe_allow_html=True)
-with cp3:st.markdown("<div class='pillar-box'><h4>3. Efficiency Indexing</h4><p style='font-size:0.8rem;'>Measuring variance against operational breakeven.</p></div>",unsafe_allow_html=True)
+c_p1,c_p2,c_p3=st.columns(3)
+with c_p1:st.markdown("<div class='pillar-box'><h4>1. Wealth Stripping</h4><p style='font-size:0.8rem;'>Removing taxes and variable costs per pax.</p></div>",unsafe_allow_html=True)
+with c_p2:st.markdown("<div class='pillar-box'><h4>2. Capacity Sensitivity</h4><p style='font-size:0.8rem;'>Dynamic hurdles triggered at 20% utilization.</p></div>",unsafe_allow_html=True)
+with c_p3:st.markdown("<div class='pillar-box'><h4>3. Efficiency Indexing</h4><p style='font-size:0.8rem;'>Measuring variance against operational breakeven.</p></div>",unsafe_allow_html=True)
 def draw_s(title,key,d_adr,d_fl,color,is_o=False,is_g=False):
  st.markdown(f"<div class='card' style='border-left-color:{color}'>{title}</div>",unsafe_allow_html=True);c1,c2,c3=st.columns([1,1.8,1.2]) 
  with c1:s,d,t,n=st.number_input("SGL",0,key=key+"s"),st.number_input("DBL",0,key=key+"d"),st.number_input("TPL",0,key=key+"t"),st.number_input("Nights",1,key=key+"n")
@@ -60,6 +60,6 @@ def draw_s(title,key,d_adr,d_fl,color,is_o=False,is_g=False):
   with c3:
    st.metric("Net Wealth",f"{cu} {res['u']:,.2f}");st.markdown(f"<div class='status-box' style='background:{res['b']}'>{res['l']}</div>",unsafe_allow_html=True);st.markdown(f"<p style='font-size:0.85rem;'>{res['msg']}</p>",unsafe_allow_html=True);st.markdown(f"<div class='exposure-bar'>{res['rn']} RNs | Total: {res['tot']:,.0f}</div>",unsafe_allow_html=True);st.session_state[key+"_t"]=res['tot']
  st.divider()
-draw_s("1. FIT Portfolio","fit",65,40,"#3498db");draw_s("2. OTA Channels","ota",60,35,"#2ecc71",True);draw_s("3. Corporate/Gov","corp",55,38,"#34495e");draw_s("4. Corp Groups","cgrp",50,30,"#9b59b6",False,True);draw_s("5. Tour & Travel","tnt",45,25,"#e67e22",False,True)
+draw_s("1. Direct FIT Portfolio","fit",65,40,"#3498db");draw_s("2. OTA Channels","ota",60,35,"#2ecc71",True);draw_s("3. Corporate/Gov","corp",55,38,"#34495e");draw_s("4. Corp Groups","cgrp",50,30,"#9b59b6",False,True);draw_s("5. Tour & Travel","tnt",45,25,"#e67e22",False,True)
 tw=sum(st.session_state.get(k+"_t",0) for k in ["fit","ota","corp","cgrp","tnt"])
-st.markdown(f"<div style='background:#1e3799;padding:20px;border-radius:12px;text-align:center;color:white;'><h3>Portfolio Total: {cu} {tw:,.2f}</h3></div>
+st.markdown(f"<div style='background:#1e3799;padding:20px;border-radius:12px;text-align:center;color:white;'><h3>Portfolio Total: {cu} {tw:,.2f}</h3></div>",unsafe_allow_html=True)

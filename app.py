@@ -8,7 +8,6 @@ st.markdown("""
     .main-title { font-size: 2.8rem !important; font-weight: 900; color: #1e3799; text-align: center; margin-top: -10px; }
     .sub-header { font-size: 1rem; text-align: center; color: #4a69bd; font-weight: 600; margin-bottom: 15px; }
     .pillar-box { background-color: #fff; padding: 12px; border-radius: 10px; border-top: 4px solid #1e3799; text-align: center; box-shadow: 0px 4px 10px rgba(0,0,0,0.05); min-height: 100px; }
-    .pillar-box h4 { color: #1e3799; font-size: 0.9rem; margin-top:0; }
     .card { padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 10px solid; font-weight: bold; background-color: #fcfcfc; }
     .pricing-row { background-color: #f1f4f9; padding: 10px; border-radius: 8px; margin-top: 8px; border: 1px dashed #1e3799; }
     .status-box { padding: 12px; border-radius: 12px; text-align: center; font-size: 1.3rem; font-weight: bold; color: white; margin-bottom: 8px; }
@@ -25,15 +24,4 @@ if not st.session_state["auth"]:
     with st.form("login"):
         pwd = st.text_input("Access Key", type="password")
         if st.form_submit_button("Unlock"):
-            if pwd == "Gayan2026": st.session_state["auth"] = True; st.rerun()
-            else: st.error("Denied")
-    st.stop()
-
-# --- 3. SIDEBAR ---
-with st.sidebar:
-    st.markdown("<h2 style='color:#1e3799;'>Control Center</h2>", unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
-    if c1.button("🔒 Sign Out"): st.session_state["auth"] = False; st.rerun()
-    if c2.button("🔄 Empty Data"):
-        for k in list(st.session_state.keys()):
-            if any(s in k for s in ["fit", "ota", "corp", "cgrp", "tnt"]): st.session_state[k
+            if pwd == "Gayan2026": st.session

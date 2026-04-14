@@ -60,6 +60,6 @@ def draw_s(title,key,d_adr,d_fl,color,is_o=False,is_g=False):
   with c3:
    st.metric("Net Wealth",f"{cu} {res['u']:,.2f}");st.markdown(f"<div class='status-box' style='background:{res['b']}'>{res['l']}</div>",unsafe_allow_html=True);st.markdown(f"<p style='font-size:0.85rem;'>{res['msg']}</p>",unsafe_allow_html=True);st.markdown(f"<div class='exposure-bar'>{res['rn']} RNs | Total: {res['tot']:,.0f}</div>",unsafe_allow_html=True);st.session_state[key+"_t"]=res['tot']
  st.divider()
-draw_s("1. Direct|FIT ","fit",65,40,"#3498db");draw_s("2. OTA Channels","ota",60,35,"#2ecc71",True);draw_s("3. Corporate/Gov","corp",55,38,"#34495e");draw_s("4. Corporate Groups","cgrp",50,30,"#9b59b6",False,True);draw_s("5. Group Tour & Travel","tnt",45,25,"#e67e22",False,True)
+draw_s("1. Direct / FIT ","fit",65,40,"#3498db");draw_s("2. OTA Channels","ota",60,35,"#2ecc71",True);draw_s("3. Corporate/Gov","corp",55,38,"#34495e");draw_s("4. Corporate Groups","cgrp",50,30,"#9b59b6",False,True);draw_s("5. Group Tour & Travel","tnt",45,25,"#e67e22",False,True)
 tw=sum(st.session_state.get(k+"_t",0) for k in ["fit","ota","corp","cgrp","tnt"])
 st.markdown(f"<div style='background:#1e3799;padding:20px;border-radius:12px;text-align:center;color:white;'><h3>Portfolio Total: {cu} {tw:,.2f}</h3></div>",unsafe_allow_html=True)

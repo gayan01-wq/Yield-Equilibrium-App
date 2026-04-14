@@ -1,58 +1,58 @@
 import streamlit as st
 
-# --- 1. CONFIG & STYLE ---
+# --- 1. CONFIG & PREMIUM STYLING ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium")
 
 st.markdown("""
-<style>
-    .main-title { font-size: 2.5rem; font-weight: 900; color: #1e3799; text-align: center; margin-bottom: 20px; }
-    .card { padding: 12px; border-radius: 10px; margin-bottom: 15px; border-left: 10px solid; font-weight: bold; background: #fcfcfc; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
-    .status-box { padding: 15px; border-radius: 12px; text-align: center; font-size: 1.3rem; font-weight: bold; margin-bottom: 10px; }
-    .exposure-bar { padding: 10px; border-radius: 8px; font-weight: bold; text-align: center; color: white; margin-top: 5px; line-height: 1.2; }
-    [data-testid="stSidebar"] { background-color: #f1f4f9; border-right: 1px solid #ddd; }
-</style>
+    <style>
+    .main-title { font-size: 3rem !important; font-weight: 900; color: #1e3799; text-align: center; margin-bottom: 0px; }
+    .sub-header { font-size: 1.1rem; text-align: center; color: #4a69bd; font-weight: 600; margin-bottom: 20px; letter-spacing: 1px; }
+    .card { padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 10px solid; font-weight: bold; background-color: #fcfcfc; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
+    .status-box { padding: 20px; border-radius: 15px; text-align: center; font-size: 1.5rem; font-weight: bold; margin: 10px 0; border: 1px solid rgba(0,0,0,0.1); }
+    .exposure-bar { padding: 10px; border-radius: 8px; font-weight: bold; text-align: center; color: white; margin-top: 5px; line-height: 1.2; font-size: 0.9rem; }
+    [data-testid="stSidebar"] { background-color: #f1f4f9; border-right: 2px solid #3498db; }
+    </style>
 """, unsafe_allow_html=True)
 
-# --- 2. AUTH ---
-if "auth" not in st.session_state: st.session_state["auth"] = False
-if not st.session_state["auth"]:
+# --- 2. AUTHENTICATION ---
+if "auth_key" not in st.session_state:
+    st.session_state["auth_key"] = False
+
+if not st.session_state["auth_key"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
-    with st.form("login"):
+    with st.form("login_form"):
         pwd = st.text_input("Access Key", type="password")
-        if st.form_submit_button("Unlock"):
+        if st.form_submit_button("Unlock Dashboard"):
             if pwd == "Gayan2026":
-                st.session_state["auth"] = True
+                st.session_state["auth_key"] = True
                 st.rerun()
-            else: st.error("Access Denied")
+            else: st.error("Invalid Key")
     st.stop()
 
-# --- 3. RESET ---
-def reset_db():
-    for k in list(st.session_state.keys()):
-        if any(x in k for x in ["fit", "ota", "corp", "cgrp", "tnt"]):
-            if "n" in k: st.session_state[k] = 1
-            elif "a" in k or "f" in k: pass 
-            else: st.session_state[k] = 0
+# --- 3. RESET LOGIC ---
+def reset_dashboard():
+    # Targeted reset of occupancy and nights across all segments
+    keys_to_clear = ["fit", "ota", "corp", "cgrp", "tnt"]
+    for key in list(st.session_state.keys()):
+        if any(prefix in key for prefix in keys_to_clear):
+            if "n" in key: st.session_state[key] = 1
+            elif "adr" not in key and "fl" not in key: st.session_state[key] = 0
     st.rerun()
 
-# --- 4. SIDEBAR ---
+# --- 4. SIDEBAR CONFIG ---
 with st.sidebar:
-    st.markdown("<h3 style='color: #1e3799; margin-bottom: 0;'>Strategic Architect</h3>", unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
-    if c1.button("🔒 Logout"):
-        st.session_state["auth"] = False
-        st.rerun()
-    if c2.button("🔄 EMPTY ALL"): reset_db()
-    
+    st.markdown(f"<p style='font-size: 1.4rem; font-weight: 800; color: #1e3799; margin-bottom: 0px;'>Gayan Nugawela</p>", unsafe_allow_html=True)
+    st.caption("Strategic Revenue Architect")
     st.divider()
-    h_name = st.text_input("Hotel Identity", "Wyndham Garden Salalah")
-    h_total = st.number_input("Total Inventory", 1, 5000, 237)
-    cu = st.selectbox("Currency", ["OMR", "USD", "AED", "SAR", "LKR"])
-    st.divider()
-    p01 = st.number_input("P01 Fixed Fee", 0.0, 100.0, 6.90)
-    tx = st.number_input("Tax Divisor", 1.0, 3.0, 1.2327)
-    ota_p = st.slider("OTA Commission %", 0, 50, 18) / 100
     
-    st.write("### 🍽️ Meal Allocations")
-    m_bb = st.number_input("Breakfast (BB)", value=2.0)
-    m_ln = st.number_input("Lunch (LN)", value=4.0)
+    col_out, col_res = st.columns(2)
+    with col_out:
+        if st.button("🔒 Logout"):
+            st.session_state["auth_key"] = False
+            st.rerun()
+    with col_res:
+        if st.button("🔄 EMPTY ALL"):
+            reset_dashboard()
+
+    st.divider()
+    hotel_name = st

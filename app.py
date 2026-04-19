@@ -22,7 +22,7 @@ with st.sidebar:
  st.divider();cris=st.toggle("🚨 ACTIVATE CRISIS MODE",False);st.divider()
  hotel=st.text_input("Property","Wyndham Garden Salalah");h_tot=st.number_input("Inventory",1,5000,237)
  curs=["OMR","AED","SAR","KWD","BHD","QAR","EGP","JOD","LKR","INR","THB","SGD","MYR","CNY","JPY","EUR","GBP","USD"]
- cu=st.selectbox("Currency",curs);p01,tx=st.number_input("P01 Fee",6.90),st.number_input("Tax Divisor",1.2327,format="%.4f");ota_p=st.slider("OTA Comm %",0,50,18)/100
+ cu=st.selectbox("Currency",curs);p01,tx=st.number_input("P01 Fee",0.00),st.number_input("Tax Divisor",1.2327,format="%.4f");ota_p=st.slider("OTA Comm %",0,50,18)/100
  st.write("### 🍽️ Meal Allocation")
  m_bb,m_ln,m_dn=st.number_input("BB per pax",0.0),st.number_input("LN per pax",0.0),st.number_input("DN per pax",0.0)
  m_sai,m_ai=st.number_input("SAI Full",5.0),st.number_input("AI Full",5.0);m_m={"RO":0.0,"BB":m_bb,"HB":m_bb+m_dn,"FB":m_bb+m_ln+m_dn,"SAI":m_sai,"AI":m_ai}

@@ -29,7 +29,7 @@ if not st.session_state["auth"]:
             else: st.error("Denied")
     st.stop()
 
-# --- 3. SIDEBAR (REFINED LAYOUT) ---
+# --- 3. SIDEBAR (PILLAR 01 & 03) ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
     if st.button("☢️ Nuclear Data Reset"):
@@ -40,9 +40,9 @@ with st.sidebar:
     rk = str(st.session_state["reset_key"]) 
     
     st.markdown("### 🏨 Pillar 01: Universal Search")
-    # Hotel and City Manual Entry
-    hotel_name = st.text_input("🏨 Hotel Name (Google Entry)", "Wyndham Garden Salalah", key="h"+rk)
-    city_name = st.text_input("📍 City/Location (Google Entry)", "Salalah, Oman", key="c"+rk)
+    # Global Entry for Hotel and City
+    hotel_name = st.text_input("🏨 Hotel Name (Google Search)", "Wyndham Garden Salalah", key="h"+rk)
+    city_name = st.text_input("📍 City/Location (Google Search)", "Salalah, Oman", key="c"+rk)
     
     st.divider()
     # Stay Dates & Night Calculation
@@ -53,10 +53,10 @@ with st.sidebar:
     
     st.divider()
     st.markdown("### 📊 Operational Parameters")
-    # FIXED LINE 63: Closed all parentheses and arguments
     otb_occ = st.slider("OTB Occupancy %", 0, 100, 15, key="otb"+rk)
     avg_hist = st.slider("Historical Avg %", 0, 100, 45, key="hist"+rk)
     
+    # Velocity Logic
     v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 20) else 1.0
     
     ota_comm = st.slider("OTA Commission %", 0, 40, 18, key="comm"+rk)
@@ -80,4 +80,57 @@ def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.18, laundry=0, mice=0, t
     unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
     total_w = (unit_w * rn) + (trans / tx_div)
     final_yield = total_w / rn
-    status, color = ("OPTIMIZED", "#27ae60") if final_yield >=
+    
+    # FIXED LINE 83: Complete conditional logic
+    status, color = ("OPTIMIZED", "#27ae60") if final_yield >= hurdle else ("DILUTIVE", "#e74c3c")
+    return {"w": final_yield, "st": status, "cl": color, "rn": rn, "total": total_w}
+
+# --- 5. MAIN DASHBOARD ---
+st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER DASHBOARD</h1>", unsafe_allow_html=True)
+
+# Google Intelligence Feed Sync
+st.markdown(f"""<div class='google-window'>
+    <b style='color:#4285f4;'>🌐 Google Intelligence Feed: {hotel_name} | {city_name}</b><br>
+    • <b>Stay Period:</b> {d1} to {d2} ({m_nights} Nights) | <b>Velocity:</b> {v_mult}x pressure active
+</div>""", unsafe_allow_html=True)
+
+def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=False):
+    rk = str(st.session_state["reset_key"])
+    st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
+    c_in, c_res = st.columns([2.6, 1])
+    
+    with c_in:
+        st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+        r1, r2, r3, r4 = st.columns(4)
+        sgl = r1.number_input("SGL", 0, key="s"+key+rk)
+        dbl = r2.number_input("DBL", 0, key="d"+key+rk)
+        applied_adr = r3.number_input("Rate", value=float(suggest_adr * v_mult), key="a"+key+rk)
+        floor = r4.number_input("Floor", value=float(floor_def), key="f"+key+rk)
+        
+        m_row = st.columns(6)
+        m_ro = m_row[0].number_input("RO", 0, key="ro"+key+rk); m_bb = m_row[1].number_input("BB", 0, key="bb"+key+rk)
+        m_hb = m_row[2].number_input("HB", 0, key="hb"+key+rk); m_fb = m_row[3].number_input("FB", 0, key="fb"+key+rk)
+        m_sai = m_row[4].number_input("SAI", 0, key="sai"+key+rk); m_ai = m_row[5].number_input("AI", 0, key="ai"+key+rk)
+        
+        l_c, m_c, t_c = 0.0, 0.0, 0.0
+        if group:
+            g_row = st.columns(3)
+            m_c = g_row[0].number_input("MICE/Pax", 0.0, key="mice"+key+rk)
+            t_c = g_row[1].number_input("Trans/Fixed", 0.0, key="tr"+key+rk)
+            l_c = g_row[2].number_input("Laundry/Pax", 0.0, key="ln"+key+rk)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    res = run_yield([sgl, dbl], m_nights, applied_adr, {"RO":m_ro,"BB":m_bb,"HB":m_hb,"FB":m_fb,"SAI":m_sai,"AI":m_ai}, 
+                    floor, (ota_comm/100 if is_ota else 0.0), l_c, m_c, t_c)
+    if res:
+        with c_res:
+            st.metric("Net Yield", f"OMR {res['w']:,.2f}")
+            st.write(f"📊 **RN:** {res['rn']}")
+            st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
+
+# DRAW SEGMENTS
+draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
+draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
+draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
+draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
+draw_seg("5. TOUR & TRAVEL", "tnt", 45, 25, "#e67e22", group=True)

@@ -75,17 +75,4 @@ else:
             "HB": st.number_input("HB Cost", 0.0),
             "FB": st.number_input("FB Cost", 0.0),
             "SAI": st.number_input("SAI Cost", 5.0),
-            "AI": st.number_input("AI Cost", 5.0)
-        }
-
-    # --- CALCULATIONS ---
-    def calc_w(rms, adr, n, meals, comm, fl, mice=0.0, trans=0.0):
-        tot_r = sum(rms)
-        if tot_r <= 0: return None
-        
-        # Calculate pax ratios
-        px_r = (rms[0]*1 + rms[1]*2 + rms[2]*3) / tot_r
-        u_n = adr / tx
-        
-        # Calculate Meal Cost
-        m_c = sum((qty/tot_r) * m_costs[p]
+            "AI": st.number_input("

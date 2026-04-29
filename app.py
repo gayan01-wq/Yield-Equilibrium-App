@@ -33,7 +33,7 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR ---
+# --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS) ---
 with st.sidebar:
     st.markdown("### 👤 System Developer\nGayan Nugawela")
     if st.button("🧹 Clear Global Cache"):
@@ -67,6 +67,46 @@ with st.sidebar:
     ota_comm = st.slider("OTA Commission %", 0, 40, 15, key="ota_v_"+rk)
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk)
 
+    # RESTORED: Fixed the unclosed dictionary here
     st.markdown("### 🍽️ Unit Costs (Per Person Basis)")
     meal_costs = {
-        "RO": 0.
+        "RO": 0.0, 
+        "BB": st.number_input("BB Cost", 0.0, format="%.3f", key="bb_mc_"+rk),
+        "LN": st.number_input("LN Cost", 0.0, format="%.3f", key="ln_mc_"+rk), 
+        "DN": st.number_input("DN Cost", 0.0, format="%.3f", key="dn_mc_"+rk),
+        "SAI": st.number_input("SAI Cost", 0.0, format="%.3f", key="sai_mc_"+rk), 
+        "AI": st.number_input("AI Cost", 0.0, format="%.3f", key="ai_mc_"+rk)
+    }
+
+# --- 4. CALCULATION ENGINE ---
+def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=0, mice=0, trans=0):
+    tr = sum(rms); rn = tr * nts
+    if tr <= 0: return None
+    demand_adj = {"Compression (Peak)": 15.0, "High Flow": 5.0, "Standard": 0.0, "Distressed": -5.0}
+    eff_hurdle = hurdle + demand_adj.get(demand_type, 0)
+    net_adr = adr / tx_div
+    total_m = sum(qty * meal_costs.get(p, 0) for p, qty in meals.items())
+    avg_m = (total_m / tr)
+    unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
+    total_w = (unit_w * rn) + (trans / tx_div)
+    if unit_w < eff_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym}{eff_hurdle} hurdle."
+    elif unit_w < (eff_hurdle + 3.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Yield at equilibrium window."
+    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Wealth targets met."
+    if (tr / inventory) >= 0.50: rsn += " | ⚠️ DISPLACEMENT risk."
+    return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w}
+
+# --- 5. DASHBOARD ---
+st.markdown("""
+<div style="text-align: center;">
+    <h1 class='main-title'>DISPLACEMENT ANALYZER</h1>
+    <div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>
+</div>
+""", unsafe_allow_html=True)
+
+def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=False):
+    st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
+    c_in, c_res = st.columns([2.6, 1])
+    with c_in:
+        st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+        r1, r2, r3, r4, r5 = st.columns([0.8,0.8,0.8,1.3,1.3])
+        sgl = r1.number_input("SGL", 0, key=f"s_{key}_{rk}"); dbl = r2.number_input("DBL", 0, key=f"d_{key}_{

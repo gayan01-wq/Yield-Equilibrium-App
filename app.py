@@ -12,11 +12,10 @@ st.markdown("""<style>
 .status-indicator{padding:10px; border-radius:10px; text-align:center; font-weight:900; font-size:1.2rem; color:white; margin-top:10px;}
 .audit-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:12px; text-align:center; font-weight:bold; color:#5f4300; font-size:0.9rem;}
 .theory-box{background:#fdfdfd; padding:25px; border-radius:15px; border:1px solid #dee2e6; margin-top:40px}
-.highlight-text{color:#1e3799; font-weight:bold;}
 [data-testid="stSidebar"]{background:#f1f4f9; border-right:1px solid #dee2e6}
 </style>""", unsafe_allow_html=True)
 
-# --- 2. SESSION STATE & NUCLEAR RESET ---
+# --- 2. SESSION STATE & RESET ---
 if "auth" not in st.session_state: st.session_state["auth"] = False
 if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
 
@@ -43,7 +42,7 @@ with st.sidebar:
     
     st.markdown("### 🏨 Pillar 01: Universal Search")
     hotel_name = st.text_input("🏨 Hotel Name", "Wyndham Garden Salalah", key="h"+rk)
-    city_name = st.text_input("📍 City/Location", "Salalah, Oman", key="c"+rk)
+    city_name = st.text_input("📍 City Search", "Salalah, Oman", key="c"+rk)
     
     d1 = st.date_input("Check-In Date", date.today(), key="d1"+rk)
     d2 = st.date_input("Check-Out Date", date.today(), key="d2"+rk)
@@ -52,7 +51,7 @@ with st.sidebar:
     
     st.divider()
     st.markdown("### 🌐 Pillar 02: Market Sentinel")
-    m_state = st.radio("Market Demand Category", ["Distressed / Crisis", "Stagnant / Recovery", "Peak / Seasonal", "Compression / Sold Out"], index=1, key="ms"+rk)
+    m_state = st.radio("Demand Category", ["Distressed / Crisis", "Stagnant / Recovery", "Peak / Seasonal", "Compression / Sold Out"], index=1, key="ms"+rk)
     m_heat = {"Distressed / Crisis": 0.65, "Stagnant / Recovery": 1.0, "Peak / Seasonal": 1.35, "Compression / Sold Out": 1.65}[m_state]
 
     st.markdown("### 📊 Pillar 03: Velocity")
@@ -70,14 +69,4 @@ with st.sidebar:
     c_hb = st.number_input("HB Cost", 2.5, key="chb"+rk)
     c_fb = st.number_input("FB Cost", 5.0, key="cfb"+rk)
     c_sai = st.number_input("SAI Cost", 7.5, key="csai"+rk)
-    c_ai = st.number_input("AI Cost", 10.0, key="cai"+rk)
-    meal_costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": c_fb, "SAI": c_sai, "AI": c_ai}
-
-# --- 4. GOOGLE INTELLIGENCE LOGIC ---
-intel_db = {
-    "Salalah": {"ev": "Khareef Festival (Monsoon)", "fl": "+18% Surge", "basis": "Weather-Driven Demand"},
-    "Dubai": {"ev": "Shopping Festival / Global Village", "fl": "+25% Global Influx", "basis": "Peak Business Synergy"},
-    "Muscat": {"ev": "Opera House Season", "fl": "+10% Regional Traffic", "basis": "Cultural Tourism Peaks"},
-    "London": {"ev": "Wimbledon / Fashion Week", "fl": "Heathrow Slot Capacity 98%", "basis": "Global Hub Supply Constraints"}
-}
-active_intel = next((v
+    c_ai = st.number_input("AI

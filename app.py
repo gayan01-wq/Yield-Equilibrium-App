@@ -30,7 +30,7 @@ if not st.session_state["auth"]:
             else: st.error("Denied")
     st.stop()
 
-# --- 3. SIDEBAR (THE RESEARCH LEVERS) ---
+# --- 3. SIDEBAR (LEVERS & SLIDERS) ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
     if st.button("☢️ Nuclear Data Reset"):
@@ -46,15 +46,100 @@ with st.sidebar:
     d2 = st.date_input("Check-Out", date.today(), key="d2"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     
-    # NEW: OTA COMMISSION SLIDER
+    # RESTORED: OTA COMMISSION & TAX
     ota_comm_pct = st.slider("OTA Commission %", 0, 40, 18, key="comm"+rk)
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx"+rk)
     p01_fee = st.number_input("P01 Variable Fee", 0.0, value=6.90, key="p01"+rk)
     
     st.markdown("### 📈 Pillar 03: Velocity Valve")
-    # NEW: OTB OCCUPANCY %
+    # RESTORED: PACE SLIDERS
     otb_occ = st.slider("Current OTB Occupancy %", 0, 100, 15, key="otb_occ"+rk)
     avg_hist = st.slider("Historical Avg Occ %", 0, 100, 45, key="hist"+rk)
     
-    # VELOCITY MULTIPLIER LOGIC
-    v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb
+    # FIXED: SYNTAX ERROR ON LINE 60
+    if otb_occ > avg_hist:
+        v_mult = 1.35
+    elif otb_occ < (avg_hist - 20):
+        v_mult = 0.85
+    else:
+        v_mult = 1.0
+    
+    st.write(f"Velocity Multiplier: **{v_mult}x**")
+
+    st.markdown("### 🍽️ Unit Pax Costs")
+    c_bb = st.number_input("BB Cost", 0.0, key="cbb"+rk)
+    c_hb = st.number_input("HB Cost", 2.5, key="chb"+rk)
+    c_fb = st.number_input("FB Cost", 5.0, key="cfb"+rk)
+    c_sai = st.number_input("SAI Cost", 7.5, key="csai"+rk)
+    c_ai = st.number_input("AI Cost", 10.0, key="cai"+rk)
+    meal_unit_costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": c_fb, "SAI": c_sai, "AI": c_ai}
+
+# --- 4. CALCULATION ENGINE ---
+def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.18, laundry=0, mice=0, trans=0):
+    tr = sum(rms)
+    if tr <= 0: return None
+    rn = tr * nts
+    net_adr = adr / tx_div
+    total_meal_cost = sum(qty * meal_unit_costs.get(plan, 0) for plan, qty in meals.items())
+    avg_meal_cost = (total_meal_cost / tr) if tr > 0 else 0
+    
+    # Formula
+    unit_w = (net_adr - avg_meal_cost - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
+    total_w = (unit_w * rn) + (trans / tx_div)
+    final_yield = total_w / rn
+    
+    status, color = ("OPTIMIZED", "#27ae60") if final_yield >= hurdle else ("DILUTIVE", "#e74c3c")
+    return {"w": final_yield, "st": status, "cl": color, "rn": rn, "total": total_w}
+
+# --- 5. MAIN DASHBOARD ---
+st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER DASHBOARD</h1>", unsafe_allow_html=True)
+
+st.markdown(f"""<div class='google-window'>
+    <b>🌐 Google Intelligence Feed: {location}</b> | 📅 Stay: {d1} to {d2} ({m_nights} Nights)<br>
+    • <b>Pillar 02 Scan:</b> High Demand Seasonal Detected | <b>OTB Pace:</b> {otb_occ}% vs {avg_hist}% History
+</div>""", unsafe_allow_html=True)
+
+def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=False):
+    rk = str(st.session_state["reset_key"])
+    st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
+    c_in, c_res = st.columns([2.6, 1])
+    
+    with c_in:
+        st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+        r1, r2, r3, r4 = st.columns(4)
+        sgl = r1.number_input("SGL", 0, key="s"+key+rk)
+        dbl = r2.number_input("DBL", 0, key="d"+key+rk)
+        # Applied Rate linked to the velocity multiplier
+        applied_adr = r3.number_input("Rate", value=float(suggest_adr * v_mult), key="a"+key+rk)
+        floor = r4.number_input("Floor", value=float(floor_def), key="f"+key+rk)
+        
+        st.markdown("<div class='meal-header'>Board Basis (Pax)</div>", unsafe_allow_html=True)
+        m_row = st.columns(6)
+        m_ro = m_row[0].number_input("RO", 0, key="ro"+key+rk); m_bb = m_row[1].number_input("BB", 0, key="bb"+key+rk)
+        m_hb = m_row[2].number_input("HB", 0, key="hb"+key+rk); m_fb = m_row[3].number_input("FB", 0, key="fb"+key+rk)
+        m_sai = m_row[4].number_input("SAI", 0, key="sai"+key+rk); m_ai = m_row[5].number_input("AI", 0, key="ai"+key+rk)
+        
+        l_c, m_c, t_c = 0.0, 0.0, 0.0
+        if group:
+            st.markdown("<div class='meal-header'>Group Ancillaries</div>", unsafe_allow_html=True)
+            g_row = st.columns(3)
+            m_c = g_row[0].number_input("MICE/Pax", 0.0, key="mice"+key+rk)
+            t_c = g_row[1].number_input("Trans/Fixed", 0.0, key="tr"+key+rk)
+            l_c = g_row[2].number_input("Laundry/Pax", 0.0, key="ln"+key+rk)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    res = run_yield([sgl, dbl], m_nights, applied_adr, {"RO":m_ro,"BB":m_bb,"HB":m_hb,"FB":m_fb,"SAI":m_sai,"AI":m_ai}, 
+                    floor, (ota_comm_pct/100 if is_ota else 0.0), l_c, m_c, t_c)
+    if res:
+        with c_res:
+            st.metric("Net Yield", f"OMR {res['w']:,.2f}")
+            st.write(f"📊 **Room Nights:** {res['rn']}")
+            st.write(f"💰 **Total Wealth:** {res['total']:,.2f}")
+            st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
+
+# DRAW ALL 5 SEGMENTS
+draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
+draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
+draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
+draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
+draw_seg("5. TOUR & TRAVEL", "tnt", 45, 25, "#e67e22", group=True)

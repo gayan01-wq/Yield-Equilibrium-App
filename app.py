@@ -1,126 +1,110 @@
 import streamlit as st
 from datetime import date
 
-# --- STYLING ---
+# --- CONFIG & STYLE ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master Engine")
 st.markdown("""<style>
-.block-container{padding-top:1rem!important}
-.main-title{font-size:2.5rem!important;font-weight:900;color:#1e3799;text-align:center;margin-top:-10px}
-.card{padding:12px;border-radius:10px;margin-bottom:10px;border-left:10px solid;font-weight:bold;background:#fcfcfc}
-.pricing-row{background:#f1f4f9;padding:10px;border-radius:8px;margin-top:8px;border:1px solid #1e3799}
-.pricing-header{background:#1e3799;color:white;padding:3px 10px;border-radius:5px 5px 0 0;font-size:0.8rem;font-weight:bold;margin-bottom:5px}
-.status-box{padding:12px;border-radius:12px;text-align:center;font-size:1.3rem;font-weight:bold;color:white;margin-bottom:8px}
-.sentinel-box{background:#1e3799; color:white; padding:20px; border-radius:10px; margin-bottom:20px; border-left:10px solid #ffc107;}
-[data-testid="stSidebar"]{background:#f1f4f9;border-right:2px solid #3498db}
+.main-title{font-size:2.2rem!important;font-weight:900;color:#1e3799;text-align:center;margin-bottom:20px}
+.card{padding:15px;border-radius:10px;margin-bottom:10px;border-left:10px solid;font-weight:bold;background:#fcfcfc;box-shadow: 2px 2px 5px rgba(0,0,0,0.05)}
+.pricing-row{background:#f1f4f9;padding:12px;border-radius:8px;margin-top:8px;border:1px solid #1e3799}
+.pricing-header{background:#1e3799;color:white;padding:5px 10px;border-radius:5px 5px 0 0;font-size:0.9rem;font-weight:bold}
+.status-box{padding:10px;border-radius:10px;text-align:center;font-size:1.1rem;font-weight:bold;color:white}
+.sentinel-box{background:#1e3799; color:white; padding:20px; border-radius:10px; margin-bottom:25px; border-left:10px solid #ffc107;}
+[data-testid="stSidebar"]{background:#f8f9fa; border-right:1px solid #dee2e6}
 </style>""", unsafe_allow_html=True)
 
-# --- AUTH LOGIC ---
-if "auth" not in st.session_state:
-    st.session_state["auth"] = False
-
+# --- AUTH ---
+if "auth" not in st.session_state: st.session_state["auth"] = False
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     with st.form("login"):
         pwd = st.text_input("Access Key", type="password")
         if st.form_submit_button("Unlock"):
-            if pwd == "Gayan2026":
+            if pwd == "Gayan2026": 
                 st.session_state["auth"] = True
                 st.rerun()
-            else:
-                st.error("Denied")
+            else: st.error("Denied")
     st.stop()
 
-# --- MAIN DASHBOARD ---
-else:
-    with st.sidebar:
-        st.markdown("<p style='font-size:1.2rem;font-weight:800;color:#1e3799;margin:0;'>Gayan Nugawela</p><p style='font-size:0.8rem;margin:0;'>Strategic Revenue Architect</p>", unsafe_allow_html=True)
-        st.divider()
-        if st.button("🔒 Sign Out"):
-            st.session_state["auth"] = False
-            st.rerun()
-        
-        hotel = st.text_input("📍 Targeted Property", "Wyndham Garden Salalah")
-        h_tot = st.number_input("Inventory", 1, 5000, 237)
-        
-        st.write("### 📅 Stay Intelligence")
-        today = date.today()
-        d1 = st.date_input("Check-In", today)
-        d2 = st.date_input("Check-Out", today)
-        stay_n = (d2 - d1).days if (d2 - d1).days > 0 else 1
-        
-        # Khareef Logic
-        is_khareef = "Salalah" in hotel and (6 <= d1.month <= 9)
-        
-        st.write("### 🌐 Market Condition")
-        m_list = ["Global/Local Crisis", "Stagnant", "Recovering", "Peak Season"]
-        m_idx = 3 if is_khareef else 0
-        m_state = st.radio("Sentinel Scrape Status", m_list, index=m_idx)
-        m_logic = {"Global/Local Crisis": 0.65, "Stagnant": 0.85, "Recovering": 1.0, "Peak Season": 1.35}
-        m_heat = m_logic[m_state]
-        
-        st.write("### 📈 Velocity Valve (P03)")
-        def_otb = 70 if is_khareef else 15
-        otb_occ = st.slider("Current OTB %", 0, 100, def_otb)
-        hist_occ = st.slider("Historical Avg %", 0, 100, 45)
-        v_delta = otb_occ - hist_occ
-        v_mult = 1.25 if v_delta > 10 else 1.10 if v_delta > 0 else 0.85 if v_delta > -10 else 0.70
-
-        st.divider()
-        cu = st.selectbox("Currency", ["OMR","AED","SAR","USD"])
-        tx = st.number_input("Tax Divisor", 1.2327, format="%.4f")
-        ota_p = st.slider("OTA Commission %", 0, 50, 18) / 100
-        
-        st.write("### 🍽️ Meal Costs")
-        m_costs = {"RO": 0.0}
-        m_costs["BB"] = st.number_input("BB Cost", 0.0)
-        m_costs["HB"] = st.number_input("HB Cost", 0.0)
-        m_costs["FB"] = st.number_input("FB Cost", 0.0)
-        m_costs["SAI"] = st.number_input("SAI Cost", 5.0)
-        m_costs["AI"] = st.number_input("AI Cost", 5.0)
-
-    # --- CALCULATION LOGIC ---
-    def calc_w(rms, adr, n, meals, comm, fl, mice=0.0, trans=0.0):
-        tot_r = sum(rms)
-        if tot_r <= 0: return None
-        
-        px_ratio = (rms[0]*1 + rms[1]*2 + rms[2]*3) / tot_r
-        unit_net = adr / tx
-        
-        # Cleaned Meal Calculation
-        meal_total = 0.0
-        for m_type, m_qty in meals.items():
-            if m_qty > 0:
-                cost_per_pax = m_costs[m_type]
-                meal_total += (m_qty / tot_r) * cost_per_pax * px_ratio
-            
-        base_val = unit_net - meal_total
-        comm_amt = base_val * comm
-        mice_amt = (mice * px_ratio) / (n * tx)
-        
-        final_unit_w = (base_val - comm_amt) + mice_amt
-        final_tot_w = (final_unit_w * tot_r * n) + (trans / tx)
-        net_yield = final_tot_w / (tot_r * n)
-        
-        occ_check = tot_r / h_tot
-        hurdle = fl * 1.25 if occ_check >= 0.2 else fl
-        
-        if net_yield >= hurdle: l, b = "OPTIMIZED", "#27ae60"
-        elif net_yield >= hurdle * 0.95: l, b = "MARGINAL", "#ff9800"
-        else: l, b = "DILUTIVE", "#e74c3c"
-            
-        return {"u": net_yield, "l": l, "b": b, "tot": final_tot_w, "rn": tot_r * n}
-
-    # --- UI RENDER ---
-    st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER</h1>", unsafe_allow_html=True)
+# --- SIDEBAR & MASTER INPUTS ---
+with st.sidebar:
+    st.markdown("### 👤 Strategic Architect")
+    st.write("**Gayan Nugawela**")
+    if st.button("🔒 Sign Out"):
+        st.session_state["auth"] = False
+        st.rerun()
+    st.divider()
     
-    if is_khareef:
-        st.success(f"🌦️ KHAREEF MODE ACTIVATED for {hotel}")
+    # HOTEL SEARCH (Simulating Google Intelligence)
+    hotel_name = st.text_input("🏨 Property Search (Google Sync)", "Wyndham Garden Salalah")
+    inventory = st.number_input("Total Inventory", 1, 1000, 237)
+    
+    st.markdown("### 📅 Stay Intelligence")
+    d1 = st.date_input("Check-In", date.today())
+    d2 = st.date_input("Check-Out", date.today())
+    # AUTO CALCULATION OF NIGHTS
+    nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
+    st.info(f"Analysis Period: {nights} Nights")
 
-    st.markdown(f"""<div class='sentinel-box'>
-        <h3 style='margin:0; color:#ffc107;'>🤖 PILLAR 02: MARKET SENTINEL ANALYSIS</h3>
-        <div style='display:flex; justify-content:space-between; margin-top:10px;'>
-            <span><b>Strength:</b> {m_state} ({m_heat}x)</span>
-            <span><b>Velocity:</b> {v_delta}%</span>
-            <span><b>P03 Adjustment:</b> {v_mult}x</span>
-        </div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown("### 🌐 Market Condition")
+    # Automated Khareef Logic
+    is_khareef = "Salalah" in hotel_name and (6 <= d1.month <= 9)
+    m_state = st.radio("Sentinel Scrape", ["Crisis", "Stagnant", "Recovering", "Peak"], index=(3 if is_khareef else 0))
+    m_heat = {"Crisis": 0.65, "Stagnant": 0.85, "Recovering": 1.0, "Peak": 1.35}[m_state]
+
+    st.markdown("### 📈 Velocity (P03)")
+    otb = st.slider("Current OTB %", 0, 100, (70 if is_khareef else 15))
+    hist = st.slider("Historical Avg %", 0, 100, 45)
+    v_mult = 1.25 if (otb-hist) > 10 else 0.85 if (otb-hist) < -10 else 1.0
+
+    st.divider()
+    cu = st.selectbox("Currency", ["OMR", "AED", "USD"])
+    tx = st.number_input("Tax Divisor", 1.0, 2.0, 1.2327)
+    ota_comm = st.slider("OTA %", 0, 50, 18) / 100
+
+    st.markdown("### 🍽️ Pax Costs")
+    c_bb = st.number_input("BB Cost", 0.0)
+    c_hb = st.number_input("HB Cost", 0.0)
+    c_fb = st.number_input("FB Cost", 0.0)
+    c_sai = st.number_input("SAI Cost", 5.0)
+    c_ai = st.number_input("AI Cost", 5.0)
+    costs = {"RO":0, "BB":c_bb, "HB":c_hb, "FB":c_fb, "SAI":c_sai, "AI":c_ai}
+
+# --- CALCULATION ENGINE ---
+def run_yield(rms, adr, n, meals, comm, fl, mice=0, trans=0):
+    tr = sum(rms)
+    if tr <= 0: return None
+    px = (rms[0]*1 + rms[1]*2 + rms[2]*3) / tr
+    net_adr = adr / tx
+    m_cost = sum((qty/tr) * costs[m] * px for m, qty in meals.items() if qty > 0)
+    unit_w = (net_adr - m_cost - ((net_adr - m_cost) * comm)) + ((mice * px)/(n * tx))
+    total_w = (unit_w * tr * n) + (trans / tx)
+    dy = total_w / (tr * n)
+    hrd = fl * 1.25 if (tr/inventory) >= 0.2 else fl
+    l, b = ("OPTIMIZED","#27ae60") if dy >= hrd else ("DILUTIVE","#e74c3c")
+    return {"u": dy, "l": l, "b": b, "tot": total_w, "rn": tr * n}
+
+# --- MAIN DASHBOARD ---
+st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER</h1>", unsafe_allow_html=True)
+
+if is_khareef: st.success(f"🌦️ Khareef Automated Demand Active for {hotel_name}")
+
+st.markdown(f"""<div class='sentinel-box'>
+    <h3 style='margin:0; color:#ffc107;'>🤖 PILLAR 02: MARKET SENTINEL</h3>
+    <div style='display:flex; justify-content:space-between; margin-top:10px;'>
+        <span><b>Market Heat:</b> {m_state} ({m_heat}x)</span>
+        <span><b>Velocity Multiplier:</b> {v_mult}x</span>
+        <span><b>Stay Window:</b> {nights} Nights</span>
+    </div>
+</div>""", unsafe_allow_html=True)
+
+# SEGMENT 1: FIT
+st.markdown("<div class='card' style='border-left-color:#3498db'>1. DIRECT / FIT</div>", unsafe_allow_html=True)
+col1, col2, col3 = st.columns([1, 1.8, 1.2])
+with col1:
+    f_s = st.number_input("SGL", 0, key="fs")
+    f_d = st.number_input("DBL", 0, key="fd")
+    f_n = st.number_input("Nights", value=nights, key="fn")
+with col2:
+    f_suggest = (65 * m_heat) * v_mult
+    st.markdown(f

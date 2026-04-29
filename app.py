@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING (The Global Executive Aesthetic) ---
+# --- 1. STYLING ---
 st.set_page_config(layout="wide", page_title="Displacement Analyzer | Yield Equilibrium")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -35,7 +35,7 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS) ---
+# --- 3. SIDEBAR ---
 with st.sidebar:
     st.markdown("### 👤 System Developer\nGayan Nugawela")
     if st.button("🧹 Clear Global Cache"):
@@ -43,47 +43,44 @@ with st.sidebar:
         st.rerun()
     st.divider()
     rk = str(st.session_state["reset_key"]) 
-    
     currencies = {"OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "INR (₹)": "₹", "USD ($)": "$"}
     cur_choice = st.selectbox("🌍 Base Currency", list(currencies.keys()), key="c_sel_"+rk)
     cur_sym = currencies[cur_choice]
-
     hotel_name = st.text_input("🏨 Hotel", "Wyndham Garden Salalah", key="h_nm_"+rk)
     city_search = st.text_input("📍 City Search", "Salalah", key="c_nm_"+rk)
-    
     d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
     d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    st.info(f"📅 **Stay Duration: {m_nights} Nights**")
-    
+    st.info(f"📅 Stay: {m_nights} Nights")
     inventory = st.number_input("Total Capacity", 1, 1000, 237, key="inv_c_"+rk)
-    
     st.divider()
-    st.markdown("### 📊 Pillar 03: Velocity")
+    st.markdown("### 📊 Velocity")
     otb_occ = st.slider("OTB %", 0, 100, 15, key="otb_s_"+rk)
-    avg_hist = st.slider("Hist. Benchmark %", 0, 100, 45, key="hst_s_"+rk)
+    avg_hist = st.slider("Hist. %", 0, 100, 45, key="hst_s_"+rk)
     v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
-
     st.divider()
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
     ota_comm = st.slider("OTA Commission %", 0, 40, 15, key="ota_v_"+rk)
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk)
-
-    st.markdown("### 🍽️ Unit Costs (Per Person Basis)")
+    
+    # Unit Costs - Precision enabled, default 0
     meal_costs = {
-        "RO": 0.0, "BB": st.number_input("BB Cost", 2.5, key="bb_mc_"+rk),
-        "LN": st.number_input("LN Cost", 4.5, key="ln_mc_"+rk), "DN": st.number_input("DN Cost", 5.5, key="dn_mc_"+rk),
-        "SAI": st.number_input("SAI Cost", 8.5, key="sai_mc_"+rk), "AI": st.number_input("AI Cost", 10.5, key="ai_mc_"+rk)
+        "RO": 0.0, 
+        "BB": st.number_input("BB Cost", 0.0, format="%.3f", step=0.1, key="bb_mc_"+rk),
+        "LN": st.number_input("LN Cost", 0.0, format="%.3f", step=0.1, key="ln_mc_"+rk), 
+        "DN": st.number_input("DN Cost", 0.0, format="%.3f", step=0.1, key="dn_mc_"+rk),
+        "SAI": st.number_input("SAI Cost", 0.0, format="%.3f", step=0.1, key="sai_mc_"+rk), 
+        "AI": st.number_input("AI Cost", 0.0, format="%.3f", step=0.1, key="ai_mc_"+rk)
     }
 
-# --- 4. MARKET INTEL ---
+# --- 4. INTEL ---
 intel_db = {
     "salalah": {"ev": "Khareef Festival", "fl": "DXB/MCT Rotations", "news": ["Port: Stable", "Tourism: Surge", "Monsoon Rising"], "basis": "Microclimate"},
     "colombo": {"ev": "Tourism Peak", "fl": "UL Hub Growth", "news": ["Arrivals 1.2M+", "LKR Stable", "MICE Demand"], "basis": "Recovery"}
 }
 active_intel = intel_db.get(city_search.lower(), {"ev": "Active Rotation", "fl": "Baseline", "news": ["Standard market flow."], "basis": "Equilibrium"})
 
-# --- 5. CALCULATION ENGINE (FIXED Line 93) ---
+# --- 5. ENGINE ---
 def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=0, mice=0, trans=0):
     tr = sum(rms); rn = tr * nts
     if tr <= 0: return None
@@ -94,16 +91,15 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
     avg_m = (total_m / tr)
     unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
     total_w = (unit_w * rn) + (trans / tx_div)
-    if unit_w < eff_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym}{eff_hurdle} hurdle."
-    elif unit_w < (eff_hurdle + 3.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Yield at equilibrium window."
+    if unit_w < eff_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym}{eff_hurdle:.2f} hurdle."
+    elif unit_w < (eff_hurdle + 3.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Equilibrium window."
     else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Wealth targets met."
-    if (tr / inventory) >= 0.50: rsn += " | ⚠️ DISPLACEMENT: Segment ≥50% capacity."
+    if (tr / inventory) >= 0.50: rsn += " | ⚠️ DISPLACEMENT risk."
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w}
 
 # --- 6. DASHBOARD ---
 st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
 st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
-
 t1, t2 = st.tabs(["🌐 Aviation & Events", "🗞️ Market News Feed"])
 with t1: st.markdown(f"<div class='google-window'><b>🌐 Aviation Intelligence: {city_search}</b><br>• <b>Events:</b> {active_intel['ev']} | <b>Basis:</b> {active_intel['basis']}<br>• <b>Velocity:</b> {v_mult}x Applied</div>", unsafe_allow_html=True)
 with t2:
@@ -132,39 +128,34 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
         with c_res:
             st.metric(f"Net Wealth", f"{cur_sym} {res['w']:,.2f}")
             st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='reason-box'>💡 <b>Strategic Verdict:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='audit-box'>📊 {res['rn']} RN | Total Wealth: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='reason-box'>💡 <b>Verdict:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='audit-box'>📊 {res['rn']} RN | Total: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)
 
-# DRAW SEGMENTS
 draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
 draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
 draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
 draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
 draw_seg("5. TOUR & TRAVEL (GROUPS)", "tnt", 45, 25, "#e67e22", group=True)
 
-# --- 7. DETAILED METHODOLOGY & THEORY (FIXED Formatting) ---
+# --- 7. METHODOLOGY (DETAILED PILLARS) ---
 st.divider()
 st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
 st.markdown(f"<div class='small-framework-header'>The Yield Equilibrium Strategic Framework (Live Tax Basis: {tx_div})</div>", unsafe_allow_html=True)
-
 st.markdown(f"""
 <div class='theory-card' style='background:#f1f4f9; border: 1px solid #1e3799; padding:25px;'>
-    <h4 style='color:#1e3799; margin-top:0; text-align:center;'>THEORY OF YIELD EQUILIBRIUM</h4>
-    <p style='font-size:0.92rem; color:#333; line-height:1.6;'>
-        The <b>Yield Equilibrium</b> model identifies the exact point where a hotel captures maximum wealth without diluting asset value. This tool deconstructs every booking into three core pillars:
-    </p>
-    <div style='margin-top:15px;'>
-        <p style='font-size:0.88rem; color:#333; margin-bottom:10px;'>
+    <h4 style='color:#1e3799; margin-top:0; text-align:center;'>STRATEGIC FRAMEWORK DEEP-DIVE</h4>
+    <div style='margin-top:10px;'>
+        <p style='font-size:0.88rem; color:#333; margin-bottom:12px;'>
             <b>🏛️ PILLAR 01: INTERNAL WEALTH STRIPPING (THE NET-CORE)</b><br>
-            Gross revenue is an illusion. The engine strips <b>statutory taxes ({tx_div})</b>, <b>commissions</b>, and <b>marginal production costs</b> to isolate 'Net Wealth'.
+            Deconstructs revenue to find the 'True Net'. Every unit of currency is analyzed against <b>statutory tax ({tx_div})</b>, <b>leakage (Comm)</b>, and <b>variable production costs</b>. If it doesn't leave a margin after stripping, it is rejected as dilutive business.
         </p>
-        <p style='font-size:0.88rem; color:#333; margin-bottom:10px;'>
+        <p style='font-size:0.88rem; color:#333; margin-bottom:12px;'>
             <b>⚖️ PILLAR 02: HURDLE EQUILIBRIUM (THE DISPLACEMENT GUARD)</b><br>
-            During 'Compression', hurdles are inflated to protect peak inventory from lower-value business displacement.
+            Hurdles are not static; they are <b>protective barriers</b>. In 'Compression' (High Demand), the analyzer inflates the hurdle by <b>+15.0</b> units. This acts as a filter to ensure that low-value groups or OTAs don't occupy inventory that could be sold to higher-yield last-minute travelers later.
         </p>
         <p style='font-size:0.88rem; color:#333;'>
             <b>🌐 PILLAR 03: EXTERNAL VELOCITY (THE MARKET PULSE)</b><br>
-            Integrates Market Intelligence—Aviation, local events, and OTB pace—to apply a <b>Velocity Multiplier ({v_mult}x)</b>.
+            Yielding at the speed of the market. This pillar calculates <b>Pace Momentum ({v_mult}x)</b>. If OTB pace exceeds historical benchmarks, the system automatically suggests more aggressive pricing. It integrates Aviation intelligence and event rotations to ensure the hotel isn't selling 'under-market' during localized surges.
         </p>
     </div>
 </div>
@@ -174,7 +165,7 @@ st.markdown("</div>", unsafe_allow_html=True)
 # --- 8. FOOTER ---
 st.markdown("<div class='contact-section'>", unsafe_allow_html=True)
 st.subheader("✉️ Contact the System Developer")
-st.write("Direct queries to Gayan Nugawela regarding custom logic or tool modifications.")
+st.write("Direct queries to Gayan Nugawela regarding custom logic.")
 col1, col2 = st.columns([1, 1])
 with col1:
     contact_form = """
@@ -187,9 +178,5 @@ with col1:
     """
     st.markdown(contact_form, unsafe_allow_html=True)
 with col2:
-    st.markdown("""
-    ### Logic Desk Details
-    * **Email:** gayan01@gmail.com
-    * **Scope:** Algorithm updates, Displacement logic tweaks.
-    """)
+    st.markdown("### Logic Desk Details\n* **Email:** gayan01@gmail.com\n* **Scope:** Algorithm updates, Displacement logic tweaks.")
 st.markdown("</div>", unsafe_allow_html=True)

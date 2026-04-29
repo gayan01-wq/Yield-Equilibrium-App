@@ -1,19 +1,19 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING (The Global Executive Aesthetic) ---
+# --- 1. CORE CONFIG & EXECUTIVE STYLING ---
 st.set_page_config(layout="wide", page_title="Displacement Analyzer | Yield Equilibrium")
+
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
 .main-title{font-size:2.0rem!important;font-weight:900;color:#1e3799;text-align:center;margin-top:-10px;text-transform:uppercase;letter-spacing:2px;}
 .main-subtitle{font-size:1.1rem!important;font-weight:600;color:#4b6584;text-align:center;margin-top:-15px;margin-bottom:25px;letter-spacing:1px;}
-.small-framework-header{font-size:0.95rem!important; font-weight:700; color:#4b6584; text-align:center; margin-bottom:15px; letter-spacing:1px; width: 100%; display: block;}
-.card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
+.card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid #1e3799;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
 .pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
 .status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
-.reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
+.reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; font-size:0.8rem;}
 .theory-box{background:#f9f9f9; padding:25px; border-radius:15px; border:1px solid #dee2e6; margin-top:30px}
-.theory-card{background:white; padding:12px; border-radius:10px; border:1px solid #eee; margin-bottom:8px;}
+.theory-card{background:white; padding:15px; border-radius:10px; border:1px solid #eee; margin-bottom:12px;}
 [data-testid="stSidebar"]{background:#f1f4f9; border-right:1px solid #dee2e6}
 .contact-section{background:#1e3799; padding:30px; border-radius:15px; margin-top:40px; color:white;}
 </style>""", unsafe_allow_html=True)
@@ -23,7 +23,7 @@ if "auth" not in st.session_state: st.session_state["auth"] = False
 if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
 
 if not st.session_state["auth"]:
-    st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center;'><h1 class='main-title'>EQUILIBRIUM ENGINE</h1></div>", unsafe_allow_html=True)
     with st.form("login_gate"):
         pwd = st.text_input("Access Key", type="password")
         if st.form_submit_button("Unlock Engine"):
@@ -33,17 +33,17 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS) ---
+# --- 3. SIDEBAR (RESTORING ALL OPTIONS) ---
 with st.sidebar:
     st.markdown("### 👤 System Developer\nGayan Nugawela")
-    if st.button("🧹 Clear Global Cache"):
+    if st.button("🧹 Reset System Cache"):
         st.session_state["reset_key"] += 1
         st.rerun()
     st.divider()
-    rk = str(st.session_state["reset_key"]) 
     
+    rk = str(st.session_state["reset_key"]) 
     currencies = {"OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "INR (₹)": "₹", "USD ($)": "$"}
-    cur_choice = st.selectbox("🌍 Base Currency", list(currencies.keys()), key="c_sel_"+rk)
+    cur_choice = st.selectbox("🌍 Base Currency", list(currencies.keys()), key="cur_"+rk)
     cur_sym = currencies[cur_choice]
 
     hotel_name = st.text_input("🏨 Hotel", "Wyndham Garden Salalah", key="h_nm_"+rk)
@@ -64,4 +64,28 @@ with st.sidebar:
 
     st.divider()
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
-    ota_comm = st.slider
+    ota_comm = st.slider("OTA Commission %", 0, 40, 15, key="ota_v_"+rk)
+    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk)
+
+    st.markdown("### 🍽️ Unit Costs (Per Person)")
+    meal_costs = {
+        "RO": 0.0, 
+        "BB": st.number_input("BB Cost", 0.0, format="%.3f", key="bb_mc_"+rk),
+        "LN": st.number_input("LN Cost", 0.0, format="%.3f", key="ln_mc_"+rk), 
+        "DN": st.number_input("DN Cost", 0.0, format="%.3f", key="dn_mc_"+rk),
+        "SAI": st.number_input("SAI Cost", 0.0, format="%.3f", key="sai_mc_"+rk), 
+        "AI": st.number_input("AI Cost", 0.0, format="%.3f", key="ai_mc_"+rk)
+    }
+
+# --- 4. ENGINE ---
+def run_yield_engine(rms, adr, hurdle, demand, comm=0.0):
+    total_rooms = sum(rms)
+    if total_rooms <= 0: return None
+    d_adj = {"Compression (Peak)": 15.0, "High Flow": 5.0, "Standard": 0.0, "Distressed": -5.0}
+    eff_hurdle = hurdle + d_adj.get(demand, 0)
+    net_adr = adr / tx_div
+    # Average meal cost per room based on inputs
+    unit_w = (net_adr - 0.0 - (net_adr * comm)) - p01_fee
+    color = "#27ae60" if unit_w >= eff_hurdle else "#e74c3c"
+    status = "ACCEPT" if unit_w >= eff_hurdle else "REJECT"
+    return {"w": unit_w, "st": status, "cl": color, "total": unit_w * total_rooms * m_

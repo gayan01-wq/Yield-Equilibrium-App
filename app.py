@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING ---
+# --- 1. STYLING (Ultra-Stable Professional Layout) ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -24,9 +24,9 @@ if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
 
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
-    with st.form("login_form"):
+    with st.form("login_gate"):
         pwd = st.text_input("Access Key", type="password")
-        if st.form_submit_button("Unlock Engine"):
+        if st.form_submit_button("Unlock"):
             if pwd == "Gayan2026": 
                 st.session_state["auth"] = True
                 st.rerun()
@@ -43,49 +43,16 @@ with st.sidebar:
     rk = str(st.session_state["reset_key"]) 
     
     currencies = {"OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "INR (₹)": "₹", "USD ($)": "$"}
-    cur_choice = st.selectbox("🌍 Base Currency", list(currencies.keys()), key="cur_sel_"+rk)
+    cur_choice = st.selectbox("🌍 Base Currency", list(currencies.keys()), key="c_sel_"+rk)
     cur_sym = currencies[cur_choice]
     cur_code = cur_choice.split(" ")[0]
 
-    hotel_name = st.text_input("🏨 Hotel", "Wyndham Garden Salalah", key="h_name_"+rk)
-    city_name = st.text_input("📍 City", "Salalah", key="c_name_"+rk)
+    hotel_name = st.text_input("🏨 Hotel", "Wyndham Garden Salalah", key="h_nm_"+rk)
+    city_name = st.text_input("📍 City Search", "Salalah", key="c_nm_"+rk)
     
-    d1 = st.date_input("Check-In", date.today(), key="in_date_"+rk)
-    d2 = st.date_input("Check-Out", date.today(), key="out_date_"+rk)
+    d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
+    d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    st.info(f"📅 **Stay Duration: {m_nights} Nights**")
+    st.info(f"📅 **Total Duration: {m_nights} Nights**")
     
-    inventory = st.number_input("Total Property Capacity", 1, 1000, 237, key="inv_cap_"+rk)
-    
-    st.divider()
-    st.markdown("### 📊 Pillar 03: Velocity")
-    otb_occ = st.slider("OTB % (Date-Specific)", 0, 100, 15, key="otb_v_"+rk)
-    avg_hist = st.slider("Hist. Benchmark %", 0, 100, 45, key="hist_v_"+rk)
-    v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
-
-    st.divider()
-    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tax_d_"+rk)
-    ota_comm = st.slider("OTA Commission %", 0, 40, 18, key="ota_c_"+rk)
-    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_f_"+rk)
-
-    st.markdown("### 🍽️ Unit Costs (Per Person)")
-    c_snk = st.number_input(f"Snack Cost ({cur_sym})", 0.0, value=1.5, key="snk_c_"+rk)
-    meal_costs = {
-        "RO": 0.0,
-        "BB": st.number_input("BB Cost (Breakfast)", 2.5, key="bb_c_"+rk),
-        "LN": st.number_input("LN Cost (Lunch)", 4.5, key="ln_c_"+rk),
-        "DN": st.number_input("DN Cost (Dinner)", 5.5, key="dn_c_"+rk),
-        "SAI": st.number_input("SAI Cost (Soft AI)", 8.5, key="sai_c_"+rk),
-        "AI": st.number_input("AI Cost (Premium AI)", 10.5, key="ai_c_"+rk)
-    }
-
-# --- 4. MARKET INTEL ---
-intel_db = {
-    "salalah": {"ev": "Khareef Festival", "fl": "High Rotations (Dubai/Muscat)", "news": ["Port: Operations stable.", "Tourism: Surge expected.", "Weather: Monsoon rising."], "basis": "Microclimate Compression"},
-    "dubai": {"ev": "DIFC Expansion Summit", "fl": "DXB Slot Scarcity 100%", "news": ["BREAKING: UAE exiting OPEC May 1st.", "DIFC Growth: 775 new companies.", "Market: Oil volatility."], "basis": "Hub Velocity"},
-    "colombo": {"ev": "Tourism Peak", "fl": "UL connectivity rising.", "news": ["Arrivals cross 1.2M mark.", "LKR Stability Improving.", "MICE demand surging."], "basis": "Emerging Market Recovery"}
-}
-active_intel = intel_db.get(city_name.lower(), {"ev": "Active Seasonal Rotation", "fl": "Baseline Rotation", "news": ["Standard market flow."], "basis": "Equilibrium"})
-
-# --- 5. CALCULATION ENGINE ---
-def run_yield(rms, nts, adr, meals, hurdle, comm_
+    inventory = st.number_input("Total Capacity", 1, 1000, 237

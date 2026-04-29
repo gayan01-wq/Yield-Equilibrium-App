@@ -70,7 +70,7 @@ def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.18, laundry=0):
     room_nights = total_rooms * nts
     net_adr = adr / tx_div
     total_meal_cost = sum(qty * meal_unit_costs.get(plan, 0) for plan, qty in meals.items())
-    avg_meal_cost = total_meal_cost / total_rooms
+    avg_meal_cost = (total_meal_cost / total_rooms) if total_rooms > 0 else 0
     
     # Wealth Stripping including Laundry
     wealth = (net_adr - avg_meal_cost - (net_adr * comm_rate)) - p01_fee - laundry
@@ -80,5 +80,50 @@ def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.18, laundry=0):
 # --- 5. MAIN DASHBOARD ---
 st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER DASHBOARD</h1>", unsafe_allow_html=True)
 
+# FIXED LINE 84: Added the 'f' prefix for string formatting
 st.markdown(f"""<div class='google-window'>
-    <b>🌐 Google Intelligence Feed: {location
+    <b>🌐 Google Intelligence Feed: {location}</b> | 📅 Stay: {d1} to {d2} ({m_nights} Nights) | ⚖️ Tax: {tx_div}
+</div>""", unsafe_allow_html=True)
+
+def draw_seg(label, key, suggest_adr, hurdle_rate, color, ota=False, group=False):
+    rk = str(st.session_state["reset_key"])
+    st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
+    col_input, col_result = st.columns([2.6, 1])
+    
+    with col_input:
+        st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+        r1, r2, r3 = st.columns(3)
+        sgl = r1.number_input("SGL Rooms", 0, key="s"+key+rk)
+        dbl = r2.number_input("DBL Rooms", 0, key="d"+key+rk)
+        applied_adr = r3.number_input("Applied ADR", value=float(suggest_adr), key="a"+key+rk)
+        
+        st.markdown("<div class='meal-header'>Meal Plans (Pax)</div>", unsafe_allow_html=True)
+        m_row1 = st.columns(3)
+        m_ro = m_row1[0].number_input("RO", 0, key="ro"+key+rk)
+        m_bb = m_row1[1].number_input("BB", 0, key="bb"+key+rk)
+        m_hb = m_row1[2].number_input("HB", 0, key="hb"+key+rk)
+        
+        m_row2 = st.columns(3)
+        m_fb = m_row2[0].number_input("FB", 0, key="fb"+key+rk)
+        m_sai = m_row2[1].number_input("SAI", 0, key="sai"+key+rk)
+        m_ai = m_row2[2].number_input("AI", 0, key="ai"+key+rk)
+        
+        laundry_cost = 0
+        if group:
+            # UPDATED: Laundry limit increased to 10,000 as requested
+            laundry_cost = st.number_input("Laundry Cost per Pax (Max 10k)", 0, 10000, 0, key="l"+key+rk)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    res = run_yield([sgl, dbl], m_nights, applied_adr, {"RO":m_ro,"BB":m_bb,"HB":m_hb,"FB":m_fb,"SAI":m_sai,"AI":m_ai}, hurdle_rate, (0.18 if ota else 0.0), laundry_cost)
+    if res:
+        with col_result:
+            st.metric("Net Wealth (Unit)", f"OMR {res['w']:,.2f}")
+            st.write(f"**Room Nights:** {res['rn']}")
+            st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
+
+# DRAW ALL 5 SEGMENTS
+draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
+draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", ota=True)
+draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
+draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
+draw_seg("5. TOUR & TRAVEL (GDS/GROUPS)", "tnt", 45, 25, "#e67e22", group=True)

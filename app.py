@@ -57,12 +57,16 @@ with st.sidebar:
 
     st.divider()
     cu = st.selectbox("Currency", ["OMR", "AED", "USD", "EUR"])
-    tx = st.number_input("Tax Divisor (Full Precision)", value=1.2327, format="%.4f", step=0.0001)
+    # FIXED: Full decimal precision for the Tax Divisor
+    tx = st.number_input("Tax Divisor", value=1.2327, format="%.4f", step=0.0001)
     ota_comm = st.slider("OTA Commission %", 0, 50, 18) / 100
     
     st.markdown("### 🍽️ Unit Pax Costs")
-    c_bb = st.number_input("BB Pax Cost", 0.0); c_hb = st.number_input("HB Pax Cost", 0.0); c_fb = st.number_input("FB Pax Cost", 0.0)
-    c_sai = st.number_input("SAI Pax Cost", 5.0); c_ai = st.number_input("AI Cost", 5.0)
+    c_bb = st.number_input("BB Pax Cost", 0.0)
+    c_hb = st.number_input("HB Pax Cost", 0.0)
+    c_fb = st.number_input("FB Pax Cost", 0.0)
+    c_sai = st.number_input("SAI Pax Cost", 5.0)
+    c_ai = st.number_input("AI Cost", 5.0)
     costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": c_fb, "SAI": c_sai, "AI": c_ai}
 
 # --- 4. CALCULATION ENGINE ---
@@ -85,21 +89,72 @@ st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER</h1>", unsafe_allow
 st.markdown(f"""<div class='sentinel-box'>
     <h3 style='margin:0; color:#ffc107;'>🤖 PILLAR 02: MARKET SENTINEL ACTIVE</h3>
     <div style='display:flex; justify-content:space-between; margin-top:10px;'>
-        <span><b>Property:</b> {hotel}</span>
+        <span><b>Property Context:</b> {hotel}</span>
         <span><b>Condition:</b> {m_state} ({m_heat}x)</span>
-        <span><b>Nights Sync:</b> {m_nights}</span>
+        <span><b>Auto-Nights:</b> {m_nights}</span>
     </div>
 </div>""", unsafe_allow_html=True)
 
+# THE SEGMENT DRAWER
 def draw_seg(label, key, br, fl_def, col, is_ota=False, is_grp=False):
     st.markdown(f"<div class='card' style='border-left-color:{col}'>{label}</div>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1.8, 1.2])
     suggested = (br * m_heat) * v_mult
     with c1:
         s = st.number_input("SGL Rooms", 0, key=key+"s")
-        d = st.number_input("DBL Rooms", 0, key="d"+key)
-        n = st.number_input("Stay Nights", value=m_nights, key="n"+key)
+        d = st.number_input("DBL Rooms", 0, key=key+"d")
+        n = st.number_input("Stay Nights", value=m_nights, key=key+"n")
     with c2:
         st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED RATE: {cu} {suggested:,.2f}</div>", unsafe_allow_html=True)
-        adr = st.number_input("Final ADR", value=float(suggested), key="a"+key)
-        fl = st.number_input("Floor Min", float(fl_def), key="f"+key)
+        adr = st.number_input("Final ADR", value=float(suggested), key=key+"a")
+        fl = st.number_input("Floor Min", float(fl_def), key=key+"f")
+        mc = st.columns(3)
+        mx = {
+            "RO": mc[0].number_input("RO Pax", 0, key=key+"ro"),
+            "BB": mc[0].number_input("BB Pax", 0, key=key+"bb"),
+            "HB": mc[1].number_input("HB Pax", 0, key=key+"hb"),
+            "FB": mc[1].number_input("FB Pax", 0, key=key+"fb"),
+            "SAI": mc[2].number_input("SAI Pax", 0, key=key+"sai"),
+            "AI": mc[2].number_input("AI Pax", 0, key=key+"ai")
+        }
+        mi, tr = 0.0, 0.0
+        if is_grp:
+            gc = st.columns(2)
+            mi = gc[0].number_input("MICE/Event", 0.0, key=key+"mi")
+            tr = gc[1].number_input("Trans/Misc", 0.0, key=key+"tr")
+        st.markdown("</div>", unsafe_allow_html=True)
+    res = run_yield([s, d], adr, n, mx, (ota_comm if is_ota else 0.0), fl, mi, tr)
+    if res:
+        with c3:
+            st.metric("Net Yield", f"{cu} {res['u']:,.2f}")
+            st.markdown(f"<div class='status-box' style='background:{res['b']}'>{res['l']}</div>", unsafe_allow_html=True)
+            return res['tot']
+    return 0
+
+# DRAWING ALL 5 SEGMENTS
+w1 = draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
+w2 = draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
+w3 = draw_seg("3. CORPORATE / GOV", "corp", 55, 38, "#34495e")
+w4 = draw_seg("4. CORPORATE GROUPS", "cgrp", 50, 30, "#9b59b6", is_grp=True)
+w5 = draw_seg("5. GROUP TOUR & TRAVEL", "tnt", 45, 25, "#e67e22", is_grp=True)
+
+# PORTFOLIO TOTAL
+st.divider()
+total_wealth = w1 + w2 + w3 + w4 + w5
+st.markdown(f"<div style='background:#1e3799;padding:20px;border-radius:12px;text-align:center;color:white;'><h3>Portfolio Wealth Total: {cu} {total_wealth:,.2f}</h3></div>", unsafe_allow_html=True)
+
+# --- MANUAL ---
+st.divider()
+st.markdown("## 📘 User Guide & Theoretical Instructions")
+cl1, cl2 = st.columns(2)
+with cl1:
+    st.markdown("""
+    - **Step 1:** Define Property and inventory.
+    - **Step 2:** Set **Tax Divisor (1.2327)** and **P01 Variable Fees**. 
+    - **Step 3:** Use **Pillar 02** to adjust demand. If 'Salalah' is entered, the system auto-scans for Khareef dates.
+    """)
+with cl2:
+    st.markdown("""
+    - **Step 4:** Analyze segments. Accept bookings only when status is **OPTIMIZED**.
+    - **Theory:** Yield Equilibrium protects your bottom line by stripping away hidden costs before suggesting a market-competitive rate.
+    """)

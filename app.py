@@ -11,6 +11,7 @@ st.markdown("""<style>
 .google-window{background:#e8f0fe; padding:15px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.85rem; line-height:1.6;}
 .status-indicator{padding:10px; border-radius:10px; text-align:center; font-weight:900; font-size:1.2rem; color:white; margin-top:10px;}
 .audit-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:12px; text-align:center; font-weight:bold; color:#5f4300; font-size:0.9rem;}
+.theory-box{background:#fdfdfd; padding:25px; border-radius:15px; border:1px solid #dee2e6; margin-top:40px}
 [data-testid="stSidebar"]{background:#f1f4f9; border-right:1px solid #dee2e6}
 </style>""", unsafe_allow_html=True)
 
@@ -29,7 +30,7 @@ if not st.session_state["auth"]:
             else: st.error("Denied")
     st.stop()
 
-# --- 3. SIDEBAR (STRATEGIC LEVERS) ---
+# --- 3. SIDEBAR (COMPREHENSIVE PILLAR 01 & 03) ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
     if st.button("☢️ Nuclear Data Reset"):
@@ -40,12 +41,12 @@ with st.sidebar:
     rk = str(st.session_state["reset_key"]) 
     
     st.markdown("### 🏨 Pillar 01: Universal Search")
-    hotel_name = st.text_input("🏨 Hotel Name", "Wyndham Garden Salalah", key="h"+rk)
-    city_name = st.text_input("📍 City/Location", "Salalah, Oman", key="c"+rk)
+    hotel_name = st.text_input("🏨 Hotel Search", "Wyndham Garden Salalah", key="h"+rk)
+    city_name = st.text_input("📍 City Search", "Salalah, Oman", key="c"+rk)
     
     st.divider()
-    d1 = st.date_input("Check-In", date.today(), key="d1"+rk)
-    d2 = st.date_input("Check-Out", date.today(), key="d2"+rk)
+    d1 = st.date_input("📅 Check-In Date", date.today(), key="d1"+rk)
+    d2 = st.date_input("📅 Check-Out Date", date.today(), key="d2"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     st.success(f"**Stay Nights: {m_nights}**")
     
@@ -60,21 +61,24 @@ with st.sidebar:
     p01_fee = st.number_input("P01 Variable Fee", 0.0, value=6.90, key="p01"+rk)
     ota_comm = st.slider("OTA Commission %", 0, 40, 18, key="comm"+rk)
 
-    st.markdown("### 🍽️ Unit Pax Costs")
-    c_bb = st.number_input("BB Cost", 0.0, key="cbb"+rk)
-    c_hb = st.number_input("HB Cost", 2.5, key="chb"+rk)
-    c_sai = st.number_input("SAI Cost", 7.5, key="csai"+rk)
-    meal_unit_costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": 5.0, "SAI": c_sai, "AI": 10.0}
+    # RESTORED SIDEBAR MEALS
+    st.markdown("### 🍽️ Pillar 01: Master Unit Costs")
+    c_bb = st.number_input("BB Unit Cost", 0.0, key="cbb"+rk)
+    c_hb = st.number_input("HB Unit Cost", 2.5, key="chb"+rk)
+    c_fb = st.number_input("FB Unit Cost", 5.0, key="cfb"+rk)
+    c_sai = st.number_input("SAI Unit Cost", 7.5, key="csai"+rk)
+    c_ai = st.number_input("AI Unit Cost", 10.0, key="cai"+rk)
+    meal_unit_costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": c_fb, "SAI": c_sai, "AI": c_ai}
 
-# --- 4. GOOGLE INTELLIGENCE ENGINE (P02) ---
+# --- 4. DEEP GOOGLE INTELLIGENCE LOGIC (P02) ---
 intel_db = {
-    "Salalah": {"ev": "Khareef Tourism Festival", "fl": "+18% Surge (Oman Air/SalamAir)", "basis": "Seasonal Monsoonal Surge"},
-    "Dubai": {"ev": "Dubai Shopping Festival / Expo", "fl": "+25% Global via Emirates/FlyDubai", "basis": "Peak Business/Leisure Synergy"},
-    "Muscat": {"ev": "Muscat Food Festival / Opera Season", "fl": "+10% Regional Traffic", "basis": "Cultural High Season"},
-    "London": {"ev": "Wimbledon / Fashion Week", "fl": "Heathrow Capacity Constraints", "basis": "Global Hub Demand Pressures"}
+    "Salalah": {"ev": "Khareef Tourism Festival Active", "fl": "+18% Regional Surge (Oman Air/SalamAir)", "basis": "Monsoonal Microclimate Demand"},
+    "Dubai": {"ev": "Dubai Shopping Festival / Expo Peaks", "fl": "+25% Global via Emirates/FlyDubai", "basis": "Commercial & Leisure Synergy"},
+    "Muscat": {"ev": "Opera Season / Muscat Food Fest", "fl": "+10% Regional Traffic rotations", "basis": "Cultural Tourism High Season"},
+    "London": {"ev": "Wimbledon / London Fashion Week", "fl": "Heathrow Slot Capacity Constraints", "basis": "Global Hub Supply Constraints"}
 }
 active_intel = next((v for k, v in intel_db.items() if k.lower() in city_name.lower()), 
-                   {"ev": "Local Market Dynamics", "fl": "Standard Seasonal Traffic", "basis": "Baseline Market Equilibrium"})
+                   {"ev": "Active Market Events", "fl": "Standard Seasonal Rotation", "basis": "Baseline Market Equilibrium"})
 
 # --- 5. CALCULATION ENGINE ---
 def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.18, laundry=0, mice=0, trans=0):
@@ -84,7 +88,7 @@ def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.18, laundry=0, mice=0, t
     net_adr = adr / tx_div
     total_m = sum(qty * meal_unit_costs.get(plan, 0) for plan, qty in meals.items())
     avg_m = (total_m / tr) if tr > 0 else 0
-    # Wealth Stripping Math
+    # Wealth Stripping Formula
     unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
     total_w = (unit_w * rn) + (trans / tx_div)
     gross_rev = adr * rn
@@ -96,8 +100,8 @@ st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER DASHBOARD</h1>", un
 
 st.markdown(f"""<div class='google-window'>
     <b style='color:#4285f4; font-size:1.1rem;'>🌐 Google Intelligence Live Feed: {hotel_name} | {city_name}</b><br>
-    • <b>Strategic Events:</b> {active_intel['ev']} | <b>Flight Intel:</b> {active_intel['fl']}<br>
-    • <b>Demand Basis:</b> {active_intel['basis']} | <b>Velocity Multiplier:</b> {v_mult}x Applied
+    • <b>Special Events:</b> {active_intel['ev']} | <b>Flight Details:</b> {active_intel['fl']}<br>
+    • <b>Market Basis:</b> {active_intel['basis']} | <b>Velocity Index:</b> {v_mult}x Applied
 </div>""", unsafe_allow_html=True)
 
 def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=False):
@@ -105,7 +109,7 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
     st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
     c_in, c_res = st.columns([2.6, 1])
     
-    with c_in: # FIXED SYNTAX HERE
+    with c_in:
         st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
         r1, r2, r3, r4 = st.columns(4)
         sgl = r1.number_input("SGL", 0, key="s"+key+rk)
@@ -130,12 +134,11 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
                     floor, (ota_comm/100 if is_ota else 0.0), l_c, m_c, t_c)
     if res:
         with c_res:
-            st.metric("Net Yield (Unit)", f"OMR {res['w']:,.2f}")
+            st.metric("Net Wealth (Unit)", f"OMR {res['w']:,.2f}")
             st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
-            # YELLOW AUDIT BOX
             st.markdown(f"""<div class='audit-box'>
                 📊 Audit: {res['rn']} Room Nights<br>
-                💰 Gross: OMR {res['gross']:,.2f}
+                💰 Total Segment Wealth: OMR {res['total']:,.2f}
             </div>""", unsafe_allow_html=True)
 
 # DRAW SEGMENTS
@@ -144,3 +147,24 @@ draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
 draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
 draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
 draw_seg("5. TOUR & TRAVEL", "tnt", 45, 25, "#e67e22", group=True)
+
+# --- 7. FINAL ACADEMIC DESCRIPTION SECTION ---
+st.divider()
+st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
+st.markdown("## 📘 Theoretical Methodology & Research Framework")
+cl1, cl2 = st.columns(2)
+with cl1:
+    st.markdown("""
+    ### 🏗️ Pillar 01: Internal Wealth Stripping
+    * **Logic:** The system ignores standard 'Gross ADR' and calculates 'Net Wealth.' 
+    * **Formula:** Strips Taxes (**1.2327**), OTA Commissions, and variable **P01 fees**.
+    * **Board Basis:** Integrates all 6 meal packages (BB through AI) to ensure food costs are subtracted before profit is declared.
+    """)
+with cl2:
+    st.markdown("""
+    ### 🌐 Pillar 02 & 03: Market Velocity
+    * **Market Sentinel (P02):** Scans city-specific events and flight influx data via simulated Google Scrape.
+    * **Velocity Valve (P03):** Compares OTB (On-The-Books) to historical averages.
+    * **Yield Equilibrium:** High OTB relative to history triggers a 1.35x price multiplier, protecting the property from selling out too cheap.
+    """)
+st.markdown("</div>", unsafe_allow_html=True)

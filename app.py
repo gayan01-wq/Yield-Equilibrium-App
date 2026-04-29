@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import date
 
 # --- 1. STYLING ---
-st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
+st.set_page_config(layout="wide", page_title="Yield Equilibrium Master Engine")
 st.markdown("""<style>
 .main-title{font-size:2.2rem!important;font-weight:900;color:#1e3799;text-align:center;margin-bottom:20px}
 .card{padding:15px;border-radius:10px;margin-bottom:10px;border-left:10px solid;font-weight:bold;background:#fcfcfc}
@@ -28,8 +28,7 @@ if not st.session_state["auth"]:
                 st.error("Access Denied")
     st.stop()
 
-# --- 3. THE MAIN APP (ONLY SHOWS IF AUTH IS TRUE) ---
-# SIDEBAR MASTER INPUTS
+# --- 3. MASTER CONTROLS ---
 with st.sidebar:
     st.markdown("### 👤 Gayan Nugawela")
     if st.button("🔒 Sign Out"):
@@ -37,23 +36,24 @@ with st.sidebar:
         st.rerun()
     st.divider()
     
-    hotel = st.text_input("🏨 Property", "Wyndham Garden Salalah")
-    inventory = st.number_input("Inventory", 1, 1000, 237)
+    hotel = st.text_input("🏨 Property Search", "Wyndham Garden Salalah")
+    inventory = st.number_input("Total Inventory", 1, 1000, 237)
     
     st.write("### 📅 Stay Intelligence")
     d1 = st.date_input("Check-In", date.today())
     d2 = st.date_input("Check-Out", date.today())
+    # Master Night Sync
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     st.info(f"Analysis Period: {m_nights} Nights")
 
     st.write("### 🌐 Market Sentinel")
     is_khareef = "Salalah" in hotel and (6 <= d1.month <= 9)
-    m_state = st.radio("Market Heat", ["Crisis", "Stagnant", "Recovering", "Peak"], index=(3 if is_khareef else 0))
+    m_state = st.radio("Demand Status", ["Crisis", "Stagnant", "Recovering", "Peak"], index=(3 if is_khareef else 0))
     m_heat = {"Crisis": 0.65, "Stagnant": 0.85, "Recovering": 1.0, "Peak": 1.35}[m_state]
 
     st.write("### 📈 Velocity (P03)")
     otb = st.slider("OTB %", 0, 100, (70 if is_khareef else 15))
-    hist = st.slider("History %", 0, 100, 45)
+    hist = st.slider("Historical %", 0, 100, 45)
     v_mult = 1.25 if (otb-hist) > 10 else 0.85 if (otb-hist) < -10 else 1.0
 
     st.divider()
@@ -62,13 +62,12 @@ with st.sidebar:
     ota_comm = st.slider("OTA Comm %", 0, 50, 18) / 100
     
     st.write("### 🍽️ Meal Costs")
-    c_bb = st.number_input("BB Cost", 0.0)
-    c_sai = st.number_input("SAI Cost", 5.0)
-    c_ai = st.number_input("AI Cost", 5.0)
-    # Master Cost Dictionary
+    c_bb = st.number_input("BB Pax Cost", 0.0)
+    c_sai = st.number_input("SAI Pax Cost", 5.0)
+    c_ai = st.number_input("AI Pax Cost", 5.0)
     m_costs = {"RO": 0, "BB": c_bb, "SAI": c_sai, "AI": c_ai, "HB": c_bb + 3.0, "FB": c_bb + 6.0}
 
-# --- CALCULATION ENGINE ---
+# --- 4. CALCULATION ENGINE ---
 def run_yield(rms, adr, n, meals, comm, fl, mice=0, trans=0):
     tr = sum(rms)
     if tr <= 0: return None
@@ -82,19 +81,17 @@ def run_yield(rms, adr, n, meals, comm, fl, mice=0, trans=0):
     l, b = ("OPTIMIZED", "#27ae60") if dy >= hrd else ("DILUTIVE", "#e74c3c")
     return {"u": dy, "l": l, "b": b, "tot": total_w, "rn": tr * n}
 
-# --- 4. MAIN INTERFACE RENDER ---
+# --- 5. MAIN INTERFACE ---
 st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER</h1>", unsafe_allow_html=True)
 
 st.markdown(f"""<div class='sentinel-box'>
     <h3 style='margin:0; color:#ffc107;'>🤖 PILLAR 02: MARKET SENTINEL</h3>
     <div style='display:flex; justify-content:space-between; margin-top:10px;'>
-        <span><b>Strength:</b> {m_state} ({m_heat}x)</span>
-        <span><b>Velocity:</b> {otb-hist}%</span>
-        <span><b>Master Nights:</b> {m_nights}</span>
+        <span><b>Market Strength:</b> {m_state} ({m_heat}x)</span>
+        <span><b>Velocity Multiplier:</b> {v_mult}x</span>
+        <span><b>Nights:</b> {m_nights}</span>
     </div>
 </div>""", unsafe_allow_html=True)
-
-if is_khareef: st.success(f"⛈️ KHAREEF AUTOMATION ACTIVE for {hotel}")
 
 # SEGMENT 1: FIT
 st.markdown("<div class='card' style='border-left-color:#3498db'>1. DIRECT / FIT</div>", unsafe_allow_html=True)
@@ -105,7 +102,7 @@ with f1:
     fn = st.number_input("Stay Nights", value=m_nights, key="fn")
 with f2:
     f_sug = (65 * m_heat) * v_mult
-    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED: {cu} {f_sug:,.2f}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED RATE: {cu} {f_sug:,.2f}</div>", unsafe_allow_html=True)
     fa = st.number_input("Final Rate", value=float(f_sug), key="fa")
     ff = st.number_input("Min Floor", 40.0, key="ff")
     f_mx = {"RO": st.number_input("RO Qty", 0, key="fro"), "BB": st.number_input("BB Qty", 0, key="fbb")}
@@ -125,7 +122,24 @@ with o1:
     on = st.number_input("Stay Nights", value=m_nights, key="on")
 with o2:
     o_sug = (60 * m_heat) * v_mult
-    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED: {cu} {o_sug:,.2f}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED RATE: {cu} {o_sug:,.2f}</div>", unsafe_allow_html=True)
     oa = st.number_input("Applied Rate", value=float(o_sug), key="oa")
     of = st.number_input("Min Floor", 35.0, key="of")
-    o_mx = {"BB": st.number_input("BB
+    o_mx = {"BB": st.number_input("BB Qty ", 0, key="obb"), "SAI": st.number_input("SAI Qty ", 0, key="osai")}
+    st.markdown("</div>", unsafe_allow_html=True)
+ro = run_yield([0, od], oa, on, o_mx, ota_comm, of)
+if ro:
+    with o3:
+        st.metric("Net Yield", f"{cu} {ro['u']:,.2f}")
+        st.markdown(f"<div class='status-box' style='background:{ro['b']}'>{ro['l']}</div>", unsafe_allow_html=True)
+
+# SEGMENT 3: GROUPS
+st.divider()
+st.markdown("<div class='card' style='border-left-color:#9b59b6'>3. CORPORATE GROUPS / MICE</div>", unsafe_allow_html=True)
+g1, g2, g3 = st.columns([1, 1.8, 1.2])
+with g1:
+    gd = st.number_input("Group Rooms", 0, key="gd")
+    gn = st.number_input("Nights", value=m_nights, key="gn")
+with g2:
+    g_sug = (50 * m_heat) * v_mult
+    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED RATE: {cu} {g_sug:,.2

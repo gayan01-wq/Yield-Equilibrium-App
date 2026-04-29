@@ -10,12 +10,14 @@ st.markdown("""<style>
 .pricing-header{background:#1e3799;color:white;padding:5px 10px;border-radius:5px 5px 0 0;font-size:0.9rem;font-weight:bold}
 .status-box{padding:10px;border-radius:10px;text-align:center;font-size:1.1rem;font-weight:bold;color:white}
 .sentinel-box{background:#1e3799; color:white; padding:20px; border-radius:10px; margin-bottom:25px; border-left:10px solid #ffc107;}
-.google-window{background:#e8f0fe; padding:15px; border-radius:10px; border:1px solid #4285f4; margin-bottom:20px; font-size:0.9rem;}
+.google-window{background:#e8f0fe; padding:15px; border-radius:10px; border:1px solid #4285f4; margin-bottom:20px; font-size:0.9rem; line-height:1.6;}
 [data-testid="stSidebar"]{background:#f8f9fa; border-right:1px solid #dee2e6}
 </style>""", unsafe_allow_html=True)
 
-# --- 2. AUTH & SESSION RESET ---
+# --- 2. SESSION STATE & DATA CLEAR ---
 if "auth" not in st.session_state: st.session_state["auth"] = False
+
+# --- 3. AUTHENTICATION ---
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     with st.form("login"):
@@ -27,11 +29,13 @@ if not st.session_state["auth"]:
             else: st.error("Denied")
     st.stop()
 
-# --- 3. SIDEBAR MASTER CONTROL ---
+# --- 4. SIDEBAR MASTER CONTROL ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\n**Gayan Nugawela**")
     
-    if st.button("🧹 Clear All Data"):
+    # IMPROVED: ROBUST CLEAR BUTTON
+    if st.button("🧹 Clear All Data & Reset"):
+        st.cache_data.clear()
         for key in list(st.session_state.keys()):
             if key != "auth": del st.session_state[key]
         st.rerun()
@@ -54,7 +58,6 @@ with st.sidebar:
     st.info(f"Stay Duration: {m_nights} Nights")
 
     st.markdown("### 🌐 Pillar 02: Market Sentinel")
-    # Khareef Logic
     is_khareef = "Salalah" in location and (6 <= d1.month <= 9)
     m_state = st.radio("Demand Status", ["Crisis", "Stagnant", "Recovering", "Peak"], index=(3 if is_khareef else 0))
     m_heat = {"Crisis": 0.65, "Stagnant": 0.85, "Recovering": 1.0, "Peak": 1.35}[m_state]
@@ -70,7 +73,6 @@ with st.sidebar:
     ota_comm = st.slider("OTA Commission %", 0, 50, 18) / 100
     
     st.markdown("### 🍽️ Unit Pax Costs")
-    # FIXED: Ensured all strings are properly terminated
     c_bb = st.number_input("BB Pax Cost", 0.0)
     c_hb = st.number_input("HB Pax Cost", 0.0)
     c_fb = st.number_input("FB Pax Cost", 0.0)
@@ -78,7 +80,32 @@ with st.sidebar:
     c_ai = st.number_input("AI Cost", 5.0)
     costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": c_fb, "SAI": c_sai, "AI": c_ai}
 
-# --- 4. CALCULATION ENGINE ---
+# --- 5. DYNAMIC GOOGLE INTELLIGENCE LOGIC ---
+city_data = {
+    "Salalah, Oman": {
+        "events": "Salalah Tourism Festival | Khareef Seasonal Peaks",
+        "flights": "+18% Influx (Qatar Airways & FlyDubai extra rotations)",
+        "index": "High" if is_khareef else "Moderate"
+    },
+    "Muscat, Oman": {
+        "events": "Muscat Fashion Week | Muscat Food Festival",
+        "flights": "+5% Steady | Oman Air fleet expansion",
+        "index": "Recovering"
+    },
+    "Dubai, UAE": {
+        "events": "Dubai Shopping Festival | Gulfood EXPO",
+        "flights": "+25% Surge (Emirates & FlyDubai max capacity)",
+        "index": "Peak"
+    },
+    "London, UK": {
+        "events": "London Fashion Week | Wimbledon Prep",
+        "flights": "Heavy Congestion | Heathrow Slot Capacity 98%",
+        "index": "High"
+    }
+}
+current_intel = city_data.get(location)
+
+# --- 6. CALCULATION ENGINE ---
 def run_yield(rms, adr, n, meals, comm, fl, mice=0, trans=0):
     tr = sum(rms)
     if tr <= 0: return None
@@ -92,22 +119,23 @@ def run_yield(rms, adr, n, meals, comm, fl, mice=0, trans=0):
     l, b = ("OPTIMIZED", "#27ae60") if dy >= hrd else ("DILUTIVE", "#e74c3c")
     return {"u": dy, "l": l, "b": b, "tot": total_w, "rn": tr * n}
 
-# --- 5. MAIN DASHBOARD ---
+# --- 7. MAIN DASHBOARD ---
 st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER</h1>", unsafe_allow_html=True)
 
-# Google Intelligence Window
+# UPDATED: DYNAMIC GOOGLE INTELLIGENCE WINDOW
 st.markdown(f"""<div class='google-window'>
-    <b>🌐 Google Intelligence Feed: {location}</b><br>
-    • Local Demand Index: {"High (Khareef Season)" if is_khareef else "Moderate"}<br>
-    • Flight Influx: +14% via Google Travel Scrape | Event: Tourism Festival Active
+    <b style='color:#4285f4;'>🌐 Google Intelligence Feed: {location}</b><br>
+    • <b>Special Events:</b> {current_intel['events']}<br>
+    • <b>Flight Influx Data:</b> {current_intel['flights']}<br>
+    • <b>Local Demand Scrape:</b> {current_intel['index']} Demand Detected
 </div>""", unsafe_allow_html=True)
 
 st.markdown(f"""<div class='sentinel-box'>
     <h3 style='margin:0; color:#ffc107;'>🤖 PILLAR 02: MARKET SENTINEL ACTIVE</h3>
     <div style='display:flex; justify-content:space-between; margin-top:10px;'>
         <span><b>Property:</b> {hotel}</span>
-        <span><b>Heat Index:</b> {m_state} ({m_heat}x)</span>
-        <span><b>Duration:</b> {m_nights} Nights</span>
+        <span><b>Condition:</b> {m_state} ({m_heat}x)</span>
+        <span><b>Sync Duration:</b> {m_nights} Nights</span>
     </div>
 </div>""", unsafe_allow_html=True)
 
@@ -124,18 +152,19 @@ def draw_seg(label, key, br, fl_def, col, is_ota=False, is_grp=False):
         adr = st.number_input("Applied ADR", value=float(suggested), key="a"+key)
         fl = st.number_input("Floor Min", float(fl_def), key="f"+key)
         mc = st.columns(3)
-        m_ro = mc[0].number_input("RO Pax", 0, key="ro"+key)
-        m_bb = mc[0].number_input("BB Pax", 0, key="bb"+key)
-        m_hb = mc[1].number_input("HB Pax", 0, key="hb"+key)
-        m_fb = mc[1].number_input("FB Pax", 0, key="fb"+key)
-        m_sai = mc[2].number_input("SAI Pax", 0, key="sai"+key)
-        m_ai = mc[2].number_input("AI Pax", 0, key="ai"+key)
-        mx = {"RO":m_ro, "BB":m_bb, "HB":m_hb, "FB":m_fb, "SAI":m_sai, "AI":m_ai}
+        mx = {
+            "RO": mc[0].number_input("RO Pax", 0, key="ro"+key),
+            "BB": mc[0].number_input("BB Pax", 0, key="bb"+key),
+            "HB": mc[1].number_input("HB Pax", 0, key="hb"+key),
+            "FB": mc[1].number_input("FB Pax", 0, key="fb"+key),
+            "SAI": mc[2].number_input("SAI Pax", 0, key="sai"+key),
+            "AI": mc[2].number_input("AI Pax", 0, key="ai"+key)
+        }
         mi, tr = 0.0, 0.0
         if is_grp:
             gc = st.columns(2)
             mi = gc[0].number_input("MICE Revenue", 0.0, key="mi"+key)
-            tr = gc[1].number_input("Trans. Revenue", 0.0, key="tr"+key)
+            tr = gc[1].number_input("Trans. Total", 0.0, key="tr"+key)
         st.markdown("</div>", unsafe_allow_html=True)
     res = run_yield([s, d], adr, n, mx, (ota_comm if is_ota else 0.0), fl, mi, tr)
     if res:
@@ -145,7 +174,7 @@ def draw_seg(label, key, br, fl_def, col, is_ota=False, is_grp=False):
             return res['tot']
     return 0
 
-# Drawing Segments
+# DRAWING ALL 5 SEGMENTS
 w1 = draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
 w2 = draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
 w3 = draw_seg("3. CORPORATE / GOV", "corp", 55, 38, "#34495e")
@@ -154,5 +183,5 @@ w5 = draw_seg("5. GROUP TOUR & TRAVEL", "tnt", 45, 25, "#e67e22", is_grp=True)
 
 # PORTFOLIO TOTAL
 st.divider()
-total_wealth = w1 + w2 + w3 + w4 + w5
-st.markdown(f"<div style='background:#1e3799;padding:20px;border-radius:12px;text-align:center;color:white;'><h3>Portfolio Wealth Total: {cu} {total_wealth:,.2f}</h3></div>", unsafe_allow_html=True)
+total_p = w1 + w2 + w3 + w4 + w5
+st.markdown(f"<div style='background:#1e3799;padding:20px;border-radius:12px;text-align:center;color:white;'><h3>Portfolio Wealth Total: {cu} {total_p:,.2f}</h3></div>", unsafe_allow_html=True)

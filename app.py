@@ -159,4 +159,19 @@ with col_a:
     st.markdown(f"### 🏗️ Pillar 01: Internal Wealth Stripping")
     st.markdown(f"""
     * **Net Wealth Strategy:** ADR is a vanity metric; wealth is sanity. This platform strips all friction costs before declaring profit.
-    * **
+    * **Cost Stripping:** Automatically removes Taxes (**{tx_div}** divisor), OTA Commissions (**{ota_comm}%**), and P01 Variable Fees (**{cur_sym} {p01_fee}**).
+    * **Consumption Index:** Subtracts unit costs for 6 Board Bases and **Snacks (Snk)** to find the "True Bottom Line."
+    """)
+    st.markdown("</div>", unsafe_allow_html=True)
+with col_b:
+    st.markdown("<div class='theory-card'>", unsafe_allow_html=True)
+    st.markdown(f"### 🌐 Pillar 02 & 03: Velocity & Verdicts")
+    st.markdown(f"""
+    * **ADW Pace:** Measures date-specific pressure within the Arrival-Departure Window compared to benchmarks.
+    * **Verdict Logic:** * **ACCEPT (Green):** Targets GOPPAR optimization.
+        * **REVIEW (Yellow):** Marginal yield; tactical ancillaries required.
+        * **REJECT (Red):** Dilutes asset value.
+    * **Displacement Warning:** Triggered at **50% inventory capacity**.
+    """)
+    st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)

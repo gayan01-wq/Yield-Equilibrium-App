@@ -48,6 +48,7 @@ else:
         d2 = st.date_input("Check-Out", today)
         stay_n = (d2 - d1).days if (d2 - d1).days > 0 else 1
         
+        # Khareef Detection Logic
         is_khareef = "Salalah" in hotel and (6 <= d1.month <= 9)
         
         st.write("### 🌐 Market Condition")
@@ -68,7 +69,7 @@ else:
         ota_p = st.slider("OTA Commission %", 0, 50, 18) / 100
         
         st.write("### 🍽️ Meal Costs")
-        m_costs = {"RO": 0.0, "BB": 0.0, "HB": 0.0, "FB": 0.0, "SAI": 5.0, "AI": 5.0}
+        m_costs = {"RO": 0.0}
         m_costs["BB"] = st.number_input("BB Cost", 0.0)
         m_costs["HB"] = st.number_input("HB Cost", 0.0)
         m_costs["FB"] = st.number_input("FB Cost", 0.0)
@@ -84,26 +85,7 @@ else:
         px_r = (rms[0]*1 + rms[1]*2 + rms[2]*3) / tot_r
         u_n = adr / tx
         
-        m_c_total = 0.0
+        m_c_sum = 0.0
         for m_type, m_qty in meals.items():
             if m_qty > 0:
-                m_c_total += (m_qty / tot_r) * m_costs[m_type] * px_r
-            
-        net_val = u_n - m_c_total
-        comm_val = net_val * comm
-        mice_val = (mice * px_r) / (n * tx)
-        
-        unit_w = (net_val - comm_val) + mice_val
-        total_w = (unit_w * tot_r * n) + (trans / tx)
-        d_u = total_w / (tot_r * n)
-        
-        hrd = fl * 1.25 if (tot_r / h_tot) >= 0.2 else fl
-        
-        if d_u >= hrd:
-            l, b = "OPTIMIZED", "#27ae60"
-        elif d_u >= hrd * 0.95:
-            l, b = "MARGINAL", "#ff9800"
-        else:
-            l, b = "DILUTIVE", "#e74c3c"
-        
-        return {"u": d_u,
+                m_c_sum += (m_qty

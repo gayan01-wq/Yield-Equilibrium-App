@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING & INTERFACE CONFIG ---
+# --- 1. STYLING ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master Engine")
 st.markdown("""<style>
 .main-title{font-size:2.2rem!important;font-weight:900;color:#1e3799;text-align:center;margin-bottom:20px}
@@ -37,7 +37,7 @@ with st.sidebar:
     st.markdown("### 🏨 Pillar 01: Cost & Context")
     hotel = st.text_input("Property (Google Sync Enabled)", "Wyndham Garden Salalah")
     inventory = st.number_input("Total Inventory", 1, 1000, 237)
-    p01_val = st.number_input("P01 Variable Fee (Per Room)", 0.0)
+    p01_val = st.number_input("P01 Variable Fee (Per Room)", 0.0, value=6.90)
     
     st.markdown("### 📅 Stay Intelligence")
     d1 = st.date_input("Check-In", date.today())
@@ -46,7 +46,6 @@ with st.sidebar:
     st.info(f"Analysis Period: {m_nights} Nights")
 
     st.markdown("### 🌐 Pillar 02: Market Sentinel")
-    # Automating the "Google Sync" logic
     is_khareef = "Salalah" in hotel and (6 <= d1.month <= 9)
     m_state = st.radio("Market Condition", ["Crisis", "Stagnant", "Recovering", "Peak"], index=(3 if is_khareef else 0))
     m_heat = {"Crisis": 0.65, "Stagnant": 0.85, "Recovering": 1.0, "Peak": 1.35}[m_state]
@@ -70,7 +69,7 @@ with st.sidebar:
 def run_yield(rms, adr, n, meals, comm, fl, mice=0, trans=0):
     tr = sum(rms)
     if tr <= 0: return None
-    px = (rms[0]*1 + rms[1]*2 + rms[2]*3) / tr
+    px = (rms[0]*1 + rms[1]*2) / tr # Simple occupancy ratio
     net_adr = adr / tx
     m_cost_unit = sum((qty/tr) * costs.get(m, 0) * px for m, qty in meals.items() if qty > 0)
     unit_w = (net_adr - m_cost_unit - ((net_adr - m_cost_unit) * comm)) - p01_val + ((mice * px)/(n * tx))
@@ -87,31 +86,35 @@ st.markdown(f"""<div class='sentinel-box'>
     <h3 style='margin:0; color:#ffc107;'>🤖 PILLAR 02: MARKET SENTINEL ACTIVE</h3>
     <div style='display:flex; justify-content:space-between; margin-top:10px;'>
         <span><b>Property:</b> {hotel}</span>
-        <span><b>Heat Index:</b> {m_state} ({m_heat}x)</span>
+        <span><b>Condition:</b> {m_state} ({m_heat}x)</span>
         <span><b>Duration:</b> {m_nights} Nights</span>
     </div>
 </div>""", unsafe_allow_html=True)
 
-def draw_segment(title, key, base_r, floor, color, is_ota=False, is_group=False):
-    st.markdown(f"<div class='card' style='border-left-color:{color}'>{title}</div>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 1.8, 1.2])
-    suggested = (base_r * m_heat) * v_mult
-    with c1:
-        s = st.number_input("SGL Rooms", 0, key=key+"s"); d = st.number_input("DBL Rooms", 0, key=key+"d")
-        n = st.number_input("Nights", value=m_nights, key=key+"n")
-    with c2:
-        st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED RATE: {cu} {suggested:,.2f}</div>", unsafe_allow_html=True)
-        adr = st.number_input("Final Applied ADR", value=float(suggested), key=key+"a")
-        fl = st.number_input("Floor (Min)", float(floor), key=key+"f")
-        m_cols = st.columns(3)
-        m_ro = m_cols[0].number_input("RO Pax", 0, key=key+"ro")
-        m_bb = m_cols[0].number_input("BB Pax", 0, key=key+"bb")
-        m_hb = m_cols[1].number_input("HB Pax", 0, key=key+"hb")
-        m_fb = m_cols[1].number_input("FB Pax", 0, key=key+"fb")
-        m_sai = m_cols[2].number_input("SAI Pax", 0, key=key+"sai")
-        m_ai = m_cols[2].number_input("AI Pax", 0, key=key+"ai")
-        mx = {"RO": m_ro, "BB": m_bb, "HB": m_hb, "FB": m_fb, "SAI": m_sai, "AI": m_ai}
-        
-        mi, tr = 0.0, 0.0
-        if is_group:
-            gc = st.columns(2); mi = gc[0].number
+# --- SEGMENT 1: FIT (DIRECT) ---
+st.markdown("<div class='card' style='border-left-color:#3498db'>1. DIRECT / FIT</div>", unsafe_allow_html=True)
+c1, c2, c3 = st.columns([1, 1.8, 1.2])
+with c1:
+    s1, d1 = st.number_input("SGL Rooms", 0, key="s1"), st.number_input("DBL Rooms", 0, key="d1")
+    n1 = st.number_input("Nights", value=m_nights, key="n1")
+with c2:
+    sug1 = (65 * m_heat) * v_mult
+    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED RATE: {cu} {sug1:,.2f}</div>", unsafe_allow_html=True)
+    a1 = st.number_input("Applied ADR", value=float(sug1), key="a1")
+    f1 = st.number_input("Floor", 40.0, key="f1")
+    mx1 = {"RO": st.number_input("RO Pax", 0, key="ro1"), "BB": st.number_input("BB Pax", 0, key="bb1")}
+    st.markdown("</div>", unsafe_allow_html=True)
+res1 = run_yield([s1, d1], a1, n1, mx1, 0, f1)
+if res1:
+    with c3:
+        st.metric("Net Yield", f"{cu} {res1['u']:,.2f}")
+        st.markdown(f"<div class='status-box' style='background:{res1['b']}'>{res1['l']}</div>", unsafe_allow_html=True)
+        st.session_state["t1"] = res1['tot']
+
+# --- SEGMENT 2: OTA ---
+st.divider()
+st.markdown("<div class='card' style='border-left-color:#2ecc71'>2. OTA CHANNELS</div>", unsafe_allow_html=True)
+o1, o2, o3 = st.columns([1, 1.8, 1.2])
+with o1:
+    od2 = st.number_input("DBL Rooms", 0, key="od2")
+    on2 = st.number_input

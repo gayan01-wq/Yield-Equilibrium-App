@@ -30,7 +30,7 @@ if not st.session_state["auth"]:
                 st.error("Denied")
     st.stop()
 
-# --- MAIN ENGINE ---
+# --- MAIN DASHBOARD ---
 else:
     with st.sidebar:
         st.markdown("<p style='font-size:1.2rem;font-weight:800;color:#1e3799;margin:0;'>Gayan Nugawela</p><p style='font-size:0.8rem;margin:0;'>Strategic Revenue Architect</p>", unsafe_allow_html=True)
@@ -48,17 +48,19 @@ else:
         d2 = st.date_input("Check-Out", today)
         stay_n = (d2 - d1).days if (d2 - d1).days > 0 else 1
         
-        # Khareef Detection Logic
+        # Khareef Logic
         is_khareef = "Salalah" in hotel and (6 <= d1.month <= 9)
         
         st.write("### 🌐 Market Condition")
         m_list = ["Global/Local Crisis", "Stagnant", "Recovering", "Peak Season"]
-        m_state = st.radio("Sentinel Scrape Status", m_list, index=(3 if is_khareef else 0))
+        m_idx = 3 if is_khareef else 0
+        m_state = st.radio("Sentinel Scrape Status", m_list, index=m_idx)
         m_logic = {"Global/Local Crisis": 0.65, "Stagnant": 0.85, "Recovering": 1.0, "Peak Season": 1.35}
         m_heat = m_logic[m_state]
         
         st.write("### 📈 Velocity Valve (P03)")
-        otb_occ = st.slider("Current OTB %", 0, 100, (70 if is_khareef else 15))
+        def_otb = 70 if is_khareef else 15
+        otb_occ = st.slider("Current OTB %", 0, 100, def_otb)
         hist_occ = st.slider("Historical Avg %", 0, 100, 45)
         v_delta = otb_occ - hist_occ
         v_mult = 1.25 if v_delta > 10 else 1.10 if v_delta > 0 else 0.85 if v_delta > -10 else 0.70
@@ -79,13 +81,46 @@ else:
     # --- CALCULATION LOGIC ---
     def calc_w(rms, adr, n, meals, comm, fl, mice=0.0, trans=0.0):
         tot_r = sum(rms)
-        if tot_r <= 0:
-            return None
+        if tot_r <= 0: return None
         
-        px_r = (rms[0]*1 + rms[1]*2 + rms[2]*3) / tot_r
-        u_n = adr / tx
+        px_ratio = (rms[0]*1 + rms[1]*2 + rms[2]*3) / tot_r
+        unit_net = adr / tx
         
-        m_c_sum = 0.0
+        # Cleaned Meal Calculation
+        meal_total = 0.0
         for m_type, m_qty in meals.items():
             if m_qty > 0:
-                m_c_sum += (m_qty
+                cost_per_pax = m_costs[m_type]
+                meal_total += (m_qty / tot_r) * cost_per_pax * px_ratio
+            
+        base_val = unit_net - meal_total
+        comm_amt = base_val * comm
+        mice_amt = (mice * px_ratio) / (n * tx)
+        
+        final_unit_w = (base_val - comm_amt) + mice_amt
+        final_tot_w = (final_unit_w * tot_r * n) + (trans / tx)
+        net_yield = final_tot_w / (tot_r * n)
+        
+        occ_check = tot_r / h_tot
+        hurdle = fl * 1.25 if occ_check >= 0.2 else fl
+        
+        if net_yield >= hurdle: l, b = "OPTIMIZED", "#27ae60"
+        elif net_yield >= hurdle * 0.95: l, b = "MARGINAL", "#ff9800"
+        else: l, b = "DILUTIVE", "#e74c3c"
+            
+        return {"u": net_yield, "l": l, "b": b, "tot": final_tot_w, "rn": tot_r * n}
+
+    # --- UI RENDER ---
+    st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER</h1>", unsafe_allow_html=True)
+    
+    if is_khareef:
+        st.success(f"🌦️ KHAREEF MODE ACTIVATED for {hotel}")
+
+    st.markdown(f"""<div class='sentinel-box'>
+        <h3 style='margin:0; color:#ffc107;'>🤖 PILLAR 02: MARKET SENTINEL ANALYSIS</h3>
+        <div style='display:flex; justify-content:space-between; margin-top:10px;'>
+            <span><b>Strength:</b> {m_state} ({m_heat}x)</span>
+            <span><b>Velocity:</b> {v_delta}%</span>
+            <span><b>P03 Adjustment:</b> {v_mult}x</span>
+        </div>
+    </div>""", unsafe_allow_html=True)

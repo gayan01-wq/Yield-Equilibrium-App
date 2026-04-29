@@ -56,6 +56,84 @@ with st.sidebar:
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx"+rk)
     
     st.markdown("### 🍽️ Unit Pax Costs")
+    # FIXED: Added proper keys and closed all strings for line 61 area
     c_bb = st.number_input("BB Cost", 0.0, key="cbb"+rk)
     c_hb = st.number_input("HB Cost", 2.5, key="chb"+rk)
-    c_fb = st.number_input("FB Cost", 5.0, key="
+    c_fb = st.number_input("FB Cost", 5.0, key="cfb"+rk)
+    c_sai = st.number_input("SAI Cost", 7.5, key="csai"+rk)
+    c_ai = st.number_input("AI Cost", 10.0, key="cai"+rk)
+    meal_unit_costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": c_fb, "SAI": c_sai, "AI": c_ai}
+
+# --- 4. CALCULATION ENGINE ---
+def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.18, laundry=0, mice_pax=0, trans_fixed=0):
+    total_rooms = sum(rms)
+    if total_rooms <= 0: return None
+    room_nights = total_rooms * nts
+    net_adr = adr / tx_div
+    
+    total_meal_cost = sum(qty * meal_unit_costs.get(plan, 0) for plan, qty in meals.items())
+    avg_meal_cost = (total_meal_cost / total_rooms) if total_rooms > 0 else 0
+    
+    # Wealth Formula: ADR + MICE Revenue - Costs - Taxes - Commission - P01 - Laundry
+    unit_wealth = (net_adr - avg_meal_cost - (net_adr * comm_rate)) - p01_fee - laundry + (mice_pax / tx_div)
+    total_wealth = (unit_wealth * room_nights) + (trans_fixed / tx_div)
+    
+    # Net Yield per Room Night
+    final_yield = total_wealth / room_nights
+    
+    status, color = ("OPTIMIZED", "#27ae60") if final_yield >= hurdle else ("DILUTIVE", "#e74c3c")
+    return {"w": final_yield, "st": status, "cl": color, "rn": room_nights, "total": total_wealth}
+
+# --- 5. MAIN DASHBOARD ---
+st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER DASHBOARD</h1>", unsafe_allow_html=True)
+
+st.markdown(f"""<div class='google-window'>
+    <b>🌐 Google Intelligence Feed: {location}</b> | 📅 Stay: {d1} to {d2} ({m_nights} Nights) | ⚖️ Tax Divisor: {tx_div}
+</div>""", unsafe_allow_html=True)
+
+def draw_seg(label, key, suggest_adr, floor_def, color, ota=False, group=False):
+    rk = str(st.session_state["reset_key"])
+    st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
+    col_input, col_result = st.columns([2.6, 1])
+    
+    with col_input:
+        st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+        r1, r2, r3, r4 = st.columns(4)
+        sgl = r1.number_input("SGL Rooms", 0, key="s"+key+rk)
+        dbl = r2.number_input("DBL Rooms", 0, key="d"+key+rk)
+        applied_adr = r3.number_input("Applied Rate", value=float(suggest_adr), key="a"+key+rk)
+        floor_amt = r4.number_input("Floor Amount", value=float(floor_def), key="f"+key+rk)
+        
+        st.markdown("<div class='meal-header'>Meal Plans (Pax)</div>", unsafe_allow_html=True)
+        m_row = st.columns(6)
+        m_ro = m_row[0].number_input("RO", 0, key="ro"+key+rk)
+        m_bb = m_row[1].number_input("BB", 0, key="bb"+key+rk)
+        m_hb = m_row[2].number_input("HB", 0, key="hb"+key+rk)
+        m_fb = m_row[3].number_input("FB", 0, key="fb"+key+rk)
+        m_sai = m_row[4].number_input("SAI", 0, key="sai"+key+rk)
+        m_ai = m_row[5].number_input("AI", 0, key="ai"+key+rk)
+        
+        laundry, mice, trans = 0.0, 0.0, 0.0
+        if group:
+            st.markdown("<div class='meal-header'>Ancillary Revenue & Logistics</div>", unsafe_allow_html=True)
+            g_row = st.columns(3)
+            mice = g_row[0].number_input("MICE (Per Pax)", 0.0, key="mice"+key+rk)
+            trans = g_row[1].number_input("Transportation (Fixed Total)", 0.0, key="trans"+key+rk)
+            laundry = g_row[2].number_input("Laundry (Per Pax)", 0, 10000, 0, key="laun"+key+rk)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    res = run_yield([sgl, dbl], m_nights, applied_adr, {"RO":m_ro,"BB":m_bb,"HB":m_hb,"FB":m_fb,"SAI":m_sai,"AI":m_ai}, 
+                    floor_amt, (0.18 if ota else 0.0), laundry, mice, trans)
+    if res:
+        with col_result:
+            st.metric("Net Yield", f"OMR {res['w']:,.2f}")
+            st.write(f"📊 **Room Nights:** {res['rn']}")
+            st.write(f"💰 **Total Wealth:** {res['total']:,.2f}")
+            st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
+
+# DRAW ALL 5 SEGMENTS
+draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
+draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", ota=True)
+draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
+draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
+draw_seg("5. TOUR & TRAVEL (GDS/GROUPS)", "tnt", 45, 25, "#e67e22", group=True)

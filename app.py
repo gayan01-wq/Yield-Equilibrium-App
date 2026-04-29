@@ -42,19 +42,15 @@ with st.sidebar:
     is_khareef = "Salalah" in hotel and (d1.month in [6, 7, 8, 9])
     
     st.write("### 🌐 Market Condition")
-    default_state = "Peak Season" if is_khareef else "Global/Local Crisis"
-    market_state = st.radio("Sentinel Scrape Status", ["Global/Local Crisis", "Stagnant", "Recovering", "Peak Season"], index=(3 if is_khareef else 0))
+    # Automatic trigger based on Khareef
+    default_idx = 3 if is_khareef else 0
+    market_state = st.radio("Sentinel Scrape Status", ["Global/Local Crisis", "Stagnant", "Recovering", "Peak Season"], index=default_idx)
     m_logic = {"Global/Local Crisis": 0.65, "Stagnant": 0.85, "Recovering": 1.0, "Peak Season": 1.35}
     m_heat = m_logic[market_state]
     
     st.write("### 📈 Velocity Valve (P03)")
-    otb_occ = st.slider("Current OTB %", 0, 100, (70 if is_khareef else 15))
+    default_otb = 70 if is_khareef else 15
+    otb_occ = st.slider("Current OTB %", 0, 100, default_otb)
     hist_occ = st.slider("Historical Avg %", 0, 100, 45)
     v_delta = otb_occ - hist_occ
-    v_mult = 1.25 if v_delta > 10 else 1.10 if v_delta > 0 else 0.85 if v_delta > -10 else 0.70
-
-    st.divider()
-    cu = st.selectbox("Currency", ["OMR","AED","SAR","USD"])
-    tx = st.number_input("Tax Divisor", 1.2327, format="%.4f")
-    ota_p = st.slider("OTA Commission %", 0, 50, 18) / 100
-    m_costs = {"RO": 0.0, "BB": st.number_input("BB", 0.0), "HB":
+    v_mult = 1.25 if v_delta > 10 else 1.10 if v_delta > 0 else 0.

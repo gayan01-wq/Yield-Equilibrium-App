@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING (Professional Executive Design) ---
+# --- 1. STYLING ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -33,7 +33,6 @@ if not st.session_state["auth"]:
 # --- 3. SIDEBAR (STRATEGIC INPUTS) ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
-    # NEW: Professional naming as requested
     if st.button("🧹 Clear Global Cache"):
         st.session_state["reset_key"] += 1
         st.rerun()
@@ -41,14 +40,10 @@ with st.sidebar:
     
     rk = str(st.session_state["reset_key"]) 
     
-    # NEW: Global Currency Selection
-    currency_map = {
-        "OMR (﷼)": "OMR ﷼", "USD ($)": "USD $", "GBP (£)": "GBP £", 
-        "EUR (€)": "EUR €", "AED (د.إ)": "AED د.إ", "SAR (﷼)": "SAR ﷼"
-    }
-    cur_choice = st.selectbox("🌍 Base Operating Currency", list(currency_map.keys()), key="cur"+rk)
-    cur_sym = currency_map[cur_choice].split(" ")[1]
-    cur_code = currency_map[cur_choice].split(" ")[0]
+    # Stable Currency Selector
+    currencies = {"OMR": "﷼", "USD": "$", "GBP": "£", "EUR": "€", "AED": "د.إ", "SAR": "﷼"}
+    cur_code = st.selectbox("🌍 Base Operating Currency", list(currencies.keys()), key="cur"+rk)
+    cur_sym = currencies[cur_code]
 
     hotel_name = st.text_input("🏨 Hotel Name", "Wyndham Garden Salalah", key="h"+rk)
     city_name = st.text_input("📍 City Search", "Salalah, Oman", key="c"+rk)
@@ -59,7 +54,7 @@ with st.sidebar:
     
     inventory = st.number_input("Total Property Capacity", 1, 1000, 237, key="inv"+rk)
     st.success(f"**Stay Window: {m_nights} Nights**")
-    st.info(f"**Max Capacity: {inventory * m_nights} Room Nights**")
+    st.info(f"**Capacity: {inventory * m_nights} RN**")
     
     st.divider()
     st.markdown("### 📊 Pillar 03: Velocity (ADW Pace)")
@@ -70,25 +65,28 @@ with st.sidebar:
     st.divider()
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx"+rk)
     ota_comm = st.slider("OTA Commission %", 0, 40, 18, key="comm"+rk)
-    p01_fee = st.number_input(f"P01 Variable Fee ({cur_sym})", 0.0, value=6.90, key="p01"+rk)
+    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01"+rk)
 
     st.markdown("### 🍽️ Unit Costs (Pillar 01)")
-    c_snk = st.number_input(f"Snack Unit Cost ({cur_sym})", 0.0, value=1.5, key="csnk"+rk)
+    c_snk = st.number_input(f"Snack Cost ({cur_sym})", 0.0, value=1.5, key="csnk"+rk)
     meal_costs = {
-        "RO": 0, "BB": st.number_input(f"BB Cost ({cur_sym})", 0.0, key="cbb"+rk),
-        "HB": st.number_input(f"HB Cost ({cur_sym})", 2.5, key="chb"+rk), "FB": st.number_input(f"FB Cost ({cur_sym})", 5.0, key="cfb"+rk),
-        "SAI": st.number_input(f"SAI Cost ({cur_sym})", 7.5, key="csai"+rk), "AI": st.number_input(f"AI Cost ({cur_sym})", 10.0, key="cai"+rk)
+        "RO": 0, 
+        "BB": st.number_input(f"BB ({cur_sym})", 0.0, key="cbb"+rk),
+        "HB": st.number_input(f"HB ({cur_sym})", 2.5, key="chb"+rk),
+        "FB": st.number_input(f"FB ({cur_sym})", 5.0, key="cfb"+rk),
+        "SAI": st.number_input(f"SAI ({cur_sym})", 7.5, key="csai"+rk),
+        "AI": st.number_input(f"AI ({cur_sym})", 10.0, key="cai"+rk)
     }
 
-# --- 4. GOOGLE MARKET INTELLIGENCE FEED ---
+# --- 4. GOOGLE INTELLIGENCE ---
 intel_db = {
-    "Salalah": {"ev": "Khareef Tourism Festival (Monsoon Season)", "fl": "+18% Surge (Oman Air/SalamAir/Qatar)", "basis": "Weather-Driven Microclimate Demand"},
-    "Dubai": {"ev": "Shopping Festival / Global Trade Expo", "fl": "+25% Global Influx via EK/FZ Hubs", "basis": "Commercial Synergy & Leisure Compression"},
-    "Muscat": {"ev": "Royal Opera House / Muscat Food Fest", "fl": "+10% Regional Traffic rotations", "basis": "Cultural Tourism High Season"},
-    "London": {"ev": "Wimbledon / London Fashion Week Season", "fl": "Heathrow Slot Capacity at 98%", "basis": "Global Hub Supply Scarcity"}
+    "Salalah": {"ev": "Khareef Festival", "fl": "+18% Surge", "basis": "Weather Demand"},
+    "Dubai": {"ev": "Expo / Shopping Fest", "fl": "+25% Influx", "basis": "Commercial Synergy"},
+    "Muscat": {"ev": "Opera House Season", "fl": "+10% Traffic", "basis": "Cultural Peaks"},
+    "London": {"ev": "Wimbledon", "fl": "Heathrow 98%", "basis": "Hub Constraints"}
 }
 active_intel = intel_db.get(next((k for k in intel_db if k.lower() in city_name.lower()), None), 
-                           {"ev": "Active Seasonal Market Dynamics", "fl": "Baseline Regional Rotation", "basis": "Standard Market Equilibrium"})
+                           {"ev": "Standard Dynamics", "fl": "Baseline Rotation", "basis": "Equilibrium"})
 
 # --- 5. CALCULATION ENGINE ---
 def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, trans=0, snack_qty=0):
@@ -100,4 +98,80 @@ def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, tr
     total_s = snack_qty * c_snk
     avg_m_s = ((total_m + total_s) / tr) if tr > 0 else 0
     
-    unit_w = (net_adr - avg_m_s - (net_adr * comm_rate)) - p01_
+    unit_w = (net_adr - avg_m_s - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
+    total_w = (unit_w * rn) + (trans / tx_div)
+    
+    disp_risk = (tr / inventory) >= 0.50
+    
+    if unit_w < hurdle:
+        stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Basis: Unit wealth < {cur_sym} hurdle."
+    elif unit_w < (hurdle + 3.0):
+        stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Basis: Yield equilibrium window."
+    else:
+        stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Basis: Strong wealth stripping."
+        
+    if disp_risk: rsn += " | ⚠️ DISPLACEMENT: Segment ≥50% capacity."
+        
+    return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w}
+
+# --- 6. DASHBOARD ---
+st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER DASHBOARD</h1>", unsafe_allow_html=True)
+
+st.markdown(f"""<div class='google-window'>
+    <b>🌐 Google Intelligence: {hotel_name} | {city_name}</b><br>
+    • <b>Events:</b> {active_intel['ev']} | <b>Flights:</b> {active_intel['fl']}<br>
+    • <b>Basis:</b> {active_intel['basis']} | <b>Currency:</b> {cur_code}
+</div>""", unsafe_allow_html=True)
+
+def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=False):
+    rk = str(st.session_state["reset_key"])
+    st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
+    c_in, c_res = st.columns([2.6, 1])
+    with c_in:
+        st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+        r1, r2, r3, r4, r5 = st.columns([1,1,1,1.5,1.5])
+        sgl = r1.number_input("SGL", 0, key="s"+key+rk); dbl = r2.number_input("DBL", 0, key="d"+key+rk); tpl = r3.number_input("TPL", 0, key="t"+key+rk)
+        applied_adr = r4.number_input(f"Rate ({cur_sym})", value=float(suggest_adr * v_mult), key="a"+key+rk)
+        floor = r5.number_input(f"Floor ({cur_sym})", value=float(floor_def), key="f"+key+rk)
+        
+        m_row = st.columns(7)
+        p_ro = m_row[0].number_input("RO", 0, key="ro"+key+rk); p_bb = m_row[1].number_input("BB", 0, key="bb"+key+rk); p_hb = m_row[2].number_input("HB", 0, key="hb"+key+rk); p_fb = m_row[3].number_input("FB", 0, key="fb"+key+rk); p_sai = m_row[4].number_input("SAI", 0, key="sai"+key+rk); p_ai = m_row[5].number_input("AI", 0, key="ai"+key+rk); p_snk = m_row[6].number_input("Snk", 0, key="snk"+key+rk)
+        
+        l_c, m_c, t_c = 0.0, 0.0, 0.0
+        if group:
+            g_row = st.columns(3)
+            m_c = g_row[0].number_input(f"MICE ({cur_sym})", 0.0, key="mice"+key+rk); t_c = g_row[1].number_input(f"Trans ({cur_sym})", 0.0, key="tr"+key+rk); l_c = g_row[2].number_input(f"Laundry ({cur_sym})", 0.0, key="ln"+key+rk)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    res = run_yield([sgl, dbl, tpl], m_nights, applied_adr, {"RO":p_ro,"BB":p_bb,"HB":p_hb,"FB":p_fb,"SAI":p_sai,"AI":p_ai}, floor, (ota_comm/100 if is_ota else 0.0), l_c, m_c, t_c, p_snk)
+    if res:
+        with c_res:
+            st.metric(f"Net Wealth ({cur_sym})", f"{cur_sym} {res['w']:,.2f}")
+            st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='reason-box'>💡 <b>Strategic Reasoning:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='audit-box'>📊 {res['rn']} Room Nights | Total: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)
+
+draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
+draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
+draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
+draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
+draw_seg("5. TOUR & TRAVEL (GROUPS)", "tnt", 45, 25, "#e67e22", group=True)
+
+# --- 7. MANUAL ---
+st.divider()
+st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
+st.markdown(f"## 📘 Theoretical Methodology & Research Framework (Tax Basis: {tx_div})")
+cl1, cl2 = st.columns(2)
+with cl1:
+    st.markdown(f"""
+    ### 🏗️ Pillar 01: Internal Wealth Stripping
+    * **Net Wealth Strategy:** Strips Taxes (Divisor: **{tx_div}**), Commissions, and Meal/Snack costs.
+    * **Currency:** Operating in **{cur_code}** base context.
+    """)
+with cl2:
+    st.markdown(f"""
+    ### 🌐 Pillar 02 & 03: External Velocity Valve
+    * **ADW Pace:** Date-specific OTB analysis.
+    * **Displacement:** Strategic heads-up triggered at ≥50% capacity occupancy.
+    """)
+st.markdown("</div>", unsafe_allow_html=True)

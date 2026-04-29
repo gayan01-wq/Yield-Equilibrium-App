@@ -39,6 +39,7 @@ with st.sidebar:
         st.session_state["reset_key"] += 1
         st.rerun()
     st.divider()
+    
     rk = str(st.session_state["reset_key"]) 
     
     currencies = {
@@ -46,7 +47,7 @@ with st.sidebar:
         "SAR (﷼)": "﷼", "INR (₹)": "₹", "CNY (¥)": "¥", "SGD ($)": "$", 
         "MYR (RM)": "RM", "USD ($)": "$", "GBP (£)": "£", "EUR (€)": "€"
     }
-    cur_choice = st.selectbox("🌍 Operating Currency", list(currencies.keys()), key="cur"+rk)
+    cur_choice = st.selectbox("🌍 Base Operating Currency", list(currencies.keys()), key="cur"+rk)
     cur_sym = currencies[cur_choice]
     cur_code = cur_choice.split(" ")[0]
 
@@ -58,12 +59,12 @@ with st.sidebar:
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     st.info(f"📅 **Stay Window: {m_nights} Nights**")
     
-    inventory = st.number_input("Total Capacity (Rooms)", 1, 1000, 237, key="inv"+rk)
-    st.success(f"**Max Capacity: {inventory * m_nights} RN**")
+    inventory = st.number_input("Total Property Capacity", 1, 1000, 237, key="inv"+rk)
+    st.success(f"**Max Window Capacity: {inventory * m_nights} RN**")
     
     st.divider()
     st.markdown("### 📊 Pillar 03: Velocity")
-    otb_occ = st.slider("OTB % (ADW Pace)", 0, 100, 15, key="otb"+rk)
+    otb_occ = st.slider("OTB % (Date-Specific)", 0, 100, 15, key="otb"+rk)
     avg_hist = st.slider("Hist. Benchmark %", 0, 100, 45, key="hist"+rk)
     v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
 
@@ -82,8 +83,5 @@ with st.sidebar:
 
 # --- 4. MARKET INTEL ---
 intel_db = {
-    "salalah": {"ev": "Khareef Festival", "fl": "High Rotations (Dubai/Muscat)", "news": ["Port: Operations stable.", "Tourism: 15% influx surge expected.", "Weather: Monsoon conditions rising."], "basis": "Microclimate Compression"},
-    "dubai": {"ev": "DIFC Expansion Summit", "fl": "DXB Slot Scarcity 100%", "news": ["BREAKING: UAE exiting OPEC May 1st.", "DIFC Growth: 775 new companies in Q1.", "Market: Oil price driving demand."], "basis": "Hub Velocity"},
-    "colombo": {"ev": "Tourism Recovery", "fl": "SriLankan Airlines Hub growing", "news": ["Arrivals cross 1M mark.", "LKR Stability Improving.", "MICE demand surging."], "basis": "Emerging Market Recovery"}
-}
-active_intel = intel_db.get(city_name
+    "salalah": {"ev": "Khareef Festival", "fl": "High Rotations (Dubai/Muscat)", "news": ["Port: Operations stable.", "Tourism: Influx surge expected.", "Weather: Early Monsoon rising."], "basis": "Microclimate Compression"},
+    "dubai": {"ev": "DIFC Expansion Summit", "fl": "DXB Slot Scarcity 100%", "news": ["BREAKING: UAE exiting OPEC May 1st.", "DIFC

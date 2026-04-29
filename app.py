@@ -5,7 +5,7 @@ from datetime import date
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master Engine")
 st.markdown("""<style>
 .main-title{font-size:2.2rem!important;font-weight:900;color:#1e3799;text-align:center;margin-bottom:20px}
-.card{padding:15px;border-radius:10px;margin-bottom:10px;border-left:10px solid;font-weight:bold;background:#fcfcfc;box-shadow: 2px 2px 5px rgba(0,0,0,0.05)}
+.card{padding:15px;border-radius:10px;margin-bottom:10px;border-left:10px solid;font-weight:bold;background:#fcfcfc}
 .pricing-row{background:#f1f4f9;padding:12px;border-radius:8px;margin-top:8px;border:1px solid #1e3799}
 .pricing-header{background:#1e3799;color:white;padding:5px 10px;border-radius:5px 5px 0 0;font-size:0.9rem;font-weight:bold}
 .status-box{padding:10px;border-radius:10px;text-align:center;font-size:1.1rem;font-weight:bold;color:white}
@@ -34,8 +34,7 @@ with st.sidebar:
         st.rerun()
     st.divider()
     
-    st.markdown("### 🏨 Property Details")
-    hotel = st.text_input("Property Search (Google Sync)", "Wyndham Garden Salalah")
+    hotel = st.text_input("Property (Google Sync)", "Wyndham Garden Salalah")
     inventory = st.number_input("Total Rooms", 1, 1000, 237)
     
     st.markdown("### 📅 Stay Intelligence")
@@ -60,8 +59,11 @@ with st.sidebar:
     ota_comm = st.slider("OTA Comm %", 0, 50, 18) / 100
     
     st.markdown("### 🍽️ Unit Pax Costs")
-    c_bb = st.number_input("BB Cost", 0.0); c_hb = st.number_input("HB Cost", 0.0); c_fb = st.number_input("FB Cost", 0.0)
-    c_sai = st.number_input("SAI Cost", 5.0); c_ai = st.number_input("AI Cost", 5.0)
+    c_bb = st.number_input("BB Cost", 0.0)
+    c_hb = st.number_input("HB Cost", 0.0)
+    c_fb = st.number_input("FB Cost", 0.0)
+    c_sai = st.number_input("SAI Cost", 5.0)
+    c_ai = st.number_input("AI Cost", 5.0)
     costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": c_fb, "SAI": c_sai, "AI": c_ai}
 
 # --- 4. CALCULATION ENGINE ---
@@ -90,15 +92,77 @@ st.markdown(f"""<div class='sentinel-box'>
     </div>
 </div>""", unsafe_allow_html=True)
 
-# SEGMENT 1: FIT
+# --- SEGMENT 1: FIT ---
 st.markdown("<div class='card' style='border-left-color:#3498db'>1. DIRECT / FIT</div>", unsafe_allow_html=True)
 f1, f2, f3 = st.columns([1, 1.8, 1.2])
 with f1:
-    fs = st.number_input("SGL Rooms", 0, key="fs"); fd = st.number_input("DBL Rooms", 0, key="fd")
-    fn = st.number_input("Stay Nights", value=m_nights, key="fn")
+    fs = st.number_input("SGL Rooms", 0, key="fs")
+    fd = st.number_input("DBL Rooms", 0, key="fd")
+    fn = st.number_input("Nights", value=m_nights, key="fn")
 with f2:
     f_sug = (65 * m_heat) * v_mult
     st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED: {cu} {f_sug:,.2f}</div>", unsafe_allow_html=True)
     fa = st.number_input("Final Rate", value=float(f_sug), key="fa")
     ff = st.number_input("Floor Rate", 40.0, key="ff")
-    f_mx = {"RO": st.number_input("RO Pax", 0, key="fro"), "BB": st.number_input("BB
+    fr = st.number_input("RO Pax", 0, key="fro")
+    fb = st.number_input("BB Pax", 0, key="fbb")
+    f_mx = {"RO": fr, "BB": fb}
+    st.markdown("</div>", unsafe_allow_html=True)
+res_f = run_yield([fs, fd, 0], fa, fn, f_mx, 0, ff)
+if res_f:
+    with f3:
+        st.metric("Net Yield", f"{cu} {res_f['u']:,.2f}")
+        st.markdown(f"<div class='status-box' style='background:{res_f['b']}'>{res_f['l']}</div>", unsafe_allow_html=True)
+        st.session_state["ft"] = res_f['tot']
+
+# --- SEGMENT 2: OTA ---
+st.divider()
+st.markdown("<div class='card' style='border-left-color:#2ecc71'>2. OTA CHANNELS</div>", unsafe_allow_html=True)
+o1, o2, o3 = st.columns([1, 1.8, 1.2])
+with o1:
+    od = st.number_input("DBL Rooms", 0, key="od")
+    on = st.number_input("Stay Nights", value=m_nights, key="on")
+with o2:
+    o_sug = (60 * m_heat) * v_mult
+    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED: {cu} {o_sug:,.2f}</div>", unsafe_allow_html=True)
+    oa = st.number_input("Applied Rate", value=float(o_sug), key="oa")
+    of = st.number_input("Floor", 35.0, key="of")
+    obb = st.number_input("BB Pax", 0, key="obb")
+    osai = st.number_input("SAI Pax", 0, key="osai")
+    o_mx = {"BB": obb, "SAI": osai}
+    st.markdown("</div>", unsafe_allow_html=True)
+res_o = run_yield([0, od, 0], oa, on, o_mx, ota_comm, of)
+if res_o:
+    with o3:
+        st.metric("Net Yield", f"{cu} {res_o['u']:,.2f}")
+        st.markdown(f"<div class='status-box' style='background:{res_o['b']}'>{res_o['l']}</div>", unsafe_allow_html=True)
+        st.session_state["ot"] = res_o['tot']
+
+# --- SEGMENT 3: GROUPS ---
+st.divider()
+st.markdown("<div class='card' style='border-left-color:#9b59b6'>3. CORPORATE GROUPS / MICE</div>", unsafe_allow_html=True)
+g1, g2, g3 = st.columns([1, 1.8, 1.2])
+with g1:
+    gd = st.number_input("Group Rooms", 0, key="gd")
+    gn = st.number_input("Group Nights", value=m_nights, key="gn")
+with g2:
+    g_sug = (50 * m_heat) * v_mult
+    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED: {cu} {g_sug:,.2f}</div>", unsafe_allow_html=True)
+    ga = st.number_input("Group Rate", value=float(g_sug), key="ga")
+    gf = st.number_input("Floor", 30.0, key="gf")
+    gai = st.number_input("AI Pax", 0, key="gai")
+    gfb = st.number_input("FB Pax", 0, key="gfb")
+    g_mx = {"AI": gai, "FB": gfb}
+    gmice = st.number_input("MICE Revenue (Pax)", 0.0, key="gmice")
+    st.markdown("</div>", unsafe_allow_html=True)
+res_g = run_yield([0, gd, 0], ga, gn, g_mx, 0, gf, mice=gmice)
+if res_g:
+    with g3:
+        st.metric("Net Yield", f"{cu} {res_g['u']:,.2f}")
+        st.markdown(f"<div class='status-box' style='background:{res_g['b']}'>{res_g['l']}</div>", unsafe_allow_html=True)
+        st.session_state["gt"] = res_g['tot']
+
+# --- PORTFOLIO TOTAL ---
+st.divider()
+total_wealth = st.session_state.get("ft",0) + st.session_state.get("ot",0) + st.session_state.get("gt",0)
+st.markdown(f"<div style='background:#1e3799;padding:20px;border-radius:12px;text-align:center;color:white;'><h3>Portfolio Wealth Total: {cu} {total_wealth:,.2f}</h3></div>", unsafe_allow_html=True)

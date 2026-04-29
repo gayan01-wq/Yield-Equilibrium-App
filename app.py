@@ -29,7 +29,7 @@ if not st.session_state["auth"]:
             else: st.error("Denied")
     st.stop()
 
-# --- 3. SIDEBAR (GLOBAL SELECTION UPGRADE) ---
+# --- 3. SIDEBAR (REFINED LAYOUT) ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
     if st.button("☢️ Nuclear Data Reset"):
@@ -39,25 +39,45 @@ with st.sidebar:
     
     rk = str(st.session_state["reset_key"]) 
     
-    st.markdown("### 🏨 Pillar 01: Google Sync Entry")
-    # NEW: Global Hotel Search Simulation
-    hotel_sync = st.text_input("🏨 Search Hotel (Google Sync)", "Wyndham Garden Salalah", key="h_sync"+rk)
-    
-    # NEW: Global City Search Simulation
-    location_sync = st.text_input("📍 Search City/Location", "Salalah, Oman", key="l_sync"+rk)
+    st.markdown("### 🏨 Pillar 01: Universal Search")
+    # Hotel and City Manual Entry
+    hotel_name = st.text_input("🏨 Hotel Name (Google Entry)", "Wyndham Garden Salalah", key="h"+rk)
+    city_name = st.text_input("📍 City/Location (Google Entry)", "Salalah, Oman", key="c"+rk)
     
     st.divider()
-    # NEW: Date Alignment (Check-in, Check-out, and Nights below)
-    d1 = st.date_input("📅 Check-In", date.today(), key="d1"+rk)
-    d2 = st.date_input("📅 Check-Out", date.today(), key="d2"+rk)
+    # Stay Dates & Night Calculation
+    d1 = st.date_input("📅 Check-In Date", date.today(), key="d1"+rk)
+    d2 = st.date_input("📅 Check-Out Date", date.today(), key="d2"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     st.success(f"**Total Stay Nights: {m_nights}**")
     
     st.divider()
-    st.markdown("### ⚙️ Operational Parameters")
-    ota_comm_pct = st.slider("OTA Commission %", 0, 40, 18, key="comm"+rk)
+    st.markdown("### 📊 Operational Parameters")
+    # FIXED LINE 63: Closed all parentheses and arguments
+    otb_occ = st.slider("OTB Occupancy %", 0, 100, 15, key="otb"+rk)
+    avg_hist = st.slider("Historical Avg %", 0, 100, 45, key="hist"+rk)
+    
+    v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 20) else 1.0
+    
+    ota_comm = st.slider("OTA Commission %", 0, 40, 18, key="comm"+rk)
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx"+rk)
     p01_fee = st.number_input("P01 Variable Fee", 0.0, value=6.90, key="p01"+rk)
     
-    st.markdown("### 📈 Pillar 03: Pace")
-    otb_occ = st.slider("OTB Occupancy %",
+    st.markdown("### 🍽️ Unit Pax Costs")
+    c_bb = st.number_input("BB Cost", 0.0, key="cbb"+rk)
+    c_hb = st.number_input("HB Cost", 2.5, key="chb"+rk)
+    c_sai = st.number_input("SAI Cost", 7.5, key="csai"+rk)
+    meal_unit_costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": 5.0, "SAI": c_sai, "AI": 10.0}
+
+# --- 4. CALCULATION ENGINE ---
+def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.18, laundry=0, mice=0, trans=0):
+    tr = sum(rms)
+    if tr <= 0: return None
+    rn = tr * nts
+    net_adr = adr / tx_div
+    total_m = sum(qty * meal_unit_costs.get(plan, 0) for plan, qty in meals.items())
+    avg_m = (total_m / tr) if tr > 0 else 0
+    unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
+    total_w = (unit_w * rn) + (trans / tx_div)
+    final_yield = total_w / rn
+    status, color = ("OPTIMIZED", "#27ae60") if final_yield >=

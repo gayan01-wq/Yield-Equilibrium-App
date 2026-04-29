@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING (Ultra-Stable Professional Layout) ---
+# --- 1. STYLING (Ultra-Stable Layout) ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -39,7 +39,6 @@ with st.sidebar:
         st.session_state["reset_key"] += 1
         st.rerun()
     st.divider()
-    
     rk = str(st.session_state["reset_key"]) 
     
     currencies = {
@@ -73,7 +72,4 @@ with st.sidebar:
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01"+rk)
 
     st.markdown("### 🍽️ Unit Costs")
-    c_snk = st.number_input(f"Snack ({cur_sym})", 0.0, value=1.5, key="csnk"+rk)
-    meal_costs = {
-        "RO": 0, "BB": st.number_input("BB Cost", 0.0, key="cbb"+rk),
-        "HB
+    c_snk = st

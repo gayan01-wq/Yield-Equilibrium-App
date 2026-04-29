@@ -79,7 +79,7 @@ def run_yield_engine(rooms, adr, hurdle, demand, comm=0.0):
 # --- 5. DASHBOARD HEADER ---
 st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
 st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence</div>", unsafe_allow_html=True)
-st.info(f"📍 Analysis: {city} | 📈 Velocity: {v_mult}x | 📅 Length of Stay: {m_nights} Nights")
+st.info(f"📍 Analysis: {city} | 📈 Velocity: {v_mult}x | 📅 Stay: {m_nights} Nights")
 
 # --- 6. SEGMENT GENERATION ---
 def draw_segment(label, key, suggest_adr, floor, is_ota=False):
@@ -98,36 +98,19 @@ def draw_segment(label, key, suggest_adr, floor, is_ota=False):
         with c2:
             st.metric("Net Wealth", f"{cur_sym}{res['w']:,.2f}")
             st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='reason-box'>Total Stay Wealth: {cur_sym}{res['total']:,.2f}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='reason-box'>Total Wealth: {cur_sym}{res['total']:,.2f}</div>", unsafe_allow_html=True)
 
 draw_segment("1. DIRECT / FIT", "fit", 65, 40)
 draw_segment("2. OTA CHANNELS", "ota", 60, 35, is_ota=True)
-draw_segment("3. GROUPS / MICE", "grp", 50, 30)
+draw_segment("3. CORPORATE GROUPS", "corp", 55, 32)
+draw_segment("4. MICE GROUPS", "mice", 50, 30)
+draw_segment("5. TOUR & TRAVEL (GROUPS)", "tnt", 45, 25)
 
 # --- 7. METHODOLOGY (RESEARCH PAPER DEFINITIONS) ---
 st.divider()
 st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
 st.markdown("<h3 style='text-align:center; color:#1e3799;'>Algorithmic Research Framework</h3>", unsafe_allow_html=True)
-
 st.markdown(f"""
 <div class='theory-card'>
     <b>🏛️ PILLAR 01: NET-WEALTH DECONSTRUCTION (CLEAN ASSET YIELD)</b><br>
-    The model identifies <b>'Clean Asset Yield'</b> by stripping statutory tax liabilities and distribution leakages. This ensures revenue volume does not mask unit-level margin erosion.
-</div>
-<div class='theory-card'>
-    <b>⚖️ PILLAR 02: TEMPORAL LENGTH OF STAY (LOS) YIELDING</b><br>
-    The engine evaluates cumulative wealth across the <b>{m_nights}-night stay</b>. This temporal analysis determines if the total wealth generated justifies inventory displacement. Hurdle offsets (Compression +15.0) act as filters during high-velocity windows.
-</div>
-<div class='theory-card'>
-    <b>🌐 PILLAR 03: EXTERNAL VELOCITY MOMENTUM ANALYTICS</b><br>
-    Pricing is dynamically adjusted via a <b>Velocity Multiplier ({v_mult}x)</b>. This is a derivative of OTB pace vs historical benchmarks. Acceleration beyond the mean triggers a positive multiplier to capture localized consumer surplus.
-</div>
-""", unsafe_allow_html=True)
-st.markdown("</div>", unsafe_allow_html=True)
-
-# --- 8. FOOTER ---
-st.markdown("<div class='contact-section'>", unsafe_allow_html=True)
-st.subheader("✉️ Contact the System Developer")
-st.write("Direct queries to Gayan Nugawela regarding algorithmic logic or research data requests.")
-st.write("**Email:** gayan01@gmail.com")
-st.markdown("</div>", unsafe_allow_html=True)
+    The model identifies <b>'Clean Asset Yield'</b> by stripping statutory tax liabilities and distribution leakages.

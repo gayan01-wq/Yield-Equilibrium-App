@@ -58,7 +58,7 @@ with st.sidebar:
     d2 = st.date_input("Check-Out", date.today(), key="d2"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     
-    inventory = st.number_input("Total Property Capacity", 1, 1000, 237, key="inv"+rk)
+    inventory = st.number_input("Total Capacity (Rooms)", 1, 1000, 237, key="inv"+rk)
     st.info(f"**Stay Window: {m_nights} Nights**")
     
     st.divider()
@@ -75,14 +75,14 @@ with st.sidebar:
     st.markdown("### 🍽️ Unit Costs (Pillar 01)")
     c_snk = st.number_input(f"Snack Cost ({cur_sym})", 0.0, value=1.5, key="csnk"+rk)
     meal_costs = {
-        "RO": 0, "BB": st.number_input(f"BB Cost ({cur_sym})", 0.0, key="cbb"+rk),
-        "HB": st.number_input(f"HB Cost ({cur_sym})", 2.5, key="chb"+rk),
-        "FB": st.number_input(f"FB Cost ({cur_sym})", 5.0, key="cfb"+rk),
-        "SAI": st.number_input(f"SAI Cost ({cur_sym})", 7.5, key="csai"+rk),
-        "AI": st.number_input(f"AI Cost ({cur_sym})", 10.0, key="cai"+rk)
+        "RO": 0, "BB": st.number_input("BB Cost", 0.0, key="cbb"+rk),
+        "HB": st.number_input("HB Cost", 2.5, key="chb"+rk),
+        "FB": st.number_input("FB Cost", 5.0, key="cfb"+rk),
+        "SAI": st.number_input("SAI Cost", 7.5, key="csai"+rk),
+        "AI": st.number_input("AI Cost", 10.0, key="cai"+rk)
     }
 
-# --- 4. MARKET INTELLIGENCE DATA ---
+# --- 4. DEEP MARKET INTELLIGENCE DATA ---
 intel_db = {
     "salalah": {
         "ev": "Khareef Monsoon Festival", "fl": "High Rotations (Dubai/Muscat)",
@@ -92,21 +92,4 @@ intel_db = {
     "colombo": {
         "ev": "Tourism Recovery Peak", "fl": "Srilankan Airlines hub connectivity rising.",
         "news": ["Arrivals cross 1M milestone.", "LKR stability improving.", "MICE demand growing."],
-        "basis": "Emerging Market Velocity"
-    },
-    "dubai": {
-        "ev": "DIFC Expansion Summit", "fl": "DXB Slot Scarcity 100%; EK A380 fully deployed.",
-        "news": ["BREAKING: UAE exiting OPEC May 1st.", "DIFC Growth: 775 new companies in Q1.", "Market: Oil price driving demand."],
-        "basis": "Energy Hub Velocity"
-    }
-}
-active_intel = intel_db.get(city_name.lower(), {"ev": "Active Seasonal Rotation", "fl": "Baseline Regional Rotation", "news": ["Standard market flow."], "basis": "Market Equilibrium"})
-
-# --- 5. CALCULATION ENGINE ---
-def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, trans=0, snack_qty=0):
-    tr = sum(rms); rn = tr * nts
-    if tr <= 0: return None
-    net_adr = adr / tx_div
-    total_m_s = sum(qty * meal_costs.get(p, 0) for p, qty in meals.items()) + (snack_qty * c_snk)
-    avg_m_s = (total_m_s / tr) if tr > 0 else 0
-    unit_w = (net_adr - avg_m_s - (net_adr * comm_rate)) - p01_fee - laundry +
+        "basis

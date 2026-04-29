@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING (Professional Executive Design) ---
+# --- 1. STYLING (Fixed Stability) ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -32,7 +32,7 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS) ---
+# --- 3. SIDEBAR (STRATEGIC INPUTS) ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
     if st.button("🧹 Clear Global Cache"):
@@ -42,6 +42,7 @@ with st.sidebar:
     
     rk = str(st.session_state["reset_key"]) 
     
+    # Stable Currency Selector
     currencies = {
         "OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.إ)": "د.إ", 
         "SAR (﷼)": "﷼", "INR (₹)": "₹", "CNY (¥)": "¥", "SGD ($)": "$", 
@@ -60,3 +61,12 @@ with st.sidebar:
     
     inventory = st.number_input("Total Property Capacity", 1, 1000, 237, key="inv"+rk)
     st.info(f"**Max Capacity: {inventory * m_nights} RN**")
+    
+    st.divider()
+    st.markdown("### 📊 Pillar 03: Velocity (ADW Pace)")
+    otb_occ = st.slider("OTB % (Date-Specific)", 0, 100, 15, key="otb"+rk)
+    avg_hist = st.slider("Hist. Benchmark % (LY ADW)", 0, 100, 45, key="hist"+rk)
+    v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
+
+    st.divider()
+    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx"+rk)

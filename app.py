@@ -104,7 +104,7 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
 st.markdown("""
 <div style="text-align: center; width: 100%;">
     <h1 class='main-title' style='margin-bottom: 0;'>DISPLACEMENT ANALYZER</h1>
-    <div class='main-subtitle' style='margin-top: 5px;'>Yield Equilibrium Strategic Intelligence Engine</div>
+<div class='main-subtitle' style='margin-top: 5px;'>Yield Equilibrium Strategic Intelligence Engine</div>
 </div>
 """, unsafe_allow_html=True)
 

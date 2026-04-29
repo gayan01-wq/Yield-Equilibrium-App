@@ -10,7 +10,6 @@ st.markdown("""<style>
 .small-framework-header{font-size:0.95rem!important; font-weight:700; color:#4b6584; text-align:center; margin-bottom:15px; letter-spacing:1px; width: 100%; display: block;}
 .card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
 .pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
-.google-window{background:#e8f0fe; padding:18px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.85rem; line-height:1.6;}
 .status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
 .reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
 .theory-box{background:#f9f9f9; padding:25px; border-radius:15px; border:1px solid #dee2e6; margin-top:30px}
@@ -34,7 +33,7 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS) ---
+# --- 3. SIDEBAR ---
 with st.sidebar:
     st.markdown("### 👤 System Developer\nGayan Nugawela")
     if st.button("🧹 Clear Global Cache"):
@@ -53,7 +52,6 @@ with st.sidebar:
     d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
     d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    # FIXED: Re-closed the f-string and parenthesis here
     st.info(f"📅 **Stay Duration: {m_nights} Nights**")
     
     inventory = st.number_input("Total Capacity", 1, 1000, 237, key="inv_c_"+rk)
@@ -71,19 +69,4 @@ with st.sidebar:
 
     st.markdown("### 🍽️ Unit Costs (Per Person Basis)")
     meal_costs = {
-        "RO": 0.0, "BB": st.number_input("BB Cost", 0.0, format="%.3f", key="bb_mc_"+rk),
-        "LN": st.number_input("LN Cost", 0.0, format="%.3f", key="ln_mc_"+rk), 
-        "DN": st.number_input("DN Cost", 0.0, format="%.3f", key="dn_mc_"+rk),
-        "SAI": st.number_input("SAI Cost", 0.0, format="%.3f", key="sai_mc_"+rk), 
-        "AI": st.number_input("AI Cost", 0.0, format="%.3f", key="ai_mc_"+rk)
-    }
-
-# --- 4. MARKET INTEL ---
-intel_db = {
-    "salalah": {"ev": "Khareef Festival", "fl": "DXB/MCT Rotations", "news": ["Port: Stable", "Tourism: Surge", "Monsoon Rising"], "basis": "Microclimate"},
-    "colombo": {"ev": "Tourism Peak", "fl": "UL Hub Growth", "news": ["Arrivals 1.2M+", "LKR Stable", "MICE Demand"], "basis": "Recovery"}
-}
-active_intel = intel_db.get(city_search.lower(), {"ev": "Active Rotation", "fl": "Baseline", "news": ["Standard market flow."], "basis": "Equilibrium"})
-
-# --- 5. CALCULATION ENGINE ---
-def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0
+        "RO": 0.

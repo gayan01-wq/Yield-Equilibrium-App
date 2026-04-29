@@ -59,11 +59,8 @@ with st.sidebar:
     ota_comm = st.slider("OTA Comm %", 0, 50, 18) / 100
     
     st.markdown("### 🍽️ Unit Pax Costs")
-    c_bb = st.number_input("BB Cost", 0.0)
-    c_hb = st.number_input("HB Cost", 0.0)
-    c_fb = st.number_input("FB Cost", 0.0)
-    c_sai = st.number_input("SAI Cost", 5.0)
-    c_ai = st.number_input("AI Cost", 5.0)
+    c_bb = st.number_input("BB Cost", 0.0); c_hb = st.number_input("HB Cost", 0.0); c_fb = st.number_input("FB Cost", 0.0)
+    c_sai = st.number_input("SAI Cost", 5.0); c_ai = st.number_input("AI Cost", 5.0)
     costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": c_fb, "SAI": c_sai, "AI": c_ai}
 
 # --- 4. CALCULATION ENGINE ---
@@ -92,77 +89,57 @@ st.markdown(f"""<div class='sentinel-box'>
     </div>
 </div>""", unsafe_allow_html=True)
 
-# --- SEGMENT 1: FIT ---
-st.markdown("<div class='card' style='border-left-color:#3498db'>1. DIRECT / FIT</div>", unsafe_allow_html=True)
-f1, f2, f3 = st.columns([1, 1.8, 1.2])
-with f1:
-    fs = st.number_input("SGL Rooms", 0, key="fs")
-    fd = st.number_input("DBL Rooms", 0, key="fd")
-    fn = st.number_input("Nights", value=m_nights, key="fn")
-with f2:
-    f_sug = (65 * m_heat) * v_mult
-    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED: {cu} {f_sug:,.2f}</div>", unsafe_allow_html=True)
-    fa = st.number_input("Final Rate", value=float(f_sug), key="fa")
-    ff = st.number_input("Floor Rate", 40.0, key="ff")
-    fr = st.number_input("RO Pax", 0, key="fro")
-    fb = st.number_input("BB Pax", 0, key="fbb")
-    f_mx = {"RO": fr, "BB": fb}
-    st.markdown("</div>", unsafe_allow_html=True)
-res_f = run_yield([fs, fd, 0], fa, fn, f_mx, 0, ff)
-if res_f:
-    with f3:
-        st.metric("Net Yield", f"{cu} {res_f['u']:,.2f}")
-        st.markdown(f"<div class='status-box' style='background:{res_f['b']}'>{res_f['l']}</div>", unsafe_allow_html=True)
-        st.session_state["ft"] = res_f['tot']
+# Helper for segments to avoid syntax errors
+def draw_segment(title, key, base_r, floor, color, is_ota=False, is_group=False):
+    st.markdown(f"<div class='card' style='border-left-color:{color}'>{title}</div>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1, 1.8, 1.2])
+    suggested = (base_r * m_heat) * v_mult
+    
+    with c1:
+        s = st.number_input("SGL", 0, key=key+"s")
+        d = st.number_input("DBL", 0, key=key+"d")
+        n = st.number_input("Nights", value=m_nights, key=key+"n")
+    with c2:
+        st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED: {cu} {suggested:,.2f}</div>", unsafe_allow_html=True)
+        adr = st.number_input("Applied Rate", value=float(suggested), key=key+"a")
+        fl = st.number_input("Floor", float(floor), key=key+"f")
+        mc = st.columns(3)
+        m_ro = mc[0].number_input("RO Pax", 0, key=key+"ro")
+        m_bb = mc[0].number_input("BB Pax", 0, key=key+"bb")
+        m_hb = mc[1].number_input("HB Pax", 0, key=key+"hb")
+        m_fb = mc[1].number_input("FB Pax", 0, key=key+"fb")
+        m_sai = mc[2].number_input("SAI Pax", 0, key=key+"sai")
+        m_ai = mc[2].number_input("AI Pax", 0, key=key+"ai")
+        mx = {"RO": m_ro, "BB": m_bb, "HB": m_hb, "FB": m_fb, "SAI": m_sai, "AI": m_ai}
+        
+        mi, tr = 0.0, 0.0
+        if is_group:
+            gc = st.columns(2)
+            mi = gc[0].number_input("MICE Revenue", 0.0, key=key+"mi")
+            tr = gc[1].number_input("Trans. Total", 0.0, key=key+"tr")
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    res = run_yield([s, d, 0], adr, n, mx, (ota_comm if is_ota else 0), fl, mi, tr)
+    if res:
+        with c3:
+            st.metric("Net Yield", f"{cu} {res['u']:,.2f}")
+            st.markdown(f"<div class='status-box' style='background:{res['b']}'>{res['l']}</div>", unsafe_allow_html=True)
+            st.write(f"Wealth: {res['tot']:,.2f}")
+            return res['tot']
+    return 0
 
-# --- SEGMENT 2: OTA ---
+# DRAWING THE 5 PILLARS OF THE PORTFOLIO
+t_fit = draw_segment("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
 st.divider()
-st.markdown("<div class='card' style='border-left-color:#2ecc71'>2. OTA CHANNELS</div>", unsafe_allow_html=True)
-o1, o2, o3 = st.columns([1, 1.8, 1.2])
-with o1:
-    od = st.number_input("DBL Rooms", 0, key="od")
-    on = st.number_input("Stay Nights", value=m_nights, key="on")
-with o2:
-    o_sug = (60 * m_heat) * v_mult
-    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED: {cu} {o_sug:,.2f}</div>", unsafe_allow_html=True)
-    oa = st.number_input("Applied Rate", value=float(o_sug), key="oa")
-    of = st.number_input("Floor", 35.0, key="of")
-    obb = st.number_input("BB Pax", 0, key="obb")
-    osai = st.number_input("SAI Pax", 0, key="osai")
-    o_mx = {"BB": obb, "SAI": osai}
-    st.markdown("</div>", unsafe_allow_html=True)
-res_o = run_yield([0, od, 0], oa, on, o_mx, ota_comm, of)
-if res_o:
-    with o3:
-        st.metric("Net Yield", f"{cu} {res_o['u']:,.2f}")
-        st.markdown(f"<div class='status-box' style='background:{res_o['b']}'>{res_o['l']}</div>", unsafe_allow_html=True)
-        st.session_state["ot"] = res_o['tot']
+t_ota = draw_segment("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
+st.divider()
+t_corp = draw_segment("3. CORPORATE / GOV", "corp", 55, 38, "#34495e")
+st.divider()
+t_cgrp = draw_segment("4. CORPORATE GROUPS", "cgrp", 50, 30, "#9b59b6", is_group=True)
+st.divider()
+t_tnt = draw_segment("5. GROUP TOUR & TRAVEL", "tnt", 45, 25, "#e67e22", is_group=True)
 
-# --- SEGMENT 3: GROUPS ---
+# PORTFOLIO TOTAL
 st.divider()
-st.markdown("<div class='card' style='border-left-color:#9b59b6'>3. CORPORATE GROUPS / MICE</div>", unsafe_allow_html=True)
-g1, g2, g3 = st.columns([1, 1.8, 1.2])
-with g1:
-    gd = st.number_input("Group Rooms", 0, key="gd")
-    gn = st.number_input("Group Nights", value=m_nights, key="gn")
-with g2:
-    g_sug = (50 * m_heat) * v_mult
-    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED: {cu} {g_sug:,.2f}</div>", unsafe_allow_html=True)
-    ga = st.number_input("Group Rate", value=float(g_sug), key="ga")
-    gf = st.number_input("Floor", 30.0, key="gf")
-    gai = st.number_input("AI Pax", 0, key="gai")
-    gfb = st.number_input("FB Pax", 0, key="gfb")
-    g_mx = {"AI": gai, "FB": gfb}
-    gmice = st.number_input("MICE Revenue (Pax)", 0.0, key="gmice")
-    st.markdown("</div>", unsafe_allow_html=True)
-res_g = run_yield([0, gd, 0], ga, gn, g_mx, 0, gf, mice=gmice)
-if res_g:
-    with g3:
-        st.metric("Net Yield", f"{cu} {res_g['u']:,.2f}")
-        st.markdown(f"<div class='status-box' style='background:{res_g['b']}'>{res_g['l']}</div>", unsafe_allow_html=True)
-        st.session_state["gt"] = res_g['tot']
-
-# --- PORTFOLIO TOTAL ---
-st.divider()
-total_wealth = st.session_state.get("ft",0) + st.session_state.get("ot",0) + st.session_state.get("gt",0)
-st.markdown(f"<div style='background:#1e3799;padding:20px;border-radius:12px;text-align:center;color:white;'><h3>Portfolio Wealth Total: {cu} {total_wealth:,.2f}</h3></div>", unsafe_allow_html=True)
+total_p = t_fit + t_ota + t_corp + t_cgrp + t_tnt
+st.markdown(f"<div style='background:#1e3799;padding:20px;border-radius:12px;text-align:center;color:white;'><h3>Portfolio Wealth Total: {cu} {total_p:,.2f}</h3></div>", unsafe_allow_html=True)

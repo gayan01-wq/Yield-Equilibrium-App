@@ -10,7 +10,7 @@ st.markdown("""<style>
 .pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
 .google-window{background:#e8f0fe; padding:15px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.85rem; line-height:1.6;}
 .status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
-.reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem; line-height:1.3;}
+.reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
 .theory-box{background:#fdfdfd; padding:25px; border-radius:15px; border:1px solid #dee2e6; margin-top:40px}
 [data-testid="stSidebar"]{background:#f1f4f9; border-right:1px solid #dee2e6}
 </style>""", unsafe_allow_html=True)
@@ -27,10 +27,10 @@ if not st.session_state["auth"]:
             if pwd == "Gayan2026": 
                 st.session_state["auth"] = True
                 st.rerun()
-            else: st.error("Access Denied")
+            else: st.error("Denied")
     st.stop()
 
-# --- 3. SIDEBAR (STRATEGIC INPUTS) ---
+# --- 3. SIDEBAR ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
     if st.button("☢️ Nuclear Data Reset"):
@@ -46,17 +46,14 @@ with st.sidebar:
     d2 = st.date_input("Check-Out", date.today(), key="d2"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     
-    inventory = st.number_input("Total Inventory (Rooms)", 1, 1000, 237, key="inv"+rk)
-    # NEW: SIDEBAR ROOM NIGHTS CALCULATION
-    total_rn_capacity = inventory * m_nights
-    st.success(f"**Stay Nights: {m_nights}**")
-    st.info(f"**Total Capacity: {total_rn_capacity} RN**")
+    inventory = st.number_input("Total Property Capacity", 1, 1000, 237, key="inv"+rk)
+    st.info(f"**Max Window Capacity: {inventory * m_nights} RN**")
     
     st.divider()
     st.markdown("### 📊 Pillar 03: Velocity (Pace)")
-    otb_occ = st.slider("OTB % (Date-Specific)", 0, 100, 15, key="otb"+rk)
-    avg_hist = st.slider("Hist. Avg % (LY/3-Yr)", 0, 100, 45, key="hist"+rk)
-    v_mult = 1.25 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
+    otb_occ = st.slider("OTB % (ADW Pace)", 0, 100, 15, key="otb"+rk)
+    avg_hist = st.slider("Hist. Benchmark % (LY ADW)", 0, 100, 45, key="hist"+rk)
+    v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
 
     st.divider()
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx"+rk)
@@ -64,33 +61,42 @@ with st.sidebar:
     p01_fee = st.number_input("P01 Variable Fee", 0.0, value=6.90, key="p01"+rk)
 
     st.markdown("### 🍽️ Unit Costs (Pillar 01)")
+    c_snk = st.number_input("Snack Unit Cost", 0.0, value=1.5, key="csnk"+rk)
     meal_costs = {
         "RO": 0, "BB": st.number_input("BB Cost", 0.0, key="cbb"+rk),
         "HB": st.number_input("HB Cost", 2.5, key="chb"+rk), "FB": st.number_input("FB Cost", 5.0, key="cfb"+rk),
         "SAI": st.number_input("SAI Cost", 7.5, key="csai"+rk), "AI": st.number_input("AI Cost", 10.0, key="cai"+rk)
     }
 
-# --- 4. ENGINE & DASHBOARD ---
-def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, trans=0):
+# --- 4. ENGINE ---
+def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, trans=0, snack_qty=0):
     tr = sum(rms)
     if tr <= 0: return None
     rn = tr * nts
     net_adr = adr / tx_div
     total_m = sum(qty * meal_costs.get(p, 0) for p, qty in meals.items())
-    avg_m = (total_m / tr) if tr > 0 else 0
-    unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
+    total_s = snack_qty * c_snk
+    avg_m_s = ((total_m + total_s) / tr) if tr > 0 else 0
+    
+    unit_w = (net_adr - avg_m_s - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
     total_w = (unit_w * rn) + (trans / tx_div)
     
-    # NEW STRATEGIC VERDICT REASONING
+    # DISPLACEMENT LOGIC (50% THRESHOLD)
+    displacement_risk = (tr / inventory) >= 0.50
+    
     if unit_w < hurdle:
-        stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", "Basis: Unit wealth is below hurdle. This deal erodes the property's financial anchor."
+        stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", "Basis: Wealth erosion. Deal fails the minimum equilibrium threshold."
     elif unit_w < (hurdle + 3.0):
-        stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Basis: Yield is at equilibrium. Only accept if there is high volume or strategic ancillary benefit."
+        stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Basis: Yield equilibrium. Strategic review suggested for volume parity."
     else:
-        stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Basis: Strong wealth stripping achieved. High-yield contribution to GOPPAR."
+        stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Basis: Strong wealth contribution. Aligned with Pillar 01 targets."
+        
+    if displacement_risk: 
+        rsn += " | ⚠️ HIGH DISPLACEMENT ADVISORY: Segment occupies ≥50% of inventory. Validate Rate Variance against Market Peaks."
         
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w}
 
+# --- 5. DASHBOARD ---
 st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER DASHBOARD</h1>", unsafe_allow_html=True)
 
 def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=False):
@@ -99,24 +105,25 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
     c_in, c_res = st.columns([2.6, 1])
     with c_in:
         st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
-        r1, r2, r3, r4 = st.columns(4)
-        sgl = r1.number_input("SGL", 0, key="s"+key+rk); dbl = r2.number_input("DBL", 0, key="d"+key+rk)
-        applied_adr = r3.number_input("Rate", value=float(suggest_adr * v_mult), key="a"+key+rk)
-        floor = r4.number_input("Floor", value=float(floor_def), key="f"+key+rk)
-        m_row = st.columns(6)
-        p_ro = m_row[0].number_input("RO", 0, key="ro"+key+rk); p_bb = m_row[1].number_input("BB", 0, key="bb"+key+rk); p_hb = m_row[2].number_input("HB", 0, key="hb"+key+rk); p_fb = m_row[3].number_input("FB", 0, key="fb"+key+rk); p_sai = m_row[4].number_input("SAI", 0, key="sai"+key+rk); p_ai = m_row[5].number_input("AI", 0, key="ai"+key+rk)
+        r1, r2, r3, r4, r5 = st.columns([1,1,1,1.5,1.5])
+        sgl = r1.number_input("SGL", 0, key="s"+key+rk); dbl = r2.number_input("DBL", 0, key="d"+key+rk); tpl = r3.number_input("TPL", 0, key="t"+key+rk)
+        applied_adr = r4.number_input("Rate", value=float(suggest_adr * v_mult), key="a"+key+rk)
+        floor = r5.number_input("Floor", value=float(floor_def), key="f"+key+rk)
+        
+        m_row = st.columns(7)
+        p_ro = m_row[0].number_input("RO", 0, key="ro"+key+rk); p_bb = m_row[1].number_input("BB", 0, key="bb"+key+rk); p_hb = m_row[2].number_input("HB", 0, key="hb"+key+rk); p_fb = m_row[3].number_input("FB", 0, key="fb"+key+rk); p_sai = m_row[4].number_input("SAI", 0, key="sai"+key+rk); p_ai = m_row[5].number_input("AI", 0, key="ai"+key+rk); p_snk = m_row[6].number_input("Snk", 0, key="snk"+key+rk)
+        
         l_c, m_c, t_c = 0.0, 0.0, 0.0
         if group:
             g_row = st.columns(3)
             m_c = g_row[0].number_input("MICE/Pax", 0.0, key="mice"+key+rk); t_c = g_row[1].number_input("Trans/Fixed", 0.0, key="tr"+key+rk); l_c = g_row[2].number_input("Laundry/Pax", 0.0, key="ln"+key+rk)
         st.markdown("</div>", unsafe_allow_html=True)
         
-    res = run_yield([sgl, dbl], m_nights, applied_adr, {"RO":p_ro,"BB":p_bb,"HB":p_hb,"FB":p_fb,"SAI":p_sai,"AI":p_ai}, floor, (ota_comm/100 if is_ota else 0.0), l_c, m_c, t_c)
+    res = run_yield([sgl, dbl, tpl], m_nights, applied_adr, {"RO":p_ro,"BB":p_bb,"HB":p_hb,"FB":p_fb,"SAI":p_sai,"AI":p_ai}, floor, (ota_comm/100 if is_ota else 0.0), l_c, m_c, t_c, p_snk)
     if res:
         with c_res:
             st.metric("Net Wealth (Unit)", f"OMR {res['w']:,.2f}")
             st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
-            # YELLOW REASON BOX
             st.markdown(f"<div class='reason-box'>💡 <b>Strategic Reasoning:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
             st.markdown(f"<div class='audit-box'>📊 {res['rn']} Room Nights | Total: OMR {res['total']:,.2f}</div>", unsafe_allow_html=True)
 
@@ -125,3 +132,22 @@ draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
 draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
 draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
 draw_seg("5. TOUR & TRAVEL (GROUPS)", "tnt", 45, 25, "#e67e22", group=True)
+
+# --- 6. MANUAL ---
+st.divider()
+st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
+st.markdown(f"## 📘 Theoretical Methodology & Research Framework (Tax Basis: {tx_div})")
+cl1, cl2 = st.columns(2)
+with cl1:
+    st.markdown(f"""
+    ### 🏗️ Pillar 01: Internal Wealth Stripping
+    * **Wealth vs Revenue:** Calculates yield after Taxes (Divisor: **{tx_div}**), Distribution Fees, and Meal/Snack costs.
+    * **Snack Costing:** Integration of ancillary consumption (Snk) into the unit wealth subtraction logic.
+    """)
+with cl2:
+    st.markdown(f"""
+    ### 🌐 Pillar 02 & 03: External Velocity & Compression
+    * **ADW Pace:** Date-specific OTB analysis within the Arrival-Departure Window.
+    * **Displacement advisory:** A strategic 'Heads-up' triggered at ≥50% inventory occupancy. It mandates a check on **Rate Variance**—ensuring the contracted rate justifies blocking half the property capacity during market peaks.
+    """)
+st.markdown("</div>", unsafe_allow_html=True)

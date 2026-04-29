@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING (Ultra-Stable Layout) ---
+# --- 1. STYLING (Ultra-Stable Professional Layout) ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -72,4 +72,14 @@ with st.sidebar:
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01"+rk)
 
     st.markdown("### 🍽️ Unit Costs")
-    c_snk = st
+    c_snk = st.number_input(f"Snack ({cur_sym})", 0.0, value=1.5, key="csnk"+rk)
+    meal_costs = {
+        "RO": 0, "BB": st.number_input("BB Cost", 0.0, key="cbb"+rk),
+        "HB": st.number_input("HB Cost", 2.5, key="chb"+rk), "FB": st.number_input("FB Cost", 5.0, key="cfb"+rk),
+        "SAI": st.number_input("SAI Cost", 7.5, key="csai"+rk), "AI": st.number_input("AI Cost", 10.0, key="cai"+rk)
+    }
+
+# --- 4. MARKET INTEL ---
+intel_db = {
+    "salalah": {"ev": "Khareef Monsoon Festival", "fl": "High Rotations (Dubai/Muscat)", "news": ["Port: Operations stable.", "Tourism: Influx surge expected.", "Weather: Early Monsoon rising."], "basis": "Microclimate Compression"},
+    "dubai": {"ev":

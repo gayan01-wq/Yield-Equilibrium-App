@@ -79,7 +79,113 @@ with st.sidebar:
         "AI": st.number_input("AI (Premium AI)", 10.5, key="ai_mc_"+rk)
     }
 
-# --- 4. MARKET INTEL ---
+# --- 4. MARKET INTEL (FIXED SYNTAX) ---
 intel_db = {
     "salalah": {"ev": "Khareef Festival", "fl": "Dubai/Muscat Rotations", "news": ["Port: Stable.", "Tourism: Surge.", "Weather: Monsoon."], "basis": "Microclimate"},
-    "colombo": {"ev": "Tourism Peak", "fl": "UL Hub Growth", "news": ["Arrivals: 1.2M+", "LKR:
+    "colombo": {"ev": "Tourism Peak", "fl": "UL Hub Growth", "news": ["Arrivals: 1.2M+", "LKR: Stable.", "MICE: Rising."], "basis": "Recovery"}
+}
+active_intel = intel_db.get(city_search.lower(), {"ev": "Active Rotation", "fl": "Baseline", "news": ["Standard market dynamics."], "basis": "Equilibrium"})
+
+# --- 5. CALCULATION ENGINE ---
+def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=0, mice=0, trans=0):
+    tr = sum(rms); rn = tr * nts
+    if tr <= 0: return None
+    
+    demand_adj = {"Compression (Peak)": 15.0, "High Flow": 5.0, "Standard": 0.0, "Distressed": -5.0}
+    eff_hurdle = hurdle + demand_adj.get(demand_type, 0)
+    
+    net_adr = adr / tx_div
+    total_m = sum(qty * meal_costs.get(p, 0) for p, qty in meals.items())
+    avg_m = (total_m / tr)
+    
+    unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
+    total_w = (unit_w * rn) + (trans / tx_div)
+    
+    if unit_w < eff_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym}{eff_hurdle} hurdle."
+    elif unit_w < (eff_hurdle + 3.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Yield at equilibrium window."
+    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Wealth targets met."
+    
+    if (tr / inventory) >= 0.50: rsn += " | ⚠️ DISPLACEMENT: Segment ≥50% capacity."
+    return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w}
+
+# --- 6. DASHBOARD ---
+st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
+st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
+
+t1, t2 = st.tabs(["🌐 Aviation & Events", "🗞️ Market News Feed"])
+with t1: st.markdown(f"<div class='google-window'><b>🌐 Aviation Intelligence: {city_search}</b><br>• <b>Events:</b> {active_intel['ev']} | <b>Basis:</b> {active_intel['basis']}<br>• <b>Velocity:</b> {v_mult}x Applied</div>", unsafe_allow_html=True)
+with t2:
+    st.markdown(f"<div class='google-window' style='background:#fdf2f2; border-color:#ff4b4b;'><b style='color:#ff4b4b;'>🗞️ Market Alerts: {city_search} | {date.today().strftime('%B %d, %Y')}</b></div>", unsafe_allow_html=True)
+    for item in active_intel['news']: st.markdown(f"<div class='news-item'>{item}</div>", unsafe_allow_html=True)
+
+def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=False):
+    st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
+    c_in, c_res = st.columns([2.6, 1])
+    with c_in:
+        st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+        r1, r2, r3, r4, r5 = st.columns([0.8,0.8,0.8,1.3,1.3])
+        sgl = r1.number_input("SGL", 0, key=f"s_{key}_{rk}"); dbl = r2.number_input("DBL", 0, key=f"d_{key}_{rk}"); tpl = r3.number_input("TPL", 0, key=f"t_{key}_{rk}")
+        applied_adr = r4.number_input(f"Rate ({cur_sym})", value=float(suggest_adr * v_mult), key=f"a_{key}_{rk}")
+        floor = r5.number_input(f"Base Hurdle", value=float(floor_def), key=f"f_{key}_{rk}")
+        
+        m_row = st.columns([1.5, 1, 1, 1, 1, 1, 1])
+        demand_sel = m_row[0].selectbox("Demand Context", ["Compression (Peak)", "High Flow", "Standard", "Distressed"], key=f"dm_{key}_{rk}")
+        p_ro = m_row[1].number_input("RO", 0, key=f"ro_{key}_{rk}"); p_bb = m_row[2].number_input("BB", 0, key=f"bb_{key}_{rk}"); p_ln = m_row[3].number_input("LN", 0, key=f"ln_{key}_{rk}"); p_dn = m_row[4].number_input("DN", 0, key=f"dn_{key}_{rk}"); p_sai = m_row[5].number_input("SAI", 0, key=f"sai_{key}_{rk}"); p_ai = m_row[6].number_input("AI", 0, key=f"ai_{key}_{rk}")
+        
+        l_c, m_c, t_c = 0.0, 0.0, 0.0
+        if group:
+            g_row = st.columns(3)
+            m_c = g_row[0].number_input(f"MICE Rev", 0.0, key=f"mi_{key}_{rk}"); t_c = g_row[1].number_input(f"Trans Rev", 0.0, key=f"tr_{key}_{rk}"); l_c = g_row[2].number_input(f"Laundry", 0.0, key=f"la_{key}_{rk}")
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    res = run_yield([sgl, dbl, tpl], m_nights, applied_adr, {"RO":p_ro,"BB":p_bb,"LN":p_ln,"DN":p_dn,"SAI":p_sai,"AI":p_ai}, floor, demand_sel, (ota_comm/100 if is_ota else 0.0), l_c, m_c, t_c)
+    if res:
+        with c_res:
+            st.metric(f"Net Wealth", f"{cur_sym} {res['w']:,.2f}")
+            st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='reason-box'>💡 <b>Strategic Verdict:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='audit-box'>📊 {res['rn']} RN | Total Wealth: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)
+
+# DEPLOY ALL 5 SEGMENTS
+draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
+draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
+draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
+draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
+draw_seg("5. TOUR & TRAVEL (GROUPS)", "tnt", 45, 25, "#e67e22", group=True)
+
+# --- 7. DETAILED METHODOLOGY ---
+st.divider()
+st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
+st.markdown(f"<div class='small-framework-header'>Methodology & Strategic Operating Framework (Live Tax Basis: {tx_div})</div>", unsafe_allow_html=True)
+c_a, c_b = st.columns(2)
+with c_a:
+    st.markdown(f"<div class='theory-card'><b>🏗️ Pillar 01: Internal Wealth Stripping</b><br>Wealth stripping via Tax (**{tx_div}**), segment-specific Commissions (**OTA only**), and specialized costs (BB, LN, DN, SAI, AI).</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='theory-card'><b>⚖️ Pillar 02: Demand & Hurdle Logic</b><br>The <b>Demand Context</b> selector adjusts the base hurdle. <i>Compression</i> adds +15.0 to protect peak inventory.</div>", unsafe_allow_html=True)
+with c_b:
+    st.markdown(f"<div class='theory-card'><b>🌐 Pillar 03: External Velocity</b><br>ADW Pace vs Benchmark multiplier (**{v_mult}x**). Live Market News & Aviation tabs substantiate pricing decisions.</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='theory-card'><b>📉 Inventory Logistics</b><br>Captures 100% of deal wealth including MICE, Transportation, and Laundry across SGL/DBL/TPL units.</div>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
+
+# --- 8. FOOTER CONTACT FORM ---
+st.markdown("<div class='contact-section'>", unsafe_allow_html=True)
+st.subheader("✉️ Contact the Strategic Architect")
+st.write("Direct queries to Gayan Nugawela regarding custom logic or tool modifications.")
+col1, col2 = st.columns([1, 1])
+with col1:
+    contact_form = """
+    <form action="https://formspree.io/f/mkoywogq" method="POST" style="display: flex; flex-direction: column; gap: 15px; background: white; padding: 20px; border-radius: 10px;">
+        <input type="text" name="name" placeholder="Your Full Name" style="padding: 10px; border-radius: 5px; border: 1px solid #ddd; color: black;" required>
+        <input type="email" name="_replyto" placeholder="Your Work Email" style="padding: 10px; border-radius: 5px; border: 1px solid #ddd; color: black;" required>
+        <textarea name="message" placeholder="Technical query or requested feature..." style="padding: 10px; border-radius: 5px; border: 1px solid #ddd; height: 100px; color: black;" required></textarea>
+        <button type="submit" style="background-color: #1e3799; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1rem;">🚀 Submit to Architect</button>
+    </form>
+    """
+    st.markdown(contact_form, unsafe_allow_html=True)
+with col2:
+    st.markdown("""
+    ### Logic Desk Details
+    * **Email:** gayan01@gmail.com
+    * **Response Time:** 24-48 Business Hours
+    * **Scope:** Algorithm updates, Displacement logic tweaks, Currency/Market DB updates.
+    """)
+st.markdown("</div>", unsafe_allow_html=True)

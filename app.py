@@ -10,7 +10,6 @@ st.markdown("""<style>
 .pricing-header{background:#1e3799;color:white;padding:5px 10px;border-radius:5px 5px 0 0;font-size:0.9rem;font-weight:bold}
 .status-box{padding:10px;border-radius:10px;text-align:center;font-size:1.1rem;font-weight:bold;color:white}
 .sentinel-box{background:#1e3799; color:white; padding:20px; border-radius:10px; margin-bottom:25px; border-left:10px solid #ffc107;}
-.guide-box{background:#ffffff; padding:20px; border-radius:10px; border:1px solid #dee2e6; margin-top:20px;}
 [data-testid="stSidebar"]{background:#f8f9fa; border-right:1px solid #dee2e6}
 </style>""", unsafe_allow_html=True)
 
@@ -27,7 +26,7 @@ if not st.session_state["auth"]:
             else: st.error("Denied")
     st.stop()
 
-# --- 3. SIDEBAR MASTER CONTROL (THE ARCHITECT'S DESK) ---
+# --- 3. SIDEBAR MASTER CONTROL ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\n**Gayan Nugawela**")
     if st.button("🔒 Sign Out"):
@@ -38,7 +37,7 @@ with st.sidebar:
     st.markdown("### 🏨 Pillar 01: Cost & Context")
     hotel = st.text_input("Property (Google Sync Enabled)", "Wyndham Garden Salalah")
     inventory = st.number_input("Total Inventory", 1, 1000, 237)
-    p01_value = st.number_input("P01 Variable Fee (Per Room)", 0.0, help="Variable transaction/cleaning costs.")
+    p01_val = st.number_input("P01 Variable Fee (Per Room)", 0.0)
     
     st.markdown("### 📅 Stay Intelligence")
     d1 = st.date_input("Check-In", date.today())
@@ -47,6 +46,7 @@ with st.sidebar:
     st.info(f"Analysis Period: {m_nights} Nights")
 
     st.markdown("### 🌐 Pillar 02: Market Sentinel")
+    # Automating the "Google Sync" logic
     is_khareef = "Salalah" in hotel and (6 <= d1.month <= 9)
     m_state = st.radio("Market Condition", ["Crisis", "Stagnant", "Recovering", "Peak"], index=(3 if is_khareef else 0))
     m_heat = {"Crisis": 0.65, "Stagnant": 0.85, "Recovering": 1.0, "Peak": 1.35}[m_state]
@@ -66,15 +66,14 @@ with st.sidebar:
     c_sai = st.number_input("SAI Cost", 5.0); c_ai = st.number_input("AI Cost", 5.0)
     costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": c_fb, "SAI": c_sai, "AI": c_ai}
 
-# --- 4. CALCULATION ENGINE (THE WEALTH STRIPPER) ---
+# --- 4. CALCULATION ENGINE ---
 def run_yield(rms, adr, n, meals, comm, fl, mice=0, trans=0):
     tr = sum(rms)
     if tr <= 0: return None
     px = (rms[0]*1 + rms[1]*2 + rms[2]*3) / tr
     net_adr = adr / tx
     m_cost_unit = sum((qty/tr) * costs.get(m, 0) * px for m, qty in meals.items() if qty > 0)
-    # Wealth Strip including P01
-    unit_w = (net_adr - m_cost_unit - ((net_adr - m_cost_unit) * comm)) - p01_value + ((mice * px)/(n * tx))
+    unit_w = (net_adr - m_cost_unit - ((net_adr - m_cost_unit) * comm)) - p01_val + ((mice * px)/(n * tx))
     total_w = (unit_w * tr * n) + (trans / tx)
     dy = total_w / (tr * n)
     hrd = fl * 1.25 if (tr/inventory) >= 0.2 else fl
@@ -87,9 +86,9 @@ st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER</h1>", unsafe_allow
 st.markdown(f"""<div class='sentinel-box'>
     <h3 style='margin:0; color:#ffc107;'>🤖 PILLAR 02: MARKET SENTINEL ACTIVE</h3>
     <div style='display:flex; justify-content:space-between; margin-top:10px;'>
-        <span><b>Property Context:</b> {hotel}</span>
-        <span><b>Market Heat:</b> {m_state} ({m_heat}x)</span>
-        <span><b>Velocity Trigger:</b> {v_mult}x</span>
+        <span><b>Property:</b> {hotel}</span>
+        <span><b>Heat Index:</b> {m_state} ({m_heat}x)</span>
+        <span><b>Duration:</b> {m_nights} Nights</span>
     </div>
 </div>""", unsafe_allow_html=True)
 
@@ -98,11 +97,21 @@ def draw_segment(title, key, base_r, floor, color, is_ota=False, is_group=False)
     c1, c2, c3 = st.columns([1, 1.8, 1.2])
     suggested = (base_r * m_heat) * v_mult
     with c1:
-        s = st.number_input("SGL", 0, key=key+"s"); d = st.number_input("DBL", 0, key=key+"d")
+        s = st.number_input("SGL Rooms", 0, key=key+"s"); d = st.number_input("DBL Rooms", 0, key=key+"d")
         n = st.number_input("Nights", value=m_nights, key=key+"n")
     with c2:
-        st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED EQUILIBRIUM: {cu} {suggested:,.2f}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED RATE: {cu} {suggested:,.2f}</div>", unsafe_allow_html=True)
         adr = st.number_input("Final Applied ADR", value=float(suggested), key=key+"a")
         fl = st.number_input("Floor (Min)", float(floor), key=key+"f")
-        mc = st.columns(3)
-        mx = {"RO": mc[0].number_input("RO Pax", 0, key=key+"ro"), "BB": mc[0].number_input("BB Pax", 0, key=key
+        m_cols = st.columns(3)
+        m_ro = m_cols[0].number_input("RO Pax", 0, key=key+"ro")
+        m_bb = m_cols[0].number_input("BB Pax", 0, key=key+"bb")
+        m_hb = m_cols[1].number_input("HB Pax", 0, key=key+"hb")
+        m_fb = m_cols[1].number_input("FB Pax", 0, key=key+"fb")
+        m_sai = m_cols[2].number_input("SAI Pax", 0, key=key+"sai")
+        m_ai = m_cols[2].number_input("AI Pax", 0, key=key+"ai")
+        mx = {"RO": m_ro, "BB": m_bb, "HB": m_hb, "FB": m_fb, "SAI": m_sai, "AI": m_ai}
+        
+        mi, tr = 0.0, 0.0
+        if is_group:
+            gc = st.columns(2); mi = gc[0].number

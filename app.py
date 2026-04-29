@@ -15,7 +15,7 @@ st.markdown("""<style>
 [data-testid="stSidebar"]{background:#f1f4f9; border-right:1px solid #dee2e6}
 </style>""", unsafe_allow_html=True)
 
-# --- 2. SESSION STATE & RESET ---
+# --- 2. SESSION STATE ---
 if "auth" not in st.session_state: st.session_state["auth"] = False
 if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
 
@@ -30,7 +30,7 @@ if not st.session_state["auth"]:
             else: st.error("Denied")
     st.stop()
 
-# --- 3. SIDEBAR (STRATEGIC LEVERS) ---
+# --- 3. SIDEBAR ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
     if st.button("☢️ Nuclear Data Reset"):
@@ -69,4 +69,18 @@ with st.sidebar:
     c_hb = st.number_input("HB Cost", 2.5, key="chb"+rk)
     c_fb = st.number_input("FB Cost", 5.0, key="cfb"+rk)
     c_sai = st.number_input("SAI Cost", 7.5, key="csai"+rk)
-    c_ai = st.number_input("AI
+    # FIXED: Line 72 is now properly terminated
+    c_ai = st.number_input("AI Cost", 10.0, key="cai"+rk)
+    meal_costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": c_fb, "SAI": c_sai, "AI": c_ai}
+
+# --- 4. GOOGLE INTELLIGENCE ---
+intel_db = {
+    "Salalah": {"ev": "Khareef Festival (Monsoon)", "fl": "+18% Surge", "basis": "Weather-Driven Demand"},
+    "Dubai": {"ev": "Shopping Festival / Expo", "fl": "+25% Global Influx", "basis": "Peak Business Synergy"},
+    "Muscat": {"ev": "Opera House Season", "fl": "+10% Regional Traffic", "basis": "Cultural Peaks"},
+    "London": {"ev": "Wimbledon / Fashion Week", "fl": "Heathrow Capacity 98%", "basis": "Hub Constraints"}
+}
+active_intel = intel_db.get(next((k for k in intel_db if k.lower() in city_name.lower()), None), 
+                           {"ev": "Standard Market Events", "fl": "Baseline Rotation", "basis": "Equilibrium"})
+
+# --- 5. CALCULATION ENGINE

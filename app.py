@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING ---
+# --- 1. STYLING (The Global Executive Aesthetic) ---
 st.set_page_config(layout="wide", page_title="Displacement Analyzer | Yield Equilibrium")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -35,7 +35,7 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR ---
+# --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS) ---
 with st.sidebar:
     st.markdown("### 👤 System Developer\nGayan Nugawela")
     if st.button("🧹 Clear Global Cache"):
@@ -51,15 +51,44 @@ with st.sidebar:
     d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
     d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    st.info(f"📅 Stay: {m_nights} Nights")
+    st.info(f"📅 **Stay Duration: {m_nights} Nights**")
     inventory = st.number_input("Total Capacity", 1, 1000, 237, key="inv_c_"+rk)
     st.divider()
     st.markdown("### 📊 Velocity Analytics")
     otb_occ = st.slider("OTB %", 0, 100, 15, key="otb_s_"+rk)
     avg_hist = st.slider("Hist. Benchmark %", 0, 100, 45, key="hst_s_"+rk)
-    # Velocity Multiplier Logic
     v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
     st.divider()
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
     ota_comm = st.slider("OTA Commission %", 0, 40, 15, key="ota_v_"+rk)
-    p01_fee = st.number_input(
+    # FIXED Line 65: Closed parenthesis
+    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk)
+    
+    # Unit Costs - 0.000 Baseline with high precision for research
+    meal_costs = {
+        "RO": 0.0, 
+        "BB": st.number_input("BB Cost", 0.0, format="%.3f", key="bb_mc_"+rk),
+        "LN": st.number_input("LN Cost", 0.0, format="%.3f", key="ln_mc_"+rk), 
+        "DN": st.number_input("DN Cost", 0.0, format="%.3f", key="dn_mc_"+rk),
+        "SAI": st.number_input("SAI Cost", 0.0, format="%.3f", key="sai_mc_"+rk), 
+        "AI": st.number_input("AI Cost", 0.0, format="%.3f", key="ai_mc_"+rk)
+    }
+
+# --- 4. MARKET INTEL ---
+intel_db = {
+    "salalah": {"ev": "Khareef Festival", "fl": "DXB/MCT Rotations", "news": ["Port: Stable", "Tourism: Surge", "Monsoon Rising"], "basis": "Microclimate"},
+    "colombo": {"ev": "Tourism Peak", "fl": "UL Hub Growth", "news": ["Arrivals 1.2M+", "LKR Stable", "MICE Demand"], "basis": "Recovery"}
+}
+active_intel = intel_db.get(city_search.lower(), {"ev": "Active Rotation", "fl": "Baseline", "news": ["Standard market flow."], "basis": "Equilibrium"})
+
+# --- 5. CALCULATION ENGINE ---
+def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=0, mice=0, trans=0):
+    tr = sum(rms); rn = tr * nts
+    if tr <= 0: return None
+    demand_adj = {"Compression (Peak)": 15.0, "High Flow": 5.0, "Standard": 0.0, "Distressed": -5.0}
+    eff_hurdle = hurdle + demand_adj.get(demand_type, 0)
+    net_adr = adr / tx_div
+    total_m = sum(qty * meal_costs.get(p, 0) for p, qty in meals.items())
+    avg_m = (total_m / tr)
+    # Wealth per night per unit
+    unit_w = (net_adr - avg_

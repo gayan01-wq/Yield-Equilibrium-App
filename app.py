@@ -73,60 +73,27 @@ def run_yield_engine(rooms, adr, hurdle, demand, comm=0.0):
     d_adj = {"Compression (Peak)": 15.0, "High Flow": 5.0, "Standard": 0.0, "Distressed": -5.0}
     eff_hurdle = hurdle + d_adj.get(demand, 0)
     
-    # Pillar 01: Net-Wealth
+    # Pillar 01: Net-Wealth (Clean Asset Yield)
     net_adr = adr / tx_div
-    unit_w = (net_adr - bb_cost - (net_adr * comm)) - 6.90 # 6.90 baseline P01 fee
+    unit_w = (net_adr - bb_cost - (net_adr * comm)) - 6.90 # Baseline unit cost
     
     status = "ACCEPT" if unit_w >= eff_hurdle else "REJECT"
     color = "#27ae60" if unit_w >= eff_hurdle else "#e74c3c"
     
-    return {"w": unit_w, "st": status, "cl": color, "total": unit_w * total_rooms * m_nights}
+    # Total Stay Wealth (LOS Weighted)
+    total_w = unit_w * total_rooms * m_nights
+    
+    return {"w": unit_w, "st": status, "cl": color, "total": total_w}
 
 # --- 5. DASHBOARD ---
 st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
-st.markdown("<div class='main-subtitle'>Yield Equilibrium Research Intelligence</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence</div>", unsafe_allow_html=True)
 
-st.info(f"📍 City: {city} | 📈 Velocity: {v_mult}x | 📅 LOS: {m_nights} Nights")
+st.info(f"📍 Analysis: {city} | 📈 Velocity: {v_mult}x | 📅 Length of Stay: {m_nights} Nights")
 
 def draw_segment(label, key, suggest_adr, floor, is_ota=False):
     st.markdown(f"<div class='card'><b>{label}</b></div>", unsafe_allow_html=True)
     c1, c2 = st.columns([2.5, 1])
     with c1:
         st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
-        r1, r2, r3 = st.columns(3)
-        rms = r1.number_input("Rooms", 0, key="r_"+key)
-        rate = r2.number_input("Rate", value=float(suggest_adr * v_mult), key="a_"+key)
-        dem = r3.selectbox("Demand Context", ["Standard", "Compression (Peak)", "Distressed"], key="d_"+key)
-        st.markdown("</div>", unsafe_allow_html=True)
-    
-    res = run_yield_engine([rms], rate, floor, dem, (ota_c/100 if is_ota else 0.0))
-    if res:
-        with c2:
-            st.metric("Net Wealth", f"{cur_sym}{res['w']:,.2f}")
-            st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='reason-box'>Total Stay Wealth: {cur_sym}{res['total']:,.2f}</div>", unsafe_allow_html=True)
-
-draw_segment("1. DIRECT / FIT", "fit", 65, 40)
-draw_segment("2. OTA CHANNELS", "ota", 60, 35, is_ota=True)
-draw_segment("3. GROUPS / MICE", "grp", 50, 30)
-
-# --- 6. METHODOLOGY (RESEARCH PAPER DEFINITIONS) ---
-st.divider()
-st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
-st.markdown("<h3 style='text-align:center; color:#1e3799;'>Algorithmic Research Framework</h3>", unsafe_allow_html=True)
-
-st.markdown(f"""
-<div class='theory-card'>
-    <b>🏛️ PILLAR 01: NET-WEALTH DECONSTRUCTION</b><br>
-    The model identifies <b>'Clean Asset Yield'</b> by stripping statutory tax ({tx_div}) and distribution leakages. 
-    This ensures revenue volume does not mask unit-level margin erosion.
-</div>
-<div class='theory-card'>
-    <b>⚖️ PILLAR 02: TEMPORAL LOS (LENGTH OF STAY) YIELDING</b><br>
-    The engine evaluates cumulative wealth across the <b>{m_nights}-night stay</b>. This temporal analysis determines if 
-    the total wealth generated justifies the displacement of future higher-yield demand. Hurdle offsets (Compression +15.0) 
-    act as filters during high-velocity windows.
-</div>
-<div class='theory-card'>
-    <b>🌐 PILLAR 03: VELOCITY MOMENTUM ANALYTICS</b><br>
-    Pricing is dynamically adjusted via a <b>Velocity Multi
+        r1, r2, r3

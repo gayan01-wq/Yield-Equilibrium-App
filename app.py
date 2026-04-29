@@ -100,9 +100,13 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
     if (tr / inventory) >= 0.50: rsn += " | ⚠️ DISPLACEMENT: Segment ≥50% capacity."
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w}
 
-# --- 6. DASHBOARD ---
-st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
-st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
+# --- 6. DASHBOARD (CENTERED TITLES) ---
+st.markdown("""
+<div style="text-align: center; width: 100%;">
+    <h1 class='main-title' style='margin-bottom: 0;'>DISPLACEMENT ANALYZER</h1>
+    <div class='main-subtitle' style='margin-top: 5px;'>Yield Equilibrium Strategic Intelligence Engine</div>
+</div>
+""", unsafe_allow_html=True)
 
 t1, t2 = st.tabs(["🌐 Aviation & Events", "🗞️ Market News Feed"])
 with t1: st.markdown(f"<div class='google-window'><b>🌐 Aviation Intelligence: {city_search}</b><br>• <b>Events:</b> {active_intel['ev']} | <b>Basis:</b> {active_intel['basis']}<br>• <b>Velocity:</b> {v_mult}x Applied</div>", unsafe_allow_html=True)

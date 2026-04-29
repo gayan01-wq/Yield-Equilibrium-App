@@ -32,7 +32,6 @@ if not st.session_state["auth"]:
 
 # --- IF AUTHENTICATED, DRAW EVERYTHING ---
 else:
-    # --- SIDEBAR ---
     with st.sidebar:
         st.markdown("<p style='font-size:1.2rem;font-weight:800;color:#1e3799;margin:0;'>Gayan Nugawela</p><p style='font-size:0.8rem;margin:0;'>Strategic Revenue Architect</p>", unsafe_allow_html=True)
         st.divider()
@@ -79,12 +78,4 @@ else:
 
     # --- CALCULATIONS ---
     def calc_w(rms, adr, n, meals, comm, fl, mice=0.0, trans=0.0):
-        tot_r = sum(rms)
-        if tot_r <= 0: return None
-        px_r = (rms[0]*1 + rms[1]*2 + rms[2]*3) / tot_r
-        u_n = adr / tx
-        m_c = sum((qty/tot_r) * m_costs[p] * px_r for p, qty in meals.items() if qty > 0)
-        unit_w = (u_n - m_c - ((u_n - m_c) * comm)) + ((mice * px_r) / (n * tx))
-        total_w = (unit_w * tot_r * n) + (trans / tx)
-        d_u = total_w / (tot_r * n)
-        hrd = fl * 1.25 if (tot
+        tot_r =

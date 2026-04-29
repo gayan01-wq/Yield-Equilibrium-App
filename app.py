@@ -1,31 +1,51 @@
-# --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS + CONTACT) ---
+import streamlit as st
+from datetime import date
+
+# --- 1. STYLING (The Displacement Analyzer Aesthetic) ---
+st.set_page_config(layout="wide", page_title="Displacement Analyzer | Yield Equilibrium")
+st.markdown("""<style>
+.block-container{padding-top:1rem!important;}
+.main-title{font-size:2.0rem!important;font-weight:900;color:#1e3799;text-align:center;margin-top:-10px;text-transform:uppercase;letter-spacing:2px;}
+.main-subtitle{font-size:1.1rem!important;font-weight:600;color:#4b6584;text-align:center;margin-top:-15px;margin-bottom:25px;letter-spacing:1px;}
+.small-framework-header{font-size:0.95rem!important; font-weight:700; color:#4b6584; text-align:center; margin-bottom:15px; letter-spacing:1px;}
+.card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
+.pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
+.google-window{background:#e8f0fe; padding:18px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.85rem; line-height:1.6;}
+.news-item{background:#ffffff; border-radius:8px; padding:10px; margin-bottom:8px; border-left:4px solid #ff4b4b; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+.status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
+.reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
+.theory-box{background:#f9f9f9; padding:25px; border-radius:15px; border:1px solid #dee2e6; margin-top:30px}
+.theory-card{background:white; padding:12px; border-radius:10px; border:1px solid #eee; margin-bottom:8px;}
+[data-testid="stSidebar"]{background:#f1f4f9; border-right:1px solid #dee2e6}
+.contact-section{background:#1e3799; padding:30px; border-radius:15px; margin-top:40px; color:white;}
+</style>""", unsafe_allow_html=True)
+
+# --- 2. AUTHENTICATION ---
+if "auth" not in st.session_state: st.session_state["auth"] = False
+if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
+
+if not st.session_state["auth"]:
+    st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
+    with st.form("login_gate"):
+        pwd = st.text_input("Access Key", type="password")
+        if st.form_submit_button("Unlock Engine"):
+            if pwd == "Gayan2026": 
+                st.session_state["auth"] = True
+                st.rerun()
+            else: st.error("Access Denied")
+    st.stop()
+
+# --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS) ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
     if st.button("🧹 Clear Global Cache"):
         st.session_state["reset_key"] += 1
         st.rerun()
     st.divider()
-    
-    # --- CONTACT FORM SECTION (ALREADY LINKED TO mkoywogq) ---
-    with st.expander("✉️ Architect Direct Line"):
-        st.markdown("<p style='font-size:0.8rem; color:#666;'>Direct query to gayan01@gmail.com via the Logic Desk.</p>", unsafe_allow_html=True)
-        
-        contact_html = """
-        <form action="https://formspree.io/f/mkoywogq" method="POST" style="display: flex; flex-direction: column; gap: 8px;">
-            <input type="text" name="name" placeholder="Full Name" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.8rem;" required>
-            <input type="email" name="_replyto" placeholder="Your Email" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.8rem;" required>
-            <textarea name="message" placeholder="Technical query or custom feature request..." style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; height: 70px; font-size: 0.8rem;" required></textarea>
-            <input type="hidden" name="_subject" value="New Query from Displacement Analyzer">
-            <button type="submit" style="background-color: #1e3799; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">🚀 Submit to Architect</button>
-        </form>
-        """
-        st.markdown(contact_html, unsafe_allow_html=True)
-    
-    st.divider()
     rk = str(st.session_state["reset_key"]) 
     
     currencies = {"OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "INR (₹)": "₹", "USD ($)": "$"}
-    cur_choice = st.selectbox("🌍 Operating Currency", list(currencies.keys()), key="c_sel_"+rk)
+    cur_choice = st.selectbox("🌍 Base Operating Currency", list(currencies.keys()), key="c_sel_"+rk)
     cur_sym = currencies[cur_choice]
 
     hotel_name = st.text_input("🏨 Hotel", "Wyndham Garden Salalah", key="h_nm_"+rk)
@@ -49,12 +69,17 @@ with st.sidebar:
     ota_comm = st.slider("OTA Commission %", 0, 40, 15, key="ota_v_"+rk)
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk)
 
-    st.markdown("### 🍽️ Unit Costs (Per Person Basis)")
+    st.markdown("### 🍽️ Unit Costs (Per Person)")
     meal_costs = {
         "RO": 0.0,
-        "BB": st.number_input("Breakfast (BB)", 2.5, key="bb_mc_"+rk),
-        "LN": st.number_input("Lunch (LN)", 4.5, key="ln_mc_"+rk),
-        "DN": st.number_input("Dinner (DN)", 5.5, key="dn_mc_"+rk),
-        "SAI": st.number_input("Soft AI (SAI)", 8.5, key="sai_mc_"+rk),
-        "AI": st.number_input("Premium AI (AI)", 10.5, key="ai_mc_"+rk)
+        "BB": st.number_input("BB (Breakfast)", 2.5, key="bb_mc_"+rk),
+        "LN": st.number_input("LN (Lunch)", 4.5, key="ln_mc_"+rk),
+        "DN": st.number_input("DN (Dinner)", 5.5, key="dn_mc_"+rk),
+        "SAI": st.number_input("SAI (Soft AI)", 8.5, key="sai_mc_"+rk),
+        "AI": st.number_input("AI (Premium AI)", 10.5, key="ai_mc_"+rk)
     }
+
+# --- 4. MARKET INTEL ---
+intel_db = {
+    "salalah": {"ev": "Khareef Festival", "fl": "Dubai/Muscat Rotations", "news": ["Port: Stable.", "Tourism: Surge.", "Weather: Monsoon."], "basis": "Microclimate"},
+    "colombo": {"ev": "Tourism Peak", "fl": "UL Hub Growth", "news": ["Arrivals: 1.2M+", "LKR:

@@ -84,4 +84,77 @@ with st.sidebar:
 # --- 4. MARKET INTEL ---
 intel_db = {
     "salalah": {"ev": "Khareef Festival", "fl": "High Rotations (Dubai/Muscat)", "news": ["Port: Operations stable.", "Tourism: Influx surge expected.", "Weather: Early Monsoon rising."], "basis": "Microclimate Compression"},
-    "dubai": {"ev": "DIFC Expansion Summit", "fl": "DXB Slot Scarcity 100%", "news": ["BREAKING: UAE exiting OPEC May 1st.", "DIFC
+    "dubai": {"ev": "DIFC Expansion Summit", "fl": "DXB Slot Scarcity 100%", "news": ["BREAKING: UAE exiting OPEC May 1st.", "DIFC: 775 new companies in Q1.", "Market: Oil price driving demand."], "basis": "Hub Velocity"},
+    "colombo": {"ev": "Tourism Recovery", "fl": "SriLankan Airlines Hub growing", "news": ["Arrivals cross 1.2M mark.", "LKR Stability Improving.", "MICE demand surging."], "basis": "Emerging Market Recovery"}
+}
+active_intel = intel_db.get(city_name.lower(), {"ev": "Active Seasonal Dynamics", "fl": "Baseline Rotation", "news": ["Standard market dynamics."], "basis": "Equilibrium"})
+
+# --- 5. CALCULATION ENGINE ---
+def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, trans=0, snack_qty=0):
+    tr = sum(rms); rn = tr * nts
+    if tr <= 0: return None
+    net_adr = adr / tx_div
+    total_m_s = sum(qty * meal_costs.get(p, 0) for p, qty in meals.items()) + (snack_qty * c_snk)
+    avg_m_s = (total_m_s / tr) if tr > 0 else 0
+    unit_w = (net_adr - avg_m_s - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
+    total_w = (unit_w * rn) + (trans / tx_div)
+    disp_risk = (tr / inventory) >= 0.50
+    if unit_w < hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym} hurdle. Asset erosion."
+    elif unit_w < (hurdle + 3.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Yield at equilibrium window."
+    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Wealth targets met."
+    if disp_risk: rsn += " | ⚠️ DISPLACEMENT: Segment ≥50% capacity."
+    return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w}
+
+# --- 6. DASHBOARD ---
+st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER DASHBOARD</h1>", unsafe_allow_html=True)
+t1, t2 = st.tabs(["🌐 Aviation & Events", "🗞️ Live Market News Feed"])
+
+with t1:
+    st.markdown(f"<div class='google-window'><b>🌐 Aviation Intelligence: {city_name}</b><br>• <b>Events:</b> {active_intel['ev']} | <b>Basis:</b> {active_intel['basis']}<br>• <b>Flights:</b> {active_intel['fl']} | <b>Velocity:</b> {v_mult}x Applied</div>", unsafe_allow_html=True)
+
+with t2:
+    st.markdown(f"<div class='google-window' style='background:#fdf2f2; border-color:#ff4b4b;'><b style='color:#ff4b4b;'>🗞️ Market Alerts: {city_name} | {date.today().strftime('%B %d, %Y')}</b>")
+    for item in active_intel['news']: st.markdown(f"<div class='news-item'>{item}</div>", unsafe_allow_html=True)
+    st.markdown(f"• <b>Currency Operating Context:</b> {cur_code} </div>", unsafe_allow_html=True)
+
+def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=False):
+    st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
+    c_in, c_res = st.columns([2.6, 1])
+    with c_in:
+        st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+        r1, r2, r3, r4, r5 = st.columns([1,1,1,1.5,1.5])
+        sgl = r1.number_input("SGL", 0, key="s"+key+rk); dbl = r2.number_input("DBL", 0, key="d"+key+rk); tpl = r3.number_input("TPL", 0, key="t"+key+rk)
+        applied_adr = r4.number_input(f"Rate ({cur_sym})", value=float(suggest_adr * v_mult), key="a"+key+rk)
+        floor = r5.number_input(f"Floor ({cur_sym})", value=float(floor_def), key="f"+key+rk)
+        m_row = st.columns(7)
+        p_ro = m_row[0].number_input("RO", 0, key="ro"+key+rk); p_bb = m_row[1].number_input("BB", 0, key="bb"+key+rk); p_hb = m_row[2].number_input("HB", 0, key="hb"+key+rk); p_fb = m_row[3].number_input("FB", 0, key="fb"+key+rk); p_sai = m_row[4].number_input("SAI", 0, key="sai"+key+rk); p_ai = m_row[5].number_input("AI", 0, key="ai"+key+rk); p_snk = m_row[6].number_input("Snk", 0, key="snk"+key+rk)
+        l_c, m_c, t_c = 0.0, 0.0, 0.0
+        if group:
+            g_row = st.columns(3)
+            m_c = g_row[0].number_input(f"MICE", 0.0, key="mice"+key+rk); t_c = g_row[1].number_input(f"Trans", 0.0, key="tr"+key+rk); l_c = g_row[2].number_input(f"Laundry", 0.0, key="ln"+key+rk)
+        st.markdown("</div>", unsafe_allow_html=True)
+    res = run_yield([sgl, dbl, tpl], m_nights, applied_adr, {"RO":p_ro,"BB":p_bb,"HB":p_hb,"FB":p_fb,"SAI":p_sai,"AI":p_ai}, floor, (ota_comm/100 if is_ota else 0.0), l_c, m_c, t_c, p_snk)
+    if res:
+        with c_res:
+            st.metric(f"Net Wealth", f"{cur_sym} {res['w']:,.2f}")
+            st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='reason-box'>💡 <b>Strategic Verdict:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='audit-box'>📊 {res['rn']} RN | Total Wealth: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)
+
+draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
+draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
+draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
+draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
+draw_seg("5. TOUR & TRAVEL (GROUPS)", "tnt", 45, 25, "#e67e22", group=True)
+
+# --- 7. STRATEGIC MANUAL ---
+st.divider()
+st.markdown("<div class='theory-box'>## 📘 Methodology & Strategic Operating Framework")
+c_a, c_b = st.columns(2)
+with c_a:
+    st.markdown(f"<div class='theory-card'><b>🏗️ Pillar 01: Internal Wealth Stripping</b><br>Stripping Taxes (**{tx_div}**), OTA Commissions (**{ota_comm}%**), and Meal/Snack costs to find true GOPPAR.</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='theory-card'><b>🏨 Inventory Logistics</b><br>Triple Room (TPL) integration ensures pax-based cost accuracy. MICE fields capture 100% of wealth.</div>", unsafe_allow_html=True)
+with c_b:
+    st.markdown(f"<div class='theory-card'><b>🌐 Pillar 02 & 03: External Velocity</b><br>ADW Pace vs Benchmark triggers multipliers (**{v_mult}x**). Live News & Aviation tabs substantiate pricing.</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='theory-card'><b>⚖️ Strategic Verdicts</b><br>ACCEPT (Optimized), REVIEW (Marginal), REJECT (Dilutive). 50% Displacement check for group deals.</div>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)

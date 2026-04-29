@@ -102,9 +102,9 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
 
 # --- 6. DASHBOARD (CENTERED TITLES) ---
 st.markdown("""
-<div style="text-align: center; width: 100%;">
-    <h1 class='main-title' style='margin-bottom: 0;'>DISPLACEMENT ANALYZER</h1>
-<div class='main-subtitle' style='margin-top: 5px;'>Yield Equilibrium Strategic Intelligence Engine</div>
+<div style="text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%;">
+    <h1 class='main-title'>DISPLACEMENT ANALYZER</h1>
+    <p class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</p>
 </div>
 """, unsafe_allow_html=True)
 

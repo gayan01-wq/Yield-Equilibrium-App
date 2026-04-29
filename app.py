@@ -1,12 +1,12 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING (Ultra-Stable Layout) ---
+# --- 1. STYLING ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
 .main-title{font-size:1.8rem!important;font-weight:900;color:#1e3799;text-align:center;margin-top:-10px;}
-.small-framework-header{font-size:0.95rem!important; font-weight:700; color:#4b6584; text-align:center; margin-bottom:15px; letter-spacing:0.5px;}
+.small-framework-header{font-size:0.9rem!important; font-weight:700; color:#4b6584; text-align:center; margin-bottom:15px; letter-spacing:0.5px;}
 .card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
 .pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
 .google-window{background:#e8f0fe; padding:18px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.85rem; line-height:1.6;}
@@ -30,7 +30,7 @@ if not st.session_state["auth"]:
             if pwd == "Gayan2026": 
                 st.session_state["auth"] = True
                 st.rerun()
-            else: st.error("Access Denied")
+            else: st.error("Denied")
     st.stop()
 
 # --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS) ---
@@ -65,4 +65,27 @@ with st.sidebar:
 
     st.divider()
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tax_d_"+rk)
-    ota_comm = st.slider("OTA Commission %", 0, 40, 18, key="
+    ota_comm = st.slider("OTA Commission %", 0, 40, 18, key="ota_c_"+rk)
+    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_f_"+rk)
+
+    st.markdown("### 🍽️ Unit Costs (Per Person)")
+    c_snk = st.number_input(f"Snack Cost ({cur_sym})", 0.0, value=1.5, key="snk_c_"+rk)
+    meal_costs = {
+        "RO": 0.0,
+        "BB": st.number_input("BB Cost (Breakfast)", 2.5, key="bb_c_"+rk),
+        "LN": st.number_input("LN Cost (Lunch)", 4.5, key="ln_c_"+rk),
+        "DN": st.number_input("DN Cost (Dinner)", 5.5, key="dn_c_"+rk),
+        "SAI": st.number_input("SAI Cost (Soft AI)", 8.5, key="sai_c_"+rk),
+        "AI": st.number_input("AI Cost (Premium AI)", 10.5, key="ai_c_"+rk)
+    }
+
+# --- 4. MARKET INTEL ---
+intel_db = {
+    "salalah": {"ev": "Khareef Festival", "fl": "High Rotations (Dubai/Muscat)", "news": ["Port: Operations stable.", "Tourism: Surge expected.", "Weather: Monsoon rising."], "basis": "Microclimate Compression"},
+    "dubai": {"ev": "DIFC Expansion Summit", "fl": "DXB Slot Scarcity 100%", "news": ["BREAKING: UAE exiting OPEC May 1st.", "DIFC Growth: 775 new companies.", "Market: Oil volatility."], "basis": "Hub Velocity"},
+    "colombo": {"ev": "Tourism Peak", "fl": "UL connectivity rising.", "news": ["Arrivals cross 1.2M mark.", "LKR Stability Improving.", "MICE demand surging."], "basis": "Emerging Market Recovery"}
+}
+active_intel = intel_db.get(city_name.lower(), {"ev": "Active Seasonal Rotation", "fl": "Baseline Rotation", "news": ["Standard market flow."], "basis": "Equilibrium"})
+
+# --- 5. CALCULATION ENGINE ---
+def run_yield(rms, nts, adr, meals, hurdle, comm_

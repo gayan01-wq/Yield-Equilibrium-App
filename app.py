@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING ---
+# --- 1. STYLING (Ultra-Stable Professional Layout) ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -58,7 +58,7 @@ with st.sidebar:
     d2 = st.date_input("Check-Out", date.today(), key="d2"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     
-    inventory = st.number_input("Total Property Capacity", 1, 1000, 237, key="inv"+rk)
+    inventory = st.number_input("Total Capacity (Rooms)", 1, 1000, 237, key="inv"+rk)
     st.info(f"**Stay Window: {m_nights} Nights**")
     
     st.divider()
@@ -87,7 +87,7 @@ intel_db = {
     "salalah": {
         "ev": "Khareef Monsoon Festival", 
         "fl": "High Rotations (Dubai/Muscat). +18% Surge.",
-        "news": ["Port: Operations stable.", "Tourism: Influx surge expected.", "Weather: Monsoon conditions rising."],
+        "news": ["Port: Operations stable.", "Tourism: Influx surge expected.", "Weather: Early Monsoon rising."],
         "basis": "Microclimate Compression"
     },
     "colombo": {
@@ -105,11 +105,11 @@ intel_db = {
 }
 active_intel = intel_db.get(city_name.lower(), {"ev": "Active Seasonal Dynamics", "fl": "Baseline Regional Rotation", "news": ["Standard market flow."], "basis": "Market Equilibrium"})
 
-# --- 5. ENGINE ---
+# --- 5. CALCULATION ENGINE ---
 def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, trans=0, snack_qty=0):
     tr = sum(rms); rn = tr * nts
     if tr <= 0: return None
     net_adr = adr / tx_div
-    # FIXED: sum() closed correctly below
     total_m_s = sum(qty * meal_costs.get(p, 0) for p, qty in meals.items()) + (snack_qty * c_snk)
-    avg_m_s = (total
+    avg_m_s = (total_m_s / tr) if tr > 0 else 0
+    unit_w = (net_

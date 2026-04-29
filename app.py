@@ -5,8 +5,29 @@ from datetime import date
 st.set_page_config(layout="wide", page_title="Displacement Analyzer | Yield Equilibrium")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
-.main-title{font-size:2.0rem!important;font-weight:900;color:#1e3799;text-align:center;margin-top:-10px;text-transform:uppercase;letter-spacing:2px; display: block; width: 100%;}
-.main-subtitle{font-size:1.1rem!important;font-weight:600;color:#4b6584;text-align:center;margin-top:-15px;margin-bottom:25px;letter-spacing:1px; display: block; width: 100%;}
+/* Precision Centering for Titles */
+.main-title {
+    font-size: 2.2rem!important;
+    font-weight: 900;
+    color: #1e3799;
+    text-align: center!important;
+    margin-top: -10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: block;
+    width: 100%;
+}
+.main-subtitle {
+    font-size: 1.15rem!important;
+    font-weight: 600;
+    color: #4b6584;
+    text-align: center!important;
+    margin-top: -10px;
+    margin-bottom: 30px;
+    letter-spacing: 1px;
+    display: block;
+    width: 100%;
+}
 .small-framework-header{font-size:0.95rem!important; font-weight:700; color:#4b6584; text-align:center; margin-bottom:15px; letter-spacing:1px;}
 .card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
 .pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
@@ -101,7 +122,7 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
     if (tr / inventory) >= 0.50: rsn += " | ⚠️ DISPLACEMENT: Segment ≥50% capacity."
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w}
 
-# --- 6. DASHBOARD ---
+# --- 6. DASHBOARD (Centered Titles) ---
 st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
 st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
 

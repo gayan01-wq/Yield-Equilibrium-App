@@ -14,8 +14,9 @@ st.markdown("""<style>
 [data-testid="stSidebar"]{background:#f8f9fa; border-right:1px solid #dee2e6}
 </style>""", unsafe_allow_html=True)
 
-# --- 2. SESSION STATE & DATA CLEAR ---
+# --- 2. SESSION STATE & NUCLEAR CLEAR ---
 if "auth" not in st.session_state: st.session_state["auth"] = False
+if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
 
 # --- 3. AUTHENTICATION ---
 if not st.session_state["auth"]:
@@ -33,11 +34,9 @@ if not st.session_state["auth"]:
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\n**Gayan Nugawela**")
     
-    # IMPROVED: ROBUST CLEAR BUTTON
-    if st.button("🧹 Clear All Data & Reset"):
-        st.cache_data.clear()
-        for key in list(st.session_state.keys()):
-            if key != "auth": del st.session_state[key]
+    # NUCLEAR CLEAR: Increments the reset_key to force widget refresh
+    if st.button("☢️ Nuclear Data Reset"):
+        st.session_state["reset_key"] += 1
         st.rerun()
         
     if st.button("🔒 Sign Out"):
@@ -45,63 +44,47 @@ with st.sidebar:
         st.rerun()
     st.divider()
     
+    rk = str(st.session_state["reset_key"]) # String for unique keys
+    
     st.markdown("### 🏨 Pillar 01: Cost & Context")
-    hotel = st.text_input("Property Name", "Wyndham Garden Salalah")
-    location = st.selectbox("📍 Google Location Select", ["Salalah, Oman", "Muscat, Oman", "Dubai, UAE", "London, UK"])
-    inventory = st.number_input("Total Inventory", 1, 1000, 237)
-    p01_val = st.number_input("P01 Variable Fee", 0.00, value=6.90, step=0.01)
+    hotel = st.text_input("Property Name", "Wyndham Garden Salalah", key="hotel"+rk)
+    location = st.selectbox("📍 Google Location", ["Salalah, Oman", "Muscat, Oman", "Dubai, UAE", "London, UK"], key="loc"+rk)
+    inventory = st.number_input("Total Inventory", 1, 1000, 237, key="inv"+rk)
+    p01_val = st.number_input("P01 Variable Fee", 0.00, value=6.90, step=0.01, key="p01"+rk)
     
     st.markdown("### 📅 Stay Intelligence")
-    d1 = st.date_input("Check-In", date.today())
-    d2 = st.date_input("Check-Out", date.today())
+    d1 = st.date_input("Check-In", date.today(), key="d1"+rk)
+    d2 = st.date_input("Check-Out", date.today(), key="d2"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     st.info(f"Stay Duration: {m_nights} Nights")
 
     st.markdown("### 🌐 Pillar 02: Market Sentinel")
     is_khareef = "Salalah" in location and (6 <= d1.month <= 9)
-    m_state = st.radio("Demand Status", ["Crisis", "Stagnant", "Recovering", "Peak"], index=(3 if is_khareef else 0))
+    m_state = st.radio("Demand Status", ["Crisis", "Stagnant", "Recovering", "Peak"], index=(3 if is_khareef else 0), key="ms"+rk)
     m_heat = {"Crisis": 0.65, "Stagnant": 0.85, "Recovering": 1.0, "Peak": 1.35}[m_state]
 
     st.markdown("### 📈 Pillar 03: Velocity Valve")
-    otb = st.slider("Current OTB %", 0, 100, (70 if is_khareef else 15))
-    hist = st.slider("Historical Avg %", 0, 100, 45)
+    otb = st.slider("Current OTB %", 0, 100, (70 if is_khareef else 15), key="otb"+rk)
+    hist = st.slider("Historical Avg %", 0, 100, 45, key="hist"+rk)
     v_mult = 1.25 if (otb-hist) > 10 else 0.85 if (otb-hist) < -10 else 1.0
 
     st.divider()
-    cu = st.selectbox("Currency", ["OMR", "AED", "USD", "EUR"])
-    tx = st.number_input("Tax Divisor", value=1.2327, format="%.4f", step=0.0001)
-    ota_comm = st.slider("OTA Commission %", 0, 50, 18) / 100
+    cu = st.selectbox("Currency", ["OMR", "AED", "USD", "EUR"], key="cu"+rk)
+    tx = st.number_input("Tax Divisor", value=1.2327, format="%.4f", step=0.0001, key="tx"+rk)
+    ota_comm = st.slider("OTA Commission %", 0, 50, 18, key="ota"+rk) / 100
     
     st.markdown("### 🍽️ Unit Pax Costs")
-    c_bb = st.number_input("BB Pax Cost", 0.0)
-    c_hb = st.number_input("HB Pax Cost", 0.0)
-    c_fb = st.number_input("FB Pax Cost", 0.0)
-    c_sai = st.number_input("SAI Pax Cost", 5.0)
-    c_ai = st.number_input("AI Cost", 5.0)
-    costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": c_fb, "SAI": c_sai, "AI": c_ai}
+    c_bb = st.number_input("BB Pax Cost", 0.0, key="cbb"+rk)
+    c_sai = st.number_input("SAI Pax Cost", 5.0, key="csai"+rk)
+    c_ai = st.number_input("AI Cost", 5.0, key="cai"+rk)
+    costs = {"RO": 0, "BB": c_bb, "HB": c_bb+3, "FB": c_bb+6, "SAI": c_sai, "AI": c_ai}
 
 # --- 5. DYNAMIC GOOGLE INTELLIGENCE LOGIC ---
 city_data = {
-    "Salalah, Oman": {
-        "events": "Salalah Tourism Festival | Khareef Seasonal Peaks",
-        "flights": "+18% Influx (Qatar Airways & FlyDubai extra rotations)",
-        "index": "High" if is_khareef else "Moderate"
-    },
-    "Muscat, Oman": {
-        "events": "Muscat Fashion Week | Muscat Food Festival",
-        "flights": "+5% Steady | Oman Air fleet expansion",
-        "index": "Recovering"
-    },
-    "Dubai, UAE": {
-        "events": "Dubai Shopping Festival | Gulfood EXPO",
-        "flights": "+25% Surge (Emirates & FlyDubai max capacity)",
-        "index": "Peak"
-    },
-    "London, UK": {
-        "events": "London Fashion Week | Wimbledon Prep",
-        "flights": "Heavy Congestion | Heathrow Slot Capacity 98%",
-        "index": "High"
-    }
+    "Salalah, Oman": {"events": "Salalah Tourism Festival | Khareef Peaks", "flights": "+18% Influx", "index": "High" if is_khareef else "Moderate"},
+    "Muscat, Oman": {"events": "Muscat Food Festival", "flights": "+5% Steady", "index": "Recovering"},
+    "Dubai, UAE": {"events": "Dubai Shopping Festival", "flights": "+25% Surge", "index": "Peak"},
+    "London, UK": {"events": "London Fashion Week", "flights": "Congestion", "index": "High"}
 }
 current_intel = city_data.get(location)
 
@@ -122,49 +105,48 @@ def run_yield(rms, adr, n, meals, comm, fl, mice=0, trans=0):
 # --- 7. MAIN DASHBOARD ---
 st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER</h1>", unsafe_allow_html=True)
 
-# UPDATED: DYNAMIC GOOGLE INTELLIGENCE WINDOW
 st.markdown(f"""<div class='google-window'>
     <b style='color:#4285f4;'>🌐 Google Intelligence Feed: {location}</b><br>
-    • <b>Special Events:</b> {current_intel['events']}<br>
-    • <b>Flight Influx Data:</b> {current_intel['flights']}<br>
-    • <b>Local Demand Scrape:</b> {current_intel['index']} Demand Detected
+    • <b>Events:</b> {current_intel['events']} | <b>Flights:</b> {current_intel['flights']} | <b>Demand:</b> {current_intel['index']}
 </div>""", unsafe_allow_html=True)
 
 st.markdown(f"""<div class='sentinel-box'>
     <h3 style='margin:0; color:#ffc107;'>🤖 PILLAR 02: MARKET SENTINEL ACTIVE</h3>
     <div style='display:flex; justify-content:space-between; margin-top:10px;'>
-        <span><b>Property:</b> {hotel}</span>
         <span><b>Condition:</b> {m_state} ({m_heat}x)</span>
-        <span><b>Sync Duration:</b> {m_nights} Nights</span>
+        <span><b>Velocity:</b> {v_mult}x</span>
+        <span><b>Duration:</b> {m_nights} Nights</span>
     </div>
 </div>""", unsafe_allow_html=True)
 
 def draw_seg(label, key, br, fl_def, col, is_ota=False, is_grp=False):
+    rk = str(st.session_state["reset_key"])
     st.markdown(f"<div class='card' style='border-left-color:{col}'>{label}</div>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1.8, 1.2])
     suggested = (br * m_heat) * v_mult
     with c1:
-        s = st.number_input("SGL Rooms", 0, key=key+"s")
-        d = st.number_input("DBL Rooms", 0, key="d"+key)
-        n = st.number_input("Stay Nights", value=m_nights, key="n"+key)
+        s = st.number_input("SGL Rooms", 0, key=key+"s"+rk)
+        d = st.number_input("DBL Rooms", 0, key=key+"d"+rk)
+        n = st.number_input("Stay Nights", value=m_nights, key=key+"n"+rk)
     with c2:
         st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED RATE: {cu} {suggested:,.2f}</div>", unsafe_allow_html=True)
-        adr = st.number_input("Applied ADR", value=float(suggested), key="a"+key)
-        fl = st.number_input("Floor Min", float(fl_def), key="f"+key)
+        adr = st.number_input("Applied ADR", value=float(suggested), key=key+"a"+rk)
+        with st.expander("🛠️ Advanced Settings (Hurdle/Floor)"):
+            fl = st.number_input("Floor Min", float(fl_def), key=key+"f"+rk)
+        
         mc = st.columns(3)
-        mx = {
-            "RO": mc[0].number_input("RO Pax", 0, key="ro"+key),
-            "BB": mc[0].number_input("BB Pax", 0, key="bb"+key),
-            "HB": mc[1].number_input("HB Pax", 0, key="hb"+key),
-            "FB": mc[1].number_input("FB Pax", 0, key="fb"+key),
-            "SAI": mc[2].number_input("SAI Pax", 0, key="sai"+key),
-            "AI": mc[2].number_input("AI Pax", 0, key="ai"+key)
-        }
+        m_ro = mc[0].number_input("RO Pax", 0, key=key+"ro"+rk)
+        m_bb = mc[0].number_input("BB Pax", 0, key=key+"bb"+rk)
+        m_hb = mc[1].number_input("HB Pax", 0, key=key+"hb"+rk)
+        m_fb = mc[1].number_input("FB Pax", 0, key=key+"fb"+rk)
+        m_sai = mc[2].number_input("SAI Pax", 0, key=key+"sai"+rk)
+        m_ai = mc[2].number_input("AI Pax", 0, key=key+"ai"+rk)
+        mx = {"RO":m_ro, "BB":m_bb, "HB":m_hb, "FB":m_fb, "SAI":m_sai, "AI":m_ai}
         mi, tr = 0.0, 0.0
         if is_grp:
             gc = st.columns(2)
-            mi = gc[0].number_input("MICE Revenue", 0.0, key="mi"+key)
-            tr = gc[1].number_input("Trans. Total", 0.0, key="tr"+key)
+            mi = gc[0].number_input("MICE Revenue", 0.0, key=key+"mi"+rk)
+            tr = gc[1].number_input("Trans. Total", 0.0, key=key+"tr"+rk)
         st.markdown("</div>", unsafe_allow_html=True)
     res = run_yield([s, d], adr, n, mx, (ota_comm if is_ota else 0.0), fl, mi, tr)
     if res:
@@ -181,7 +163,7 @@ w3 = draw_seg("3. CORPORATE / GOV", "corp", 55, 38, "#34495e")
 w4 = draw_seg("4. CORPORATE GROUPS", "cgrp", 50, 30, "#9b59b6", is_grp=True)
 w5 = draw_seg("5. GROUP TOUR & TRAVEL", "tnt", 45, 25, "#e67e22", is_grp=True)
 
-# PORTFOLIO TOTAL
+# TOTAL PORTFOLIO
 st.divider()
 total_p = w1 + w2 + w3 + w4 + w5
 st.markdown(f"<div style='background:#1e3799;padding:20px;border-radius:12px;text-align:center;color:white;'><h3>Portfolio Wealth Total: {cu} {total_p:,.2f}</h3></div>", unsafe_allow_html=True)

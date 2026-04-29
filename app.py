@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING (The Global Executive Aesthetic) ---
+# --- 1. STYLING (Professional Executive Design) ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -9,7 +9,7 @@ st.markdown("""<style>
 .card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
 .pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
 .google-window{background:#e8f0fe; padding:18px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.85rem; line-height:1.6;}
-.news-tab{background:#fff5f5; border-left:5px solid #ff4b4b; padding:10px; margin-top:5px; border-radius:5px;}
+.news-item{background:#ffffff; border-radius:8px; padding:10px; margin-bottom:8px; border-left:4px solid #ff4b4b; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
 .status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
 .reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
 .theory-box{background:#f9f9f9; padding:30px; border-radius:15px; border:1px solid #dee2e6; margin-top:40px}
@@ -32,17 +32,40 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR (GLOBAL INPUTS) ---
+# --- 3. SIDEBAR (STRATEGIC INPUTS) ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
     if st.button("🧹 Clear Global Cache"):
         st.session_state["reset_key"] += 1
         st.rerun()
     st.divider()
-    
     rk = str(st.session_state["reset_key"]) 
     
     currencies = {
         "OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.إ)": "د.إ", 
         "SAR (﷼)": "﷼", "INR (₹)": "₹", "CNY (¥)": "¥", "SGD ($)": "$", 
-        "MYR (RM)": "RM", "USD ($)": "$", "GBP (£)": "£", "EUR (€)":
+        "MYR (RM)": "RM", "USD ($)": "$", "GBP (£)": "£", "EUR (€)": "€"
+    }
+    cur_choice = st.selectbox("🌍 Base Operating Currency", list(currencies.keys()), key="cur"+rk)
+    cur_sym = currencies[cur_choice]
+    cur_code = cur_choice.split(" ")[0]
+
+    hotel_name = st.text_input("🏨 Hotel Name", "Wyndham Garden Salalah", key="h"+rk)
+    city_name = st.text_input("📍 City Search", "Salalah", key="c"+rk)
+    
+    d1 = st.date_input("Check-In", date.today(), key="d1"+rk)
+    d2 = st.date_input("Check-Out", date.today(), key="d2"+rk)
+    m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
+    st.info(f"📅 **Stay Window: {m_nights} Nights**") # Fixed logic here!
+    
+    inventory = st.number_input("Total Property Capacity", 1, 1000, 237, key="inv"+rk)
+    st.success(f"**Max Window Capacity: {inventory * m_nights} RN**")
+    
+    st.divider()
+    st.markdown("### 📊 Pillar 03: Velocity")
+    otb_occ = st.slider("OTB % (Date-Specific)", 0, 100, 15, key="otb"+rk)
+    avg_hist = st.slider("Hist. Benchmark %", 0, 100, 45, key="hist"+rk)
+    v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
+
+    st.divider()
+    tx_div = st.number_input("Tax Divisor", value=1.2

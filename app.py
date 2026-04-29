@@ -30,7 +30,7 @@ if not st.session_state["auth"]:
                 st.error("Denied")
     st.stop()
 
-# --- IF AUTHENTICATED, DRAW EVERYTHING ---
+# --- MAIN DASHBOARD (IF AUTHENTICATED) ---
 else:
     with st.sidebar:
         st.markdown("<p style='font-size:1.2rem;font-weight:800;color:#1e3799;margin:0;'>Gayan Nugawela</p><p style='font-size:0.8rem;margin:0;'>Strategic Revenue Architect</p>", unsafe_allow_html=True)
@@ -48,6 +48,7 @@ else:
         d2 = st.date_input("Check-Out", today)
         stay_n = (d2 - d1).days if (d2 - d1).days > 0 else 1
         
+        # KHAREEF LOGIC
         is_khareef = "Salalah" in hotel and (d1.month in [6, 7, 8, 9])
         
         st.write("### 🌐 Market Condition")
@@ -68,14 +69,23 @@ else:
         ota_p = st.slider("OTA Commission %", 0, 50, 18) / 100
         
         st.write("### 🍽️ Meal Costs")
-        m_costs = {}
-        m_costs["RO"] = 0.0
-        m_costs["BB"] = st.number_input("BB Cost", 0.0)
-        m_costs["HB"] = st.number_input("HB Cost", 0.0)
-        m_costs["FB"] = st.number_input("FB Cost", 0.0)
-        m_costs["SAI"] = st.number_input("SAI Cost", 5.0)
-        m_costs["AI"] = st.number_input("AI Cost", 5.0)
+        m_costs = {
+            "RO": 0.0,
+            "BB": st.number_input("BB Cost", 0.0),
+            "HB": st.number_input("HB Cost", 0.0),
+            "FB": st.number_input("FB Cost", 0.0),
+            "SAI": st.number_input("SAI Cost", 5.0),
+            "AI": st.number_input("AI Cost", 5.0)
+        }
 
     # --- CALCULATIONS ---
     def calc_w(rms, adr, n, meals, comm, fl, mice=0.0, trans=0.0):
-        tot_r =
+        tot_r = sum(rms)
+        if tot_r <= 0: return None
+        
+        # Calculate pax ratios
+        px_r = (rms[0]*1 + rms[1]*2 + rms[2]*3) / tot_r
+        u_n = adr / tx
+        
+        # Calculate Meal Cost
+        m_c = sum((qty/tot_r) * m_costs[p]

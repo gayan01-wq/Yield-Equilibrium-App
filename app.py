@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING (Fixed stability for browser rendering) ---
+# --- 1. STYLING ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -32,7 +32,7 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR (GLOBAL INPUTS) ---
+# --- 3. SIDEBAR (STRATEGIC INPUTS) ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
     if st.button("🧹 Clear Global Cache"):
@@ -43,7 +43,7 @@ with st.sidebar:
     rk = str(st.session_state["reset_key"]) 
     
     currencies = {
-        "OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.එ)": "د.إ", 
+        "OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.إ)": "د.إ", 
         "SAR (﷼)": "﷼", "INR (₹)": "₹", "CNY (¥)": "¥", "SGD ($)": "$", 
         "MYR (RM)": "RM", "USD ($)": "$", "GBP (£)": "£", "EUR (€)": "€"
     }
@@ -58,11 +58,11 @@ with st.sidebar:
     d2 = st.date_input("Check-Out", date.today(), key="d2"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     
-    inventory = st.number_input("Total Capacity (Rooms)", 1, 1000, 237, key="inv"+rk)
+    inventory = st.number_input("Total Property Capacity", 1, 1000, 237, key="inv"+rk)
     st.info(f"**Stay Window: {m_nights} Nights**")
     
     st.divider()
-    st.markdown("### 📊 Pillar 03: Velocity")
+    st.markdown("### 📊 Pillar 03: Velocity (ADW Pace)")
     otb_occ = st.slider("OTB % (Date-Specific)", 0, 100, 15, key="otb"+rk)
     avg_hist = st.slider("Hist. Benchmark %", 0, 100, 45, key="hist"+rk)
     v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
@@ -72,7 +72,7 @@ with st.sidebar:
     ota_comm = st.slider("OTA Commission %", 0, 40, 18, key="comm"+rk)
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01"+rk)
 
-    st.markdown("### 🍽️ Unit Costs")
+    st.markdown("### 🍽️ Unit Costs (Pillar 01)")
     c_snk = st.number_input(f"Snack Cost ({cur_sym})", 0.0, value=1.5, key="csnk"+rk)
     meal_costs = {
         "RO": 0, "BB": st.number_input("BB Cost", 0.0, key="cbb"+rk),
@@ -82,10 +82,34 @@ with st.sidebar:
         "AI": st.number_input("AI Cost", 10.0, key="cai"+rk)
     }
 
-# --- 4. MARKET INTEL ---
+# --- 4. DEEP MARKET INTELLIGENCE ---
 intel_db = {
-    "salalah": {"ev": "Khareef Monsoon Festival", "fl": "High Rotations (Dubai/Muscat)", "news": ["Port: Operations stable.", "Tourism: Influx surge expected.", "Weather: Early Monsoon rising."], "basis": "Microclimate Compression"},
-    "dubai": {"ev": "DIFC Expansion Summit", "fl": "DXB Slot Scarcity 100%", "news": ["BREAKING: UAE exiting OPEC May 1st.", "DIFC: 775 new companies in Q1.", "Market: Oil price driving demand."], "basis": "Hub Velocity"},
-    "london": {"ev": "Pre-Wimbledon Hub", "fl": "LHR Capacity Critical", "news": ["Security: PM condemns London incident.", "Forex: GBP remains strong.", "Market: Hub supply constraints."], "basis": "Supply Scarcity"}
+    "salalah": {
+        "ev": "Khareef Monsoon Festival", 
+        "fl": "High Rotations (Dubai/Muscat). +18% Surge.",
+        "news": ["Port: Operations stable.", "Tourism: Influx surge expected.", "Weather: Monsoon conditions rising."],
+        "basis": "Microclimate Compression"
+    },
+    "colombo": {
+        "ev": "Tourism Recovery Peak",
+        "fl": "Hub connectivity increasing via UL/EK.",
+        "news": ["Arrivals cross 1.2M mark.", "LKR Stability improving.", "MICE demand surging."],
+        "basis": "Emerging Market Velocity"
+    },
+    "dubai": {
+        "ev": "DIFC Expansion Summit", 
+        "fl": "DXB Slot Scarcity 100%.",
+        "news": ["UAE exiting OPEC May 1st.", "DIFC: 775 new companies in Q1.", "Oil volatility driving demand."],
+        "basis": "Hub Density Logic"
+    }
 }
-active_intel =
+active_intel = intel_db.get(city_name.lower(), {"ev": "Active Seasonal Dynamics", "fl": "Baseline Regional Rotation", "news": ["Standard market flow."], "basis": "Market Equilibrium"})
+
+# --- 5. ENGINE ---
+def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, trans=0, snack_qty=0):
+    tr = sum(rms); rn = tr * nts
+    if tr <= 0: return None
+    net_adr = adr / tx_div
+    # FIXED: sum() closed correctly below
+    total_m_s = sum(qty * meal_costs.get(p, 0) for p, qty in meals.items()) + (snack_qty * c_snk)
+    avg_m_s = (total

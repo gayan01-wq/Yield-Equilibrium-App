@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING (Fixed Stability) ---
+# --- 1. STYLING (Ultra-Stable Layout) ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -13,7 +13,6 @@ st.markdown("""<style>
 .status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
 .reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
 .theory-box{background:#f9f9f9; padding:30px; border-radius:15px; border:1px solid #dee2e6; margin-top:40px}
-.theory-card{background:white; padding:15px; border-radius:10px; border:1px solid #eee; margin-bottom:10px;}
 [data-testid="stSidebar"]{background:#f1f4f9; border-right:1px solid #dee2e6}
 </style>""", unsafe_allow_html=True)
 
@@ -42,31 +41,16 @@ with st.sidebar:
     
     rk = str(st.session_state["reset_key"]) 
     
-    # Stable Currency Selector
     currencies = {
         "OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.إ)": "د.إ", 
         "SAR (﷼)": "﷼", "INR (₹)": "₹", "CNY (¥)": "¥", "SGD ($)": "$", 
         "MYR (RM)": "RM", "USD ($)": "$", "GBP (£)": "£", "EUR (€)": "€"
     }
-    cur_choice = st.selectbox("🌍 Base Operating Currency", list(currencies.keys()), key="cur"+rk)
+    cur_choice = st.selectbox("🌍 Operating Currency", list(currencies.keys()), key="cur"+rk)
     cur_sym = currencies[cur_choice]
     cur_code = cur_choice.split(" ")[0]
 
     hotel_name = st.text_input("🏨 Hotel Name", "Wyndham Garden Salalah", key="h"+rk)
-    city_name = st.text_input("📍 City Search", "Salalah, Oman", key="c"+rk)
+    city_name = st.text_input("📍 City Search", "Salalah", key="c"+rk)
     
-    d1 = st.date_input("Check-In", date.today(), key="d1"+rk)
-    d2 = st.date_input("Check-Out", date.today(), key="d2"+rk)
-    m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    
-    inventory = st.number_input("Total Property Capacity", 1, 1000, 237, key="inv"+rk)
-    st.info(f"**Max Capacity: {inventory * m_nights} RN**")
-    
-    st.divider()
-    st.markdown("### 📊 Pillar 03: Velocity (ADW Pace)")
-    otb_occ = st.slider("OTB % (Date-Specific)", 0, 100, 15, key="otb"+rk)
-    avg_hist = st.slider("Hist. Benchmark % (LY ADW)", 0, 100, 45, key="hist"+rk)
-    v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
-
-    st.divider()
-    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx"+rk)
+    d

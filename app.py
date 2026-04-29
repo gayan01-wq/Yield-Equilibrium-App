@@ -10,7 +10,7 @@ st.markdown("""<style>
 .pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
 .google-window{background:#e8f0fe; padding:15px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.85rem; line-height:1.6;}
 .status-indicator{padding:10px; border-radius:10px; text-align:center; font-weight:900; font-size:1.2rem; color:white; margin-top:10px;}
-.audit-box{background:#fff9c4; border:1px solid #fbc02d; padding:8px; border-radius:8px; margin-top:10px; text-align:center; font-weight:bold; color:#5f4300; font-size:0.85rem;}
+.audit-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:12px; text-align:center; font-weight:bold; color:#5f4300; font-size:0.9rem;}
 [data-testid="stSidebar"]{background:#f1f4f9; border-right:1px solid #dee2e6}
 </style>""", unsafe_allow_html=True)
 
@@ -40,12 +40,12 @@ with st.sidebar:
     rk = str(st.session_state["reset_key"]) 
     
     st.markdown("### 🏨 Pillar 01: Universal Search")
-    hotel_name = st.text_input("🏨 Hotel Search (Google Entry)", "Wyndham Garden Salalah", key="h"+rk)
-    city_name = st.text_input("📍 City Search (Google Entry)", "Salalah, Oman", key="c"+rk)
+    hotel_name = st.text_input("🏨 Hotel Name", "Wyndham Garden Salalah", key="h"+rk)
+    city_name = st.text_input("📍 City/Location", "Salalah, Oman", key="c"+rk)
     
     st.divider()
-    d1 = st.date_input("📅 Check-In Date", date.today(), key="d1"+rk)
-    d2 = st.date_input("📅 Check-Out Date", date.today(), key="d2"+rk)
+    d1 = st.date_input("Check-In", date.today(), key="d1"+rk)
+    d2 = st.date_input("Check-Out", date.today(), key="d2"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     st.success(f"**Stay Nights: {m_nights}**")
     
@@ -53,7 +53,6 @@ with st.sidebar:
     st.markdown("### 📊 Market Velocity (P03)")
     otb_occ = st.slider("OTB Occupancy %", 0, 100, 15, key="otb"+rk)
     avg_hist = st.slider("Historical Avg %", 0, 100, 45, key="hist"+rk)
-    
     v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 20) else 1.0
     
     st.divider()
@@ -67,17 +66,15 @@ with st.sidebar:
     c_sai = st.number_input("SAI Cost", 7.5, key="csai"+rk)
     meal_unit_costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": 5.0, "SAI": c_sai, "AI": 10.0}
 
-# --- 4. GOOGLE INTELLIGENCE ENGINE (P02 SUBSTANTIATION) ---
-# Dynamic reasoning for international markets
+# --- 4. GOOGLE INTELLIGENCE ENGINE (P02) ---
 intel_db = {
-    "Salalah": {"event": "Khareef Tourism Festival", "flight": "+18% Surge via Qatar Airways/Oman Air", "reason": "Monsoon microclimate attraction"},
-    "Dubai": {"event": "Dubai Shopping Festival / COP Prep", "flight": "+25% Global Influx via EK/FZ", "reason": "Peak MICE & Leisure synergy"},
-    "Muscat": {"event": "Royal Opera House Season", "flight": "+8% Steady Growth", "reason": "Cultural tourism high season"},
-    "London": {"event": "Wimbledon / Fashion Week", "flight": "Heathrow Slot Capacity at 98%", "reason": "Supply constraint vs High global demand"}
+    "Salalah": {"ev": "Khareef Tourism Festival", "fl": "+18% Surge (Oman Air/SalamAir)", "basis": "Seasonal Monsoonal Surge"},
+    "Dubai": {"ev": "Dubai Shopping Festival / Expo", "fl": "+25% Global via Emirates/FlyDubai", "basis": "Peak Business/Leisure Synergy"},
+    "Muscat": {"ev": "Muscat Food Festival / Opera Season", "fl": "+10% Regional Traffic", "basis": "Cultural High Season"},
+    "London": {"ev": "Wimbledon / Fashion Week", "fl": "Heathrow Capacity Constraints", "basis": "Global Hub Demand Pressures"}
 }
-# Find matching data or use default
 active_intel = next((v for k, v in intel_db.items() if k.lower() in city_name.lower()), 
-                   {"event": "Local Market Dynamics", "flight": "+5% Stable Traffic", "reason": "Standard seasonal fluctuations"})
+                   {"ev": "Local Market Dynamics", "fl": "Standard Seasonal Traffic", "basis": "Baseline Market Equilibrium"})
 
 # --- 5. CALCULATION ENGINE ---
 def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.18, laundry=0, mice=0, trans=0):
@@ -87,21 +84,20 @@ def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.18, laundry=0, mice=0, t
     net_adr = adr / tx_div
     total_m = sum(qty * meal_unit_costs.get(plan, 0) for plan, qty in meals.items())
     avg_m = (total_m / tr) if tr > 0 else 0
+    # Wealth Stripping Math
     unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
     total_w = (unit_w * rn) + (trans / tx_div)
     gross_rev = adr * rn
-    final_yield = total_w / rn
-    status, color = ("OPTIMIZED", "#27ae60") if final_yield >= hurdle else ("DILUTIVE", "#e74c3c")
-    return {"w": final_yield, "st": status, "cl": color, "rn": rn, "total": total_w, "gross": gross_rev}
+    status, color = ("OPTIMIZED", "#27ae60") if unit_w >= hurdle else ("DILUTIVE", "#e74c3c")
+    return {"w": unit_w, "st": status, "cl": color, "rn": rn, "total": total_w, "gross": gross_rev}
 
 # --- 6. MAIN DASHBOARD ---
 st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER DASHBOARD</h1>", unsafe_allow_html=True)
 
-# ENHANCED GOOGLE INTEL WINDOW
 st.markdown(f"""<div class='google-window'>
     <b style='color:#4285f4; font-size:1.1rem;'>🌐 Google Intelligence Live Feed: {hotel_name} | {city_name}</b><br>
-    • <b>Strategic Events:</b> {active_intel['event']} | <b>Flight Intelligence:</b> {active_intel['flight']}<br>
-    • <b>Demand Basis:</b> {active_intel['reason']} | <b>Velocity Multiplier:</b> {v_mult}x Applied
+    • <b>Strategic Events:</b> {active_intel['ev']} | <b>Flight Intel:</b> {active_intel['fl']}<br>
+    • <b>Demand Basis:</b> {active_intel['basis']} | <b>Velocity Multiplier:</b> {v_mult}x Applied
 </div>""", unsafe_allow_html=True)
 
 def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=False):
@@ -109,7 +105,7 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
     st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
     c_in, c_res = st.columns([2.6, 1])
     
-    with c_input := c_in:
+    with c_in: # FIXED SYNTAX HERE
         st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
         r1, r2, r3, r4 = st.columns(4)
         sgl = r1.number_input("SGL", 0, key="s"+key+rk)
@@ -134,7 +130,7 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
                     floor, (ota_comm/100 if is_ota else 0.0), l_c, m_c, t_c)
     if res:
         with c_res:
-            st.metric("Net Yield", f"OMR {res['w']:,.2f}")
+            st.metric("Net Yield (Unit)", f"OMR {res['w']:,.2f}")
             st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
             # YELLOW AUDIT BOX
             st.markdown(f"""<div class='audit-box'>

@@ -28,26 +28,4 @@ if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     with st.form("login_gate"):
-        pwd = st.text_input("Access Key", type="password")
-        if st.form_submit_button("Unlock"):
-            if pwd == "Gayan2026": 
-                st.session_state["auth"] = True
-                st.rerun()
-            else: st.error("Access Denied")
-    st.stop()
-
-# --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS) ---
-with st.sidebar:
-    st.markdown("### 👤 System Developer\nGayan Nugawela")
-    if st.button("🧹 Clear Global Cache"):
-        st.session_state["reset_key"] += 1
-        st.rerun()
-    st.divider()
-    rk = str(st.session_state["reset_key"]) 
-    
-    currencies = {"OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "INR (₹)": "₹", "USD ($)": "$"}
-    cur_choice = st.selectbox("🌍 Base Currency", list(currencies.keys()), key="c_sel_"+rk)
-    cur_sym = currencies[cur_choice]
-
-    hotel_name = st.text_input("🏨 Hotel", "Wyndham Garden Salalah", key="h_nm_"+rk)
-    city_search = st.text_input("📍 City Search", "Salalah", key="c_nm_"+rk
+        pwd =

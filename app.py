@@ -48,7 +48,6 @@ else:
         d2 = st.date_input("Check-Out", today)
         stay_n = (d2 - d1).days if (d2 - d1).days > 0 else 1
         
-        # KHAREEF AUTOMATION
         is_khareef = "Salalah" in hotel and (6 <= d1.month <= 9)
         
         st.write("### 🌐 Market Condition")
@@ -90,4 +89,9 @@ else:
             if m_qty > 0:
                 m_c_total += (m_qty / tot_r) * m_costs[m_type] * px_r
         
-        unit_w = (u_n - m_c_total - ((u_n - m_c_total) * comm)) + ((mice * px_r) / (
+        # Step-by-step Net Wealth calculation to avoid Syntax Errors
+        net_after_meals = u_n - m_c_total
+        commission_cost = net_after_meals * comm
+        mice_contribution = (mice * px_r) / (n * tx)
+        
+        unit

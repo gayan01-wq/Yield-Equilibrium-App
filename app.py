@@ -6,9 +6,11 @@ st.set_page_config(layout="wide", page_title="Displacement Analyzer | Yield Equi
 
 st.markdown("""<style>
     .block-container{padding-top:1rem!important;}
-    .header-wrapper {text-align: center; width: 100%; margin-bottom: 25px;}
+    /* Forced Centering for the Entire Header Block */
+    .header-container {text-align: center; width: 100%; margin-bottom: 25px;}
     .main-title {font-size: 2.2rem!important; font-weight: 900; color: #1e3799; text-transform: uppercase; letter-spacing: 2px; margin: 0;}
     .main-subtitle {font-size: 1.1rem!important; font-weight: 600; color: #4b6584; letter-spacing: 1px; margin-top: 5px;}
+    
     .card{padding:15px; border-radius:10px; margin-bottom:15px; border-left:12px solid #1e3799; background:#ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.1)}
     [data-testid="stSidebar"]{background:#f1f4f9;}
 </style>""", unsafe_allow_html=True)
@@ -16,7 +18,7 @@ st.markdown("""<style>
 # --- 2. AUTHENTICATION ---
 if "auth" not in st.session_state: st.session_state["auth"] = False
 if not st.session_state["auth"]:
-    st.markdown("<div class='header-wrapper'><h1 class='main-title'>EQUILIBRIUM ENGINE</h1></div>", unsafe_allow_html=True)
+    st.markdown("<div class='header-container'><h1 class='main-title'>EQUILIBRIUM ENGINE</h1></div>", unsafe_allow_html=True)
     with st.form("login_gate"):
         pwd = st.text_input("Access Key", type="password")
         if st.form_submit_button("Unlock Engine"):
@@ -65,7 +67,7 @@ def run_yield(rms, adr, hurdle, demand, is_ota=False):
 
 # --- 5. DASHBOARD HEADER ---
 st.markdown(f"""
-<div class='header-wrapper'>
+<div class='header-container'>
     <h1 class='main-title'>DISPLACEMENT ANALYZER</h1>
     <div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>
 </div>
@@ -92,6 +94,7 @@ draw_seg("1. DIRECT / FIT", "fit", 65, 40)
 draw_seg("2. OTA CHANNELS", "ota", 60, 35, is_ota=True)
 draw_seg("3. CORPORATE GROUPS", "corp", 55, 32)
 draw_seg("4. MICE GROUPS", "mice", 50, 30)
+draw_seg("5. TOUR & TRAVEL (GROUPS)", "tnt", 45, 25)
 
 # --- 7. METHODOLOGY ---
 st.divider()

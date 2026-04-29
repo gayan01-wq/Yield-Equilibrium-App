@@ -42,9 +42,8 @@ with st.sidebar:
     st.write("### 📅 Stay Intelligence")
     d1 = st.date_input("Check-In", date.today())
     d2 = st.date_input("Check-Out", date.today())
-    # Master Night Sync
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    st.info(f"Analysis Period: {m_nights} Nights")
+    st.info(f"Stay Duration: {m_nights} Nights")
 
     st.write("### 🌐 Market Sentinel")
     is_khareef = "Salalah" in hotel and (6 <= d1.month <= 9)
@@ -84,62 +83,8 @@ def run_yield(rms, adr, n, meals, comm, fl, mice=0, trans=0):
 # --- 5. MAIN INTERFACE ---
 st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER</h1>", unsafe_allow_html=True)
 
-st.markdown(f"""<div class='sentinel-box'>
-    <h3 style='margin:0; color:#ffc107;'>🤖 PILLAR 02: MARKET SENTINEL</h3>
-    <div style='display:flex; justify-content:space-between; margin-top:10px;'>
-        <span><b>Market Strength:</b> {m_state} ({m_heat}x)</span>
-        <span><b>Velocity Multiplier:</b> {v_mult}x</span>
-        <span><b>Nights:</b> {m_nights}</span>
-    </div>
-</div>""", unsafe_allow_html=True)
+# SENTINEL BOX
+st.markdown(f"<div class='sentinel-box'><h3 style='margin:0; color:#ffc107;'>🤖 PILLAR 02: MARKET SENTINEL</h3><div style='display:flex; justify-content:space-between; margin-top:10px;'><span><b>Market:</b> {m_state}</span><span><b>Velocity:</b> {v_mult}x</span><span><b>Nights:</b> {m_nights}</span></div></div>", unsafe_allow_html=True)
 
-# SEGMENT 1: FIT
+# --- SEGMENT 1: FIT ---
 st.markdown("<div class='card' style='border-left-color:#3498db'>1. DIRECT / FIT</div>", unsafe_allow_html=True)
-f1, f2, f3 = st.columns([1, 1.8, 1.2])
-with f1:
-    fs = st.number_input("SGL Rooms", 0, key="fs")
-    fd = st.number_input("DBL Rooms", 0, key="fd")
-    fn = st.number_input("Stay Nights", value=m_nights, key="fn")
-with f2:
-    f_sug = (65 * m_heat) * v_mult
-    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED RATE: {cu} {f_sug:,.2f}</div>", unsafe_allow_html=True)
-    fa = st.number_input("Final Rate", value=float(f_sug), key="fa")
-    ff = st.number_input("Min Floor", 40.0, key="ff")
-    f_mx = {"RO": st.number_input("RO Qty", 0, key="fro"), "BB": st.number_input("BB Qty", 0, key="fbb")}
-    st.markdown("</div>", unsafe_allow_html=True)
-rf = run_yield([fs, fd], fa, fn, f_mx, 0, ff)
-if rf:
-    with f3:
-        st.metric("Net Yield", f"{cu} {rf['u']:,.2f}")
-        st.markdown(f"<div class='status-box' style='background:{rf['b']}'>{rf['l']}</div>", unsafe_allow_html=True)
-
-# SEGMENT 2: OTA
-st.divider()
-st.markdown("<div class='card' style='border-left-color:#2ecc71'>2. OTA CHANNELS</div>", unsafe_allow_html=True)
-o1, o2, o3 = st.columns([1, 1.8, 1.2])
-with o1:
-    od = st.number_input("DBL Rooms", 0, key="od")
-    on = st.number_input("Stay Nights", value=m_nights, key="on")
-with o2:
-    o_sug = (60 * m_heat) * v_mult
-    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED RATE: {cu} {o_sug:,.2f}</div>", unsafe_allow_html=True)
-    oa = st.number_input("Applied Rate", value=float(o_sug), key="oa")
-    of = st.number_input("Min Floor", 35.0, key="of")
-    o_mx = {"BB": st.number_input("BB Qty ", 0, key="obb"), "SAI": st.number_input("SAI Qty ", 0, key="osai")}
-    st.markdown("</div>", unsafe_allow_html=True)
-ro = run_yield([0, od], oa, on, o_mx, ota_comm, of)
-if ro:
-    with o3:
-        st.metric("Net Yield", f"{cu} {ro['u']:,.2f}")
-        st.markdown(f"<div class='status-box' style='background:{ro['b']}'>{ro['l']}</div>", unsafe_allow_html=True)
-
-# SEGMENT 3: GROUPS
-st.divider()
-st.markdown("<div class='card' style='border-left-color:#9b59b6'>3. CORPORATE GROUPS / MICE</div>", unsafe_allow_html=True)
-g1, g2, g3 = st.columns([1, 1.8, 1.2])
-with g1:
-    gd = st.number_input("Group Rooms", 0, key="gd")
-    gn = st.number_input("Nights", value=m_nights, key="gn")
-with g2:
-    g_sug = (50 * m_heat) * v_mult
-    st.markdown(f"<div class='pricing-row'><div class='pricing-header'>SUGGESTED RATE: {cu} {g_sug:,.2

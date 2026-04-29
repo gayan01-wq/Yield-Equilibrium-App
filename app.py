@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING (Ultra-Stable Layout) ---
+# --- 1. STYLING ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -30,10 +30,10 @@ if not st.session_state["auth"]:
             if pwd == "Gayan2026": 
                 st.session_state["auth"] = True
                 st.rerun()
-            else: st.error("Access Denied")
+            else: st.error("Denied")
     st.stop()
 
-# --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS) ---
+# --- 3. SIDEBAR (GLOBAL INPUTS) ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
     if st.button("🧹 Clear Global Cache"):
@@ -76,16 +76,16 @@ with st.sidebar:
         "LN": st.number_input("LN Cost (Lunch)", 4.5, key="cln"+rk),
         "DN": st.number_input("DN Cost (Dinner)", 5.5, key="cdn"+rk),
         "SAI": st.number_input("SAI Cost (Soft AI)", 8.5, key="csai"+rk),
-        "AI": st.number_input("AI Cost (Premium AI)", 11.0, key="cai"+rk)
+        "AI": st.number_input("AI Cost (Premium AI)", 12.0, key="cai"+rk)
     }
 
 # --- 4. MARKET INTEL ---
 intel_db = {
-    "salalah": {"ev": "Khareef Festival", "fl": "High Rotations (Dubai/Muscat)", "news": ["Port: Operations stable.", "Tourism: Influx surge expected.", "Weather: Monsoon rising."], "basis": "Microclimate Compression"},
+    "salalah": {"ev": "Khareef Festival", "fl": "High Rotations (Dubai/Muscat)", "news": ["Port: Operations stable.", "Tourism: Influx surge expected.", "Weather: Early Monsoon rising."], "basis": "Microclimate Compression"},
     "dubai": {"ev": "DIFC Expansion Summit", "fl": "DXB Slot Scarcity 100%", "news": ["BREAKING: UAE exiting OPEC May 1st.", "DIFC: 775 new companies in Q1.", "Market: Oil price driving demand."], "basis": "Hub Velocity"},
     "colombo": {"ev": "Tourism Recovery", "fl": "SriLankan Airlines Hub growing", "news": ["Arrivals cross 1.2M mark.", "LKR Stability Improving.", "MICE demand surging."], "basis": "Emerging Market Recovery"}
 }
-active_intel = intel_db.get(city_name.lower(), {"ev": "Active Seasonal Rotation", "fl": "Baseline Rotation", "news": ["Standard market dynamics."], "basis": "Equilibrium"})
+active_intel = intel_db.get(city_name.lower(), {"ev": "Active Seasonal Rotation", "fl": "Baseline Rotation", "news": ["Standard market flow."], "basis": "Equilibrium"})
 
 # --- 5. ENGINE ---
 def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, trans=0, snack_qty=0):
@@ -97,7 +97,7 @@ def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, tr
     unit_w = (net_adr - avg_m_s - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
     total_w = (unit_w * rn) + (trans / tx_div)
     disp_risk = (tr / inventory) >= 0.50
-    if unit_w < hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym} hurdle. Asset erosion."
+    if unit_w < hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym} hurdle."
     elif unit_w < (hurdle + 3.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Yield at equilibrium window."
     else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Wealth targets met."
     if disp_risk: rsn += " | ⚠️ DISPLACEMENT: Segment ≥50% capacity."
@@ -117,15 +117,15 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
     with c_in:
         st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
         r1, r2, r3, r4, r5 = st.columns([1,1,1,1.5,1.5])
-        sgl = r1.number_input("SGL", 0, key="sgl_"+key+rk); dbl = r2.number_input("DBL", 0, key="dbl_"+key+rk); tpl = r3.number_input("TPL", 0, key="tpl_"+key+rk)
-        applied_adr = r4.number_input(f"Rate ({cur_sym})", value=float(suggest_adr * v_mult), key="r_"+key+rk)
-        floor = r5.number_input(f"Floor ({cur_sym})", value=float(floor_def), key="f_"+key+rk)
+        sgl = r1.number_input("SGL", 0, key=f"sgl_{key}_{rk}"); dbl = r2.number_input("DBL", 0, key=f"dbl_{key}_{rk}"); tpl = r3.number_input("TPL", 0, key=f"tpl_{key}_{rk}")
+        applied_adr = r4.number_input(f"Rate ({cur_sym})", value=float(suggest_adr * v_mult), key=f"rate_{key}_{rk}")
+        floor = r5.number_input(f"Floor ({cur_sym})", value=float(floor_def), key=f"floor_{key}_{rk}")
         m_row = st.columns(7)
-        p_ro = m_row[0].number_input("RO", 0, key="ro_"+key+rk); p_bb = m_row[1].number_input("BB", 0, key="bb_"+key+rk); p_ln = m_row[2].number_input("LN", 0, key="ln_"+key+rk); p_dn = m_row[3].number_input("DN", 0, key="dn_"+key+rk); p_sai = m_row[4].number_input("SAI", 0, key="sai_"+key+rk); p_ai = m_row[5].number_input("AI", 0, key="ai_"+key+rk); p_snk = m_row[6].number_input("Snk", 0, key="snk_"+key+rk)
+        p_ro = m_row[0].number_input("RO", 0, key=f"ro_{key}_{rk}"); p_bb = m_row[1].number_input("BB", 0, key=f"bb_{key}_{rk}"); p_ln = m_row[2].number_input("LN", 0, key=f"ln_{key}_{rk}"); p_dn = m_row[3].number_input("DN", 0, key=f"dn_{key}_{rk}"); p_sai = m_row[4].number_input("SAI", 0, key=f"sai_{key}_{rk}"); p_ai = m_row[5].number_input("AI", 0, key=f"ai_{key}_{rk}"); p_snk = m_row[6].number_input("Snk", 0, key=f"snk_{key}_{rk}")
         l_c, m_c, t_c = 0.0, 0.0, 0.0
         if group:
             g_row = st.columns(3)
-            m_c = g_row[0].number_input(f"MICE", 0.0, key="mc_"+key+rk); t_c = g_row[1].number_input(f"Trans", 0.0, key="tr_"+key+rk); l_c = g_row[2].number_input(f"Laundry", 0.0, key="ln_"+key+rk)
+            m_c = g_row[0].number_input(f"MICE", 0.0, key=f"mice_{key}_{rk}"); t_c = g_row[1].number_input(f"Trans", 0.0, key=f"tr_{key}_{rk}"); l_c = g_row[2].number_input(f"Laundry", 0.0, key=f"ln_{key}_{rk}")
         st.markdown("</div>", unsafe_allow_html=True)
     res = run_yield([sgl, dbl, tpl], m_nights, applied_adr, {"RO":p_ro,"BB":p_bb,"LN":p_ln,"DN":p_dn,"SAI":p_sai,"AI":p_ai}, floor, (ota_comm/100 if is_ota else 0.0), l_c, m_c, t_c, p_snk)
     if res:
@@ -135,7 +135,7 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
             st.markdown(f"<div class='reason-box'>💡 <b>Strategic Verdict:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
             st.markdown(f"<div class='audit-box'>📊 {res['rn']} RN | Total Wealth: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)
 
-# DRAW SEGMENTS
+# DRAW ALL 5 SEGMENTS
 draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
 draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
 draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
@@ -148,9 +148,9 @@ st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
 st.markdown(f"<div class='small-framework-header'>Methodology & Strategic Operating Framework (Live Tax Basis: {tx_div})</div>", unsafe_allow_html=True)
 c_a, c_b = st.columns(2)
 with c_a:
-    st.markdown(f"<div class='theory-card'><b>🏗️ Pillar 01: Internal Wealth Stripping</b><br>Wealth stripping via Tax (**{tx_div}**), Commissions (**{ota_comm}%**), and specialized costs (BB, LN, DN, SAI, AI).</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='theory-card'><b>🏨 Inventory Logistics</b><br>Ancillary logic captures 100% of deal wealth including MICE, Transportation, and Laundry across SGL/DBL/TPL units.</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='theory-card'><b>🏗️ Pillar 01: Internal Wealth Stripping</b><br>Wealth stripping via Tax (**{tx_div}**), Commissions (**{ota_comm}%**), and specialized component costs (BB, LN, DN, SAI, AI).</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='theory-card'><b>🏨 Inventory Logistics</b><br>Ancillary logic captures 100% of deal wealth including MICE, Transportation, and Laundry across SGL/DBL/TPL room units.</div>", unsafe_allow_html=True)
 with c_b:
-    st.markdown(f"<div class='theory-card'><b>🌐 Pillar 02 & 03: External Velocity</b><br>ADW Pace vs Benchmark multiplier (**{v_mult}x**). Live Market News & Aviation tabs substantiate pricing.</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='theory-card'><b>⚖️ Strategic Verdicts</b><br>ACCEPT (Optimized), REVIEW (Marginal), REJECT (Dilutive). 50% Displacement check for group deals.</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='theory-card'><b>🌐 Pillar 02 & 03: External Velocity</b><br>ADW Pace vs Benchmark multiplier (**{v_mult}x**). Live Market News & Aviation tabs substantiate pricing decisions.</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='theory-card'><b>⚖️ Strategic Verdicts</b><br>ACCEPT (Optimized GOPPAR), REVIEW (Marginal window), REJECT (Asset erosion). 50% Displacement check for group deals.</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)

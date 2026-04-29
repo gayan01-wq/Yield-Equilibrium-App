@@ -9,8 +9,8 @@ st.markdown("""<style>
 .card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
 .pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
 .google-window{background:#e8f0fe; padding:15px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.85rem; line-height:1.6;}
-.status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.3rem; color:white; margin-top:10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1)}
-.audit-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:12px; text-align:center; font-weight:bold; color:#5f4300; font-size:0.9rem;}
+.status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
+.reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem; line-height:1.3;}
 .theory-box{background:#fdfdfd; padding:25px; border-radius:15px; border:1px solid #dee2e6; margin-top:40px}
 [data-testid="stSidebar"]{background:#f1f4f9; border-right:1px solid #dee2e6}
 </style>""", unsafe_allow_html=True)
@@ -30,7 +30,7 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR ---
+# --- 3. SIDEBAR (STRATEGIC INPUTS) ---
 with st.sidebar:
     st.markdown("### 👤 Strategic Architect\nGayan Nugawela")
     if st.button("☢️ Nuclear Data Reset"):
@@ -41,10 +41,18 @@ with st.sidebar:
     rk = str(st.session_state["reset_key"]) 
     hotel_name = st.text_input("🏨 Hotel Name", "Wyndham Garden Salalah", key="h"+rk)
     city_name = st.text_input("📍 City Search", "Salalah, Oman", key="c"+rk)
+    
     d1 = st.date_input("Check-In", date.today(), key="d1"+rk)
     d2 = st.date_input("Check-Out", date.today(), key="d2"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     
+    inventory = st.number_input("Total Inventory (Rooms)", 1, 1000, 237, key="inv"+rk)
+    # NEW: SIDEBAR ROOM NIGHTS CALCULATION
+    total_rn_capacity = inventory * m_nights
+    st.success(f"**Stay Nights: {m_nights}**")
+    st.info(f"**Total Capacity: {total_rn_capacity} RN**")
+    
+    st.divider()
     st.markdown("### 📊 Pillar 03: Velocity (Pace)")
     otb_occ = st.slider("OTB % (Date-Specific)", 0, 100, 15, key="otb"+rk)
     avg_hist = st.slider("Hist. Avg % (LY/3-Yr)", 0, 100, 45, key="hist"+rk)
@@ -56,16 +64,13 @@ with st.sidebar:
     p01_fee = st.number_input("P01 Variable Fee", 0.0, value=6.90, key="p01"+rk)
 
     st.markdown("### 🍽️ Unit Costs (Pillar 01)")
-    c_bb = st.number_input("BB Cost", 0.0, key="cbb"+rk); c_hb = st.number_input("HB Cost", 2.5, key="chb"+rk)
-    c_fb = st.number_input("FB Cost", 5.0, key="cfb"+rk); c_sai = st.number_input("SAI Cost", 7.5, key="csai"+rk)
-    c_ai = st.number_input("AI Cost", 10.0, key="cai"+rk)
-    meal_costs = {"RO": 0, "BB": c_bb, "HB": c_hb, "FB": c_fb, "SAI": c_sai, "AI": c_ai}
+    meal_costs = {
+        "RO": 0, "BB": st.number_input("BB Cost", 0.0, key="cbb"+rk),
+        "HB": st.number_input("HB Cost", 2.5, key="chb"+rk), "FB": st.number_input("FB Cost", 5.0, key="cfb"+rk),
+        "SAI": st.number_input("SAI Cost", 7.5, key="csai"+rk), "AI": st.number_input("AI Cost", 10.0, key="cai"+rk)
+    }
 
-# --- 4. GOOGLE INTELLIGENCE ---
-intel_db = {"Salalah": {"ev": "Khareef Festival", "fl": "+18% Surge", "basis": "Seasonal Demand"}, "Dubai": {"ev": "Shopping Fest", "fl": "+25% Global", "basis": "Peak Synergy"}, "Muscat": {"ev": "Opera Season", "fl": "+10% Regional", "basis": "Cultural Peaks"}, "London": {"ev": "Wimbledon", "fl": "Heathrow 98%", "basis": "Hub Constraints"}}
-active_intel = intel_db.get(next((k for k in intel_db if k.lower() in city_name.lower()), None), {"ev": "Standard Market Events", "fl": "Baseline Rotation", "basis": "Equilibrium"})
-
-# --- 5. CALCULATION ENGINE ---
+# --- 4. ENGINE & DASHBOARD ---
 def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, trans=0):
     tr = sum(rms)
     if tr <= 0: return None
@@ -73,23 +78,20 @@ def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, tr
     net_adr = adr / tx_div
     total_m = sum(qty * meal_costs.get(p, 0) for p, qty in meals.items())
     avg_m = (total_m / tr) if tr > 0 else 0
-    # Net Wealth Formula
     unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
     total_w = (unit_w * rn) + (trans / tx_div)
     
-    # NEW VERDICT LOGIC
+    # NEW STRATEGIC VERDICT REASONING
     if unit_w < hurdle:
-        stt, clr = "REJECT: DILUTIVE", "#e74c3c"
-    elif unit_w < (hurdle + 2.0):
-        stt, clr = "MARGINAL: REVIEW", "#f39c12"
+        stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", "Basis: Unit wealth is below hurdle. This deal erodes the property's financial anchor."
+    elif unit_w < (hurdle + 3.0):
+        stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Basis: Yield is at equilibrium. Only accept if there is high volume or strategic ancillary benefit."
     else:
-        stt, clr = "ACCEPT: OPTIMIZED", "#27ae60"
+        stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Basis: Strong wealth stripping achieved. High-yield contribution to GOPPAR."
         
-    return {"w": unit_w, "st": stt, "cl": clr, "rn": rn, "total": total_w, "gross": adr * rn}
+    return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w}
 
-# --- 6. DASHBOARD ---
 st.markdown("<h1 class='main-title'>YIELD EQUILIBRIUM MASTER DASHBOARD</h1>", unsafe_allow_html=True)
-st.markdown(f"""<div class='google-window'><b>🌐 Google Intelligence Live Feed: {hotel_name} | {city_name}</b><br>• <b>Events:</b> {active_intel['ev']} | <b>Flights:</b> {active_intel['fl']} | <b>Basis:</b> {active_intel['basis']}</div>""", unsafe_allow_html=True)
 
 def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=False):
     rk = str(st.session_state["reset_key"])
@@ -114,26 +116,12 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
         with c_res:
             st.metric("Net Wealth (Unit)", f"OMR {res['w']:,.2f}")
             st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='audit-box'>📊 {res['rn']} Room Nights | Total Wealth: OMR {res['total']:,.2f}</div>", unsafe_allow_html=True)
+            # YELLOW REASON BOX
+            st.markdown(f"<div class='reason-box'>💡 <b>Strategic Reasoning:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='audit-box'>📊 {res['rn']} Room Nights | Total: OMR {res['total']:,.2f}</div>", unsafe_allow_html=True)
 
 draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
 draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
 draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
 draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
 draw_seg("5. TOUR & TRAVEL (GROUPS)", "tnt", 45, 25, "#e67e22", group=True)
-
-# --- 7. MANUAL ---
-st.divider()
-st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
-st.markdown(f"## 📘 Theoretical Methodology: Precision Framework (Tax Basis: {tx_div})")
-cl1, cl2 = st.columns(2)
-with cl1:
-    st.markdown(f"""### 🏗️ Pillar 01: Internal Wealth Stripping
-* **Strategy:** Strips Taxes (Divisor: **{tx_div}**), Commissions (OTA Segment Only: {ota_comm}%), and P01 Fees.
-* **Costing:** Direct subtraction of the selected Board Basis unit costs.""")
-with cl2:
-    st.markdown(f"""### 🌐 Pillar 02 & 03: External Velocity
-* **OTB % (Date-Specific):** Live Pulse of the arrival window.
-* **Hist. Avg % (LY/3-Yr):** Expected Benchmark comparison.
-* **Verdict Logic:** **ACCEPT** (Yield > Floor), **MARGINAL** (Review Required), **REJECT** (Dilutive).""")
-st.markdown("</div>", unsafe_allow_html=True)

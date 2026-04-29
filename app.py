@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. STYLING (Ultra-Stable Layout) ---
+# --- 1. STYLING (The Global Executive Aesthetic) ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Master")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -26,11 +26,11 @@ if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     with st.form("login_gate"):
         pwd = st.text_input("Access Key", type="password")
-        if st.form_submit_button("Unlock"):
+        if st.form_submit_button("Unlock Engine"):
             if pwd == "Gayan2026": 
                 st.session_state["auth"] = True
                 st.rerun()
-            else: st.error("Access Denied")
+            else: st.error("Denied")
     st.stop()
 
 # --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS) ---
@@ -43,19 +43,19 @@ with st.sidebar:
     rk = str(st.session_state["reset_key"]) 
     
     currencies = {"OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "INR (₹)": "₹", "USD ($)": "$"}
-    cur_choice = st.selectbox("🌍 Base Operating Currency", list(currencies.keys()), key="cur_sel_"+rk)
+    cur_choice = st.selectbox("🌍 Base Currency", list(currencies.keys()), key="cur_sel_"+rk)
     cur_sym = currencies[cur_choice]
     cur_code = cur_choice.split(" ")[0]
 
-    hotel_name = st.text_input("🏨 Hotel Name", "Wyndham Garden Salalah", key="h_nm_"+rk)
+    hotel_name = st.text_input("🏨 Hotel", "Wyndham Garden Salalah", key="h_nm_"+rk)
     city_name = st.text_input("📍 City Search", "Salalah", key="c_nm_"+rk)
     
     d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
     d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
     
-    # NIGHT COUNTER INTEGRATION
+    # STAY NIGHT COUNTER
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    st.info(f"📅 **Total Stay Duration: {m_nights} Nights**")
+    st.info(f"📅 **Stay Duration: {m_nights} Nights**")
     
     inventory = st.number_input("Total Property Capacity", 1, 1000, 237, key="inv_c_"+rk)
     
@@ -70,7 +70,7 @@ with st.sidebar:
     ota_comm = st.slider("OTA Commission %", 0, 40, 18, key="ota_v_"+rk)
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk)
 
-    # UPDATED MEAL ARCHITECTURE
+    # INDIVIDUAL MEAL COSTING (PER PERSON)
     st.markdown("### 🍽️ Unit Costs (Per Person)")
     c_snk = st.number_input(f"Snack Cost ({cur_sym})", 0.0, value=1.5, key="snk_v_"+rk)
     meal_costs = {
@@ -84,16 +84,5 @@ with st.sidebar:
 
 # --- 4. MARKET INTEL ---
 intel_db = {
-    "salalah": {"ev": "Khareef Festival", "fl": "High Rotations (Dubai/Muscat)", "news": ["Port: Operations stable.", "Tourism: Influx surge expected.", "Weather: Monsoon rising."], "basis": "Microclimate Compression"},
+    "salalah": {"ev": "Khareef Festival", "fl": "High Rotations (Dubai/Muscat)", "news": ["Port: Operations stable.", "Tourism: Surge expected.", "Weather: Monsoon rising."], "basis": "Microclimate Compression"},
     "dubai": {"ev": "DIFC Expansion Summit", "fl": "DXB Slot Scarcity 100%", "news": ["BREAKING: UAE exiting OPEC May 1st.", "DIFC Growth: 775 new companies.", "Market: Oil volatility."], "basis": "Hub Velocity"},
-    "colombo": {"ev": "Tourism Recovery", "fl": "SriLankan Airlines Hub growing", "news": ["Arrivals cross 1.2M mark.", "LKR Stability Improving.", "MICE demand surging."], "basis": "Emerging Market Recovery"}
-}
-active_intel = intel_db.get(city_name.lower(), {"ev": "Active Seasonal Rotation", "fl": "Baseline Rotation", "news": ["Standard market flow."], "basis": "Equilibrium"})
-
-# --- 5. CALCULATION ENGINE ---
-def run_yield(rms, nts, adr, meals, hurdle, comm_rate=0.0, laundry=0, mice=0, trans=0, snack_qty=0):
-    tr = sum(rms); rn = tr * nts
-    if tr <= 0: return None
-    net_adr = adr / tx_div
-    total_m_s = sum(qty * meal_costs.get(p, 0) for p, qty in meals.items()) + (snack_qty * c_snk)
-    avg_m_s = (total_m_s / tr) if tr >

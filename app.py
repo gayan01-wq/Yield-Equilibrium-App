@@ -93,9 +93,9 @@ with st.sidebar:
 
     st.markdown("### 🍽️ Unit Costs (Per Person Basis)")
     meal_costs = {
-        "RO": 0.0, "BB": st.number_input("BB Cost", 2.5, key="bb_mc_"+rk),
-        "LN": st.number_input("LN Cost", 4.5, key="ln_mc_"+rk), "DN": st.number_input("DN Cost", 5.5, key="dn_mc_"+rk),
-        "SAI": st.number_input("SAI Cost", 8.5, key="sai_mc_"+rk), "AI": st.number_input("AI Cost", 10.5, key="ai_mc_"+rk)
+        "RO": 0.0, "BB": st.number_input("BB Cost", 0, key="bb_mc_"+rk),
+        "LN": st.number_input("LN Cost", 0, key="ln_mc_"+rk), "DN": st.number_input("DN Cost", 0, key="dn_mc_"+rk),
+        "SAI": st.number_input("SAI Cost", 0, key="sai_mc_"+rk), "AI": st.number_input("AI Cost", 0, key="ai_mc_"+rk)
     }
 
 # --- 4. MARKET INTEL ---

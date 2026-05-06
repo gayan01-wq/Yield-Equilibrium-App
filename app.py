@@ -10,7 +10,7 @@ st.markdown("""<style>
 .card{padding:10px; border-radius:10px; margin-bottom:5px; border-left:10px solid; background:#ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05)}
 .pricing-row{background:#f8faff; padding:15px; border-radius:12px; border:1px solid #d1d9e6; margin-top:2px;}
 .google-window{background:#e8f0fe; padding:15px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.88rem; line-height:1.5;}
-.status-indicator{padding:12px; border-radius:8px; text-align:center; font-weight:900; font-size:1.1rem; color:white;}
+.status-indicator{padding:12px; border-radius:8px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px; display:block;}
 .reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:8px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
 .theory-box { background-color: #f1f4f9; padding: 25px; border-radius: 15px; border: 1px solid #d1d9e6; margin-top: 35px; }
 .pillar-header { color: #1e3799; font-weight: 800; font-size: 1rem; text-transform: uppercase; margin-bottom: 5px; display: block; }
@@ -121,7 +121,12 @@ for seg in segments:
             m_pp, l_pp, t_f = r2[6].number_input("Events", 0.0, key=f"m_{seg['key']}_{rk}") if seg['group'] else 0.0, r2[7].number_input("Laundry", 0.0, key=f"l_{seg['key']}_{rk}") if seg['group'] else 0.0, r2[8].number_input("Transport", 0.0, key=f"tr_{seg['key']}_{rk}") if seg['group'] else 0.0
 
             res = run_segment_yield(g_rate, {"RO":ro,"BB":bb,"HB":hb,"FB":fb,"SAI":sai,"AI":ai}, h_base, demand_sel, seg['group'], rooms_total, (ota_comm/100 if seg['ota'] else 0.0), m_pp, l_pp, t_f)
-            st.metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
+            
+            # RESTORED STATUS INDICATOR BUTTON
+            v_cols = st.columns([1, 1.5, 1])
+            v_cols[0].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
+            v_cols[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
+            
             st.markdown(f"<div class='reason-box'>💡 <b>Strategic Reasoning:</b> {res['rsn']} | <b>Effective Hurdle:</b> {cur_sym}{res['dh']:,.2f}</div>", unsafe_allow_html=True)
             wealth_results[seg['key']] = {"w": res['w'], "rooms": max(rooms_total, min_v)}
             st.markdown("</div>", unsafe_allow_html=True)
@@ -132,7 +137,6 @@ e_keys = list(wealth_results.keys())
 if len(e_keys) >= 2:
     sa, sb = wealth_results[e_keys[0]], wealth_results[e_keys[1]]
     total_gain = (sa['w'] - sb['w']) * sb['rooms'] * m_nights
-    # NEW EFFICIENCY CALCULATION
     total_potential_wealth = sa['w'] * h_cap * m_nights
     efficiency_gain = (total_gain / total_potential_wealth * 100) if total_potential_wealth != 0 else 0
 
@@ -150,8 +154,8 @@ with c_a:
     st.markdown(f"<p style='font-size:0.88rem; color:#4b6584;'>Strips statutory taxes ({tx_div}), commissions, and marginal costs to isolate <b>Net-Core Wealth</b>.</p>", unsafe_allow_html=True)
 with c_b:
     st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:0.88rem; color:#4b6584;'>Protects inventory by scaling the hurdle floor up to 2.5x during Peak cycles to ensure high-value pickup.</p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:0.88rem; color:#4b6584;'>Protects inventory by scaling the hurdle floor up to 2.5x during Peak cycles to ensure high-value pickup.</p>", unsafe_allow_html=True)
 with c_c:
     st.markdown("<span class='pillar-header'>🌐 Pillar 03: External Velocity</span>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:0.88rem; color:#4b6584;'>Integrates <b>Market Pulse</b> and Aviation Situation to apply a Velocity Multiplier based on real-time demand.</p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:0.88rem; color:#4b6584;'>Integrates <b>Market Pulse</b> and Aviation Situation to apply a Velocity Multiplier based on real-time demand.</p>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)

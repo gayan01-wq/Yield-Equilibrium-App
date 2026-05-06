@@ -1,82 +1,117 @@
 import streamlit as st
+from datetime import date
 
-# --- 1. SETTINGS & STYLING ---
-st.set_page_config(page_title="Yield Equilibrium Analyzer", layout="wide")
+# --- 1. STYLING (The Global Executive Aesthetic) ---
+st.set_page_config(layout="wide", page_title="Displacement Analyzer | Yield Equilibrium")
+st.markdown("""<style>
+.block-container{padding-top:1rem!important;}
+.main-title {
+    font-size: 2.2rem!important;
+    font-weight: 900;
+    color: #1e3799;
+    text-align: center!important;
+    margin-top: -10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: block;
+    width: 100%;
+}
+.main-subtitle {
+    font-size: 1.15rem!important;
+    font-weight: 600;
+    color: #4b6584;
+    text-align: center!important;
+    margin-top: -10px;
+    margin-bottom: 30px;
+    letter-spacing: 1px;
+    display: block;
+    width: 100%;
+}
+.noi-card { 
+    background-color: #f8f9fa; padding: 25px; border-radius: 12px; 
+    border-left: 10px solid #1e3799; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: #2f3640;
+}
+.card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
+.pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
+.status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
+</style>""", unsafe_allow_html=True)
 
-st.markdown("""
-<style>
-    .main-header { color: #1e3799; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
-    .noi-card { 
-        background-color: #f8f9fa; padding: 25px; border-radius: 12px; 
-        border-left: 10px solid #1e3799; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: #2f3640;
-    }
-</style>
-""", unsafe_allow_html=True)
+# --- 2. AUTHENTICATION & CACHE ---
+if "auth" not in st.session_state: st.session_state["auth"] = False
+if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
 
-# --- 2. SIDEBAR: STATUTORY DEFLATORS & SIMULATION ---
-st.sidebar.markdown("### 🏛️ Statutory Deflators (Oman)")
-# Defaulting to Oman market standards (VAT 5%, Muni 4%, Service Charge 8%)
-vat = st.sidebar.number_input("VAT (%)", value=5.0) / 100
-muni_tax = st.sidebar.number_input("Municipality Tax (%)", value=4.0) / 100
-service_charge = st.sidebar.number_input("Service Charge (%)", value=8.0) / 100
+if not st.session_state["auth"]:
+    st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
+    with st.form("login_gate"):
+        pwd = st.text_input("Access Key", type="password")
+        if st.form_submit_button("Unlock"):
+            if pwd == "Gayan2026": 
+                st.session_state["auth"] = True
+                st.rerun()
+            else: st.error("Access Denied")
+    st.stop()
 
-st.sidebar.divider()
-st.sidebar.markdown("### 📊 Pillar 01: Simulation")
-# Room inventory simulation bar (5 - 10,000)
-sim_rooms = st.sidebar.slider("Simulate Room Inventory Shift", 5, 10000, 40)
+# --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS + SIMULATION) ---
+with st.sidebar:
+    st.markdown("### 📊 Pillar 01: Simulation")
+    # THE ADD-ON: Simulation bar for room inventory shifts (5 to 10,000)
+    sim_rooms = st.slider("Simulate Room Inventory Shift", 5, 10000, 40, key="sim_s_"+str(st.session_state["reset_key"]))
+    st.info(f"Analyzing impact of shifting **{sim_rooms} rooms**.")
+    
+    st.divider()
+    rk = str(st.session_state["reset_key"]) 
+    currencies = {"OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "INR (₹)": "₹", "USD ($)": "$"}
+    cur_choice = st.selectbox("🌍 Base Currency", list(currencies.keys()), key="c_sel_"+rk)
+    cur_sym = currencies[cur_choice]
 
-# --- 3. INPUT DATA: SEGMENTS & MEAL PACKAGES ---
-st.markdown("<h1 class='main-header'>Yield Equilibrium Displacement Analyzer</h1>", unsafe_allow_html=True)
-st.markdown("### Pillar 01: Total Net-Flow & Statutory Deflators")
-st.divider()
+    st.markdown("### 🏛️ Statutory Deflators")
+    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
+    ota_comm = st.slider("OTA Commission %", 0, 40, 15, key="ota_v_"+rk)
+    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk)
 
+# --- 4. CALCULATION ENGINE ---
+def calculate_net_flow(adr, cost_per_room, comm_rate=0.0):
+    # Removing statutory taxes from Gross to isolate Net Wealth
+    net_adr = adr / tx_div
+    # Isolated Net Wealth = (Net ADR - Commission) - Fees/Costs
+    return (net_adr * (1 - comm_rate)) - p01_fee - cost_per_room
+
+# --- 5. DASHBOARD ---
+st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
+st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
+
+# --- SEGMENT COMPARISON BLOCK ---
 col1, col2 = st.columns(2, gap="large")
 
 with col1:
-    st.markdown("### Segment A: Direct / FIT")
-    adr_a = st.number_input("Gross ADR (A)", value=85.0, key="adr_a")
-    meal_a = st.number_input("Meal Package Cost (A)", value=5.0)
-    commission_a = st.number_input("Comm/Transaction % (A)", value=0.0) / 100
-    
-    # Calculation: Backing out taxes to get Net Room Revenue
-    total_tax_multiplier = 1 + vat + muni_tax + service_charge
-    net_adr_a = adr_a / total_tax_multiplier
-    net_a = (net_adr_a * (1 - commission_a)) - meal_a
+    st.markdown(f"<div class='card' style='border-left-color:#3498db'>SEGMENT A: DIRECT / FIT</div>", unsafe_allow_html=True)
+    adr_a = st.number_input("Gross ADR (A)", value=85.0, key="adr_a_"+rk)
+    cost_a = st.number_input("Cost per Room (A)", value=15.0, key="cost_a_"+rk)
+    net_a = calculate_net_flow(adr_a, cost_a)
 
 with col2:
-    st.markdown("### Segment B: Group / Wholesale")
-    adr_b = st.number_input("Gross ADR (B)", value=65.0, key="adr_b")
-    meal_b = st.number_input("Meal Package Cost (B)", value=8.0)
-    commission_b = st.number_input("Comm/Transaction % (B)", value=15.0) / 100
-    
-    # Calculation: Backing out taxes to get Net Room Revenue
-    net_adr_b = adr_b / total_tax_multiplier
-    net_b = (net_adr_b * (1 - commission_b)) - meal_b
+    st.markdown(f"<div class='card' style='border-left-color:#e67e22'>SEGMENT B: GROUP / HURDLE</div>", unsafe_allow_html=True)
+    adr_b = st.number_input("Gross ADR (B)", value=65.0, key="adr_b_"+rk)
+    cost_b = st.number_input("Cost per Room (B)", value=10.0, key="cost_b_"+rk)
+    net_b = calculate_net_flow(adr_b, cost_b)
 
-# --- 4. MARGINAL FLOOR & NOI LOGIC ---
-# Segment B net-flow acts as the Marginal Floor (Hurdle)
-marginal_floor = net_b 
-displacement_risk = net_a - marginal_floor
-
-# NOI Improvement based on simulated room count
+# --- 6. FORECASTING IMPACT & NOI LOGIC ---
+# Marginal Floor logic: Segment B acts as the hurdle
 baseline_noi = net_b * sim_rooms
 projected_noi = net_a * sim_rooms
 improvement_val = projected_noi - baseline_noi
 improvement_pct = (improvement_val / baseline_noi) * 100 if baseline_noi != 0 else 0
 
-# --- 5. EXECUTIVE DASHBOARD ---
 st.divider()
-st.markdown("### 📈 Forecasting Impact & Marginal Floor Audit")
+st.markdown("### 📈 Forecasting Impact & NOI Improvement")
 
-m1, m2, m3, m4 = st.columns(4)
+m1, m2, m3 = st.columns(3)
 with m1:
-    st.metric("Net Flow (A)", f"﷼ {net_a:,.2f}")
+    st.metric("Net Flow (A-B)", f"{cur_sym} {net_a - net_b:,.2f}")
 with m2:
-    st.metric("Marginal Floor (B)", f"﷼ {net_b:,.2f}")
+    st.metric("Total NOI Gain", f"{cur_sym} {improvement_val:,.2f}")
 with m3:
-    st.metric("Total NOI Gain", f"﷼ {improvement_val:,.2f}")
-with m4:
-    st.metric("NOI Improvement", f"{improvement_pct:.2f}%")
+    st.metric("NOI % Improvement", f"{improvement_pct:.2f}%")
 
 # Status Verdict
 status = "REJECT: DILUTIVE" if net_a < net_b else "ACCEPT: ACCRETIVE"
@@ -84,15 +119,15 @@ status = "REJECT: DILUTIVE" if net_a < net_b else "ACCEPT: ACCRETIVE"
 # Summary Card
 st.markdown(f"""
 <div class='noi-card'>
-    <h4>Executive Summary: {status}</h4>
-    Based on the <b>{sim_rooms} room simulation</b>, Segment A yields a Net Flow of <b>﷼ {net_a:,.2f}</b> 
-    against a Marginal Floor of <b>﷼ {net_b:,.2f}</b>. 
-    Oman statutory deflators and meal costs have been applied. 
-    Total improvement to bottom-line NOI: <b>{improvement_pct:.2f}%</b>.
+    <h4 style='margin-top:0;'>Executive Summary: {status}</h4>
+    By shifting <b>{sim_rooms} rooms</b> from Segment B to Segment A, the 
+    <b>Yield Equilibrium Protocol</b> identifies a <b>{improvement_pct:.2f}%</b> 
+    improvement in departmental NOI, contributing an additional 
+    <b>{cur_sym} {improvement_val:,.2f}</b> to the total net-flow.
 </div>
 """, unsafe_allow_html=True)
 
-# --- 6. DATA HANDOFF ---
+# --- 7. DATA HANDOFF & NAVIGATION ---
 st.session_state["current_audit"] = {
     "label": "Direct/FIT vs Group Simulation",
     "yield": net_a,

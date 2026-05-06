@@ -31,7 +31,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- 2. DATA VALIDATION ---
-# Ensures data has been passed from the main Displacement Analyzer (app.py)
+# Pulls the active segment data from the main Displacement Analyzer
 if "current_audit" not in st.session_state:
     st.warning("⚠️ No active analysis found. Please run a calculation on the Home page first.")
     if st.button("⬅ Back to Analyzer"):
@@ -45,7 +45,7 @@ st.markdown(f"<h1 class='main-header'>Strategic Audit: {audit['label']}</h1>", u
 st.markdown("### Yield Equilibrium Strategic Intelligence")
 st.divider()
 
-# Displaying core metrics passed from Pillar 01
+# Core metrics passed from Pillar 01
 c1, c2, c3 = st.columns(3)
 with c1:
     st.markdown("<div class='metric-container'>", unsafe_allow_html=True)
@@ -64,17 +64,17 @@ with c3:
 
 st.divider()
 
-# --- 4. AI STRATEGY AUDIT (PILLAR 02) ---
+# --- 4. AI STRATEGY AUDIT (PILLAR 02: WEALTH PROTECTION) ---
 st.subheader("🤖 Equilibrium Theory Audit")
 
 try:
-    # Authenticate using the API Key stored in Streamlit Secrets
+    # Configures the API using the Gemini 3 Flash Paid Tier credentials
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     
-    # Using the latest stable flash model to resolve the 404 error
-    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+    # Updated stable model path to resolve 404 API versioning errors
+    model = genai.GenerativeModel('models/gemini-1.5-flash')
     
-    # Professional prompt engineering for the Yield Equilibrium Protocol
+    # Prompting for high-level CRME executive insights
     prompt = f"""
     As a senior AI Revenue Consultant, provide a professional audit for:
     
@@ -97,7 +97,7 @@ try:
 
 except Exception as e:
     st.error(f"Audit Connection Error: {str(e)}")
-    st.info("Tip: Ensure your GEMINI_API_KEY is correctly set in the Streamlit Cloud Secrets.")
+    st.info("Check your Streamlit Secrets for a valid GEMINI_API_KEY.")
 
 # --- 5. NAVIGATION ---
 st.markdown("<br>", unsafe_allow_html=True)

@@ -9,7 +9,9 @@ st.markdown("""<style>
 .main-title { font-size: 2.2rem!important; font-weight: 900; color: #1e3799; text-align: center; text-transform: uppercase; }
 .card{padding:10px; border-radius:10px; margin-bottom:8px; border-left:10px solid; background:#ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
 .pricing-row{background:#f8faff; padding:12px; border-radius:10px; border:1px solid #d1d9e6; margin-top:5px;}
+.google-window{background:#e8f0fe; padding:18px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.85rem; line-height:1.6;}
 .status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
+.displacement-warning{background:#fff3f3; border:1px solid #ff4b4b; padding:10px; border-radius:8px; color:#ff4b4b; font-weight:700; font-size:0.85rem; margin-top:5px;}
 .noi-card { background-color: #f8f9fa; padding: 25px; border-radius: 12px; border-left: 10px solid #1e3799; color: #2f3640; }
 </style>""", unsafe_allow_html=True)
 
@@ -39,8 +41,11 @@ with st.sidebar:
     d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
     d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    st.info(f"Stay Duration: {m_nights} Nights")
-
+    
+    st.divider()
+    hotel_cap = st.number_input("Total Hotel Capacity", 1, 1000, 237, key="cap_"+rk)
+    city_search = st.text_input("📍 Market Location", "Salalah", key="city_"+rk)
+    
     st.divider()
     currencies = {"OMR (﷼)": "﷼", "LKR (රු)": "රු", "USD ($)": "$"}
     cur_choice = st.selectbox("🌍 Currency", list(currencies.keys()), key="c_sel_"+rk)
@@ -58,25 +63,41 @@ with st.sidebar:
         "SAI": st.number_input("SAI Cost", 0.0, key="sai_mc_"+rk), "AI": st.number_input("AI Cost", 0.0, key="ai_mc_"+rk)
     }
 
-# --- 4. ENGINE LOGIC ---
-def run_segment_yield(adr, meal_qty, hurdle, comm_rate=0.0):
-    net_adr = adr / tx_div
+# --- 4. MARKET INTELLIGENCE DATABASE ---
+intel_db = {
+    "salalah": {"ev": "Khareef Season", "fl": "OmanAir/SalamAir Rotations Peak", "news": "Monsoon Tourism Surge Expected", "demand": "High Flow"},
+    "muscat": {"ev": "Business Summit", "fl": "International Hub Stable", "news": "MICE Demand Up 15%", "demand": "Compression"},
+    "colombo": {"ev": "Peak Tourism", "fl": "UL Hub Growth", "news": "Arrivals Surpass 1.2M", "demand": "High Flow"}
+}
+active_intel = intel_db.get(city_search.lower(), {"ev": "Baseline Market", "fl": "Standard Flights", "news": "Stable Market Flow", "demand": "Standard"})
+
+# --- 5. ENGINE LOGIC (PILLAR 03: VELOCITY) ---
+def run_segment_yield(adr, meal_qty, hurdle, demand_type, comm_rate=0.0):
+    # Pillar 03: Velocity Calculation (Based on Demand Intensity)
+    velocity_adj = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
+    v_mult = velocity_adj.get(demand_type, 1.0)
+    
+    net_adr = (adr * v_mult) / tx_div
     total_meal_cost = sum(qty * meal_costs.get(p, 0) for p, qty in meal_qty.items())
     unit_w = (net_adr - total_meal_cost - (net_adr * comm_rate)) - p01_fee
     
-    # Classification Logic (Restored Optimized, Marginal, Dilutive)
-    if unit_w < hurdle:
-        stt, clr = "REJECT: DILUTIVE", "#e74c3c"
-    elif unit_w < (hurdle + 5.0):
-        stt, clr = "REVIEW: MARGINAL", "#f39c12"
-    else:
-        stt, clr = "ACCEPT: OPTIMIZED", "#27ae60"
+    if unit_w < hurdle: stt, clr = "REJECT: DILUTIVE", "#e74c3c"
+    elif unit_w < (hurdle + 5.0): stt, clr = "REVIEW: MARGINAL", "#f39c12"
+    else: stt, clr = "ACCEPT: OPTIMIZED", "#27ae60"
         
-    return {"w": unit_w, "st": stt, "cl": clr}
+    return {"w": unit_w, "st": stt, "cl": clr, "vm": v_mult}
 
-# --- 5. DASHBOARD ---
+# --- 6. DASHBOARD ---
 st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
-st.divider()
+
+# MARKET INSIGHTS TOPIC LINE
+st.markdown(f"""
+<div class='google-window'>
+    <b>🌐 Market Intelligence: {city_search} | {date.today().strftime('%B %Y')}</b><br>
+    • <b>Aviation Situation:</b> {active_intel['fl']} | <b>Events:</b> {active_intel['ev']}<br>
+    • <b>News Feed:</b> {active_intel['news']} | <b>Area Demand:</b> {active_intel['demand']}
+</div>
+""", unsafe_allow_html=True)
 
 segments = [
     {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "ota": False, "hurdle": 45.0},
@@ -92,17 +113,22 @@ for seg in segments:
     with st.container():
         st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
         
-        # ROW 1: ROOM COUNTS (SGL, DBL, TPL, QRPL)
+        # ROW 1: ROOMS & DEMAND (PILLAR 03)
         r1_cols = st.columns([1, 1, 1, 1, 1.5, 1.5])
         sgl = r1_cols[0].number_input("SGL", 0, key=f"sgl_{seg['key']}_{rk}")
         dbl = r1_cols[1].number_input("DBL", 0, key=f"dbl_{seg['key']}_{rk}")
         tpl = r1_cols[2].number_input("TPL", 0, key=f"tpl_{seg['key']}_{rk}")
         qrpl = r1_cols[3].number_input("QRPL", 0, key=f"qrp_{seg['key']}_{rk}")
-        adr = r1_cols[4].number_input(f"Rate ({cur_sym})", value=75.0, key=f"adr_{seg['key']}_{rk}")
+        demand_sel = r1_cols[4].selectbox("Market Demand Type", ["Compression (Peak)", "High Flow", "Standard", "Distressed"], key=f"dm_{seg['key']}_{rk}")
         h_floor = r1_cols[5].number_input("Hurdle Floor", value=seg['hurdle'], key=f"hrd_{seg['key']}_{rk}")
         
-        # ROW 2: MEAL PLANS
-        r2_cols = st.columns([0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 1.2, 1.2])
+        # DISPLACEMENT WARNING (50% CAPACITY RULE)
+        total_requested = sgl + dbl + tpl + qrpl
+        if (total_requested / hotel_cap) >= 0.50:
+            st.markdown(f"<div class='displacement-warning'>⚠️ DISPLACEMENT RISK: This segment occupies {(total_requested/hotel_cap)*100:.1f}% of total inventory.</div>", unsafe_allow_html=True)
+
+        # ROW 2: MEALS & VERDICT
+        r2_cols = st.columns([0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 1, 1.4])
         ro = r2_cols[0].number_input("RO", 0, key=f"ro_{seg['key']}_{rk}")
         bb = r2_cols[1].number_input("BB", 0, key=f"bb_{seg['key']}_{rk}")
         hb = r2_cols[2].number_input("HB", 0, key=f"hb_{seg['key']}_{rk}")
@@ -110,19 +136,18 @@ for seg in segments:
         sai = r2_cols[4].number_input("SAI", 0, key=f"sai_{seg['key']}_{rk}")
         ai = r2_cols[5].number_input("AI", 0, key=f"ai_{seg['key']}_{rk}")
         
-        # Calculation Execution
         comm = (ota_comm/100) if seg['ota'] else 0.0
-        res = run_segment_yield(adr, {"RO":ro,"BB":bb,"HB":hb,"FB":fb,"SAI":sai,"AI":ai}, h_floor, comm)
+        adr = st.number_input(f"Base Segment Rate ({cur_sym})", value=75.0, key=f"adr_{seg['key']}_{rk}")
+        res = run_segment_yield(adr, {"RO":ro,"BB":bb,"HB":hb,"FB":fb,"SAI":sai,"AI":ai}, h_floor, demand_sel, comm)
         
-        r2_cols[6].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}")
+        r2_cols[6].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
         r2_cols[7].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
         
         wealth_results[seg['key']] = res['w']
         st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 6. STRATEGIC NOI SIMULATION (PILLAR 02) ---
+# --- 7. STRATEGIC NOI SIMULATION ---
 st.divider()
-st.markdown("### 📈 Strategic NOI Simulation (Pillar 02)")
 net_a, net_b = wealth_results['fit'], wealth_results['ota']
 improvement_val = (net_a - net_b) * sim_rooms * m_nights
 improvement_pct = ((net_a - net_b) / net_b * 100) if net_b != 0 else 0
@@ -132,19 +157,6 @@ with m1: st.metric("Net Flow Gap (A-B)", f"{cur_sym} {net_a - net_b:,.2f}")
 with m2: st.metric("Total NOI Gain", f"{cur_sym} {improvement_val:,.2f}")
 with m3: st.metric("NOI % Improvement", f"{improvement_pct:.2f}%")
 
-final_status = "ACCEPT: ACCRETIVE" if net_a > net_b else "REJECT: DILUTIVE"
-st.markdown(f"""
-<div class='noi-card'>
-    <h4>Executive Verdict: {final_status}</h4>
-    Shifting <b>{sim_rooms} rooms</b> for <b>{m_nights} nights</b> identifies a <b>{improvement_pct:.2f}%</b> 
-    NOI improvement, adding <b>{cur_sym} {improvement_val:,.2f}</b> to the wealth-core.
-</div>
-""", unsafe_allow_html=True)
-
-# --- 7. DEFENSIVE NAVIGATION ---
-st.session_state["current_audit"] = {"yield": net_a, "hurdle": net_b, "status": final_status, "rooms": sim_rooms}
 if st.button("🚀 Run Pillar 02: Strategic AI Audit"):
-    if os.path.exists("pages/strategic_gem.py"):
-        st.switch_page("pages/strategic_gem.py")
-    else:
-        st.error("Audit Page Missing.")
+    st.session_state["current_audit"] = {"yield": net_a, "hurdle": net_b, "status": "ACCRETIVE", "rooms": sim_rooms}
+    st.switch_page("pages/strategic_gem.py")

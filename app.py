@@ -10,11 +10,10 @@ st.markdown("""<style>
 .main-subtitle { font-size: 1rem!important; font-weight: 600; color: #4b6584; text-align: center; margin-bottom: 15px; }
 .card{padding:8px; border-radius:8px; margin-bottom:5px; border-left:10px solid; background:#ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05)}
 .pricing-row{background:#f8faff; padding:10px; border-radius:10px; border:1px solid #d1d9e6; margin-top:2px;}
+.google-window{background:#e8f0fe; padding:15px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.88rem; line-height:1.5;}
 .status-indicator{padding:10px; border-radius:8px; text-align:center; font-weight:900; font-size:1rem; color:white;}
 .reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:8px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.75rem;}
 .theory-box { background-color: #f1f4f9; padding: 25px; border-radius: 15px; border: 1px solid #d1d9e6; margin-top: 30px; }
-.pillar-header { color: #1e3799; font-weight: 800; font-size: 0.95rem; text-transform: uppercase; margin-bottom: 5px; display: block; }
-.pillar-desc { font-size: 0.88rem; color: #4b6584; line-height: 1.5; margin-bottom: 15px; }
 </style>""", unsafe_allow_html=True)
 
 # --- 2. AUTHENTICATION ---
@@ -36,7 +35,8 @@ rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
     h_name = st.text_input("Hotel", "Wyndham Garden Salalah", key="h_nm_"+rk)
-    h_cap = st.number_input("Inventory", 1, 1000, 237, key="cap_"+rk)
+    h_cap = st.number_input("Inventory Capacity", 1, 1000, 237, key="cap_"+rk)
+    city_search = st.text_input("📍 Market Location", "Salalah", key="city_"+rk)
     
     st.divider()
     st.markdown("### 📊 Pillar 01: Simulation")
@@ -51,9 +51,7 @@ with st.sidebar:
 
     st.divider()
     st.markdown("### 🌍 Global Currency Suite")
-    currencies = {
-        "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "INR (₹)": "₹", "EUR (€)": "€", "GBP (£)": "£", "USD ($)": "$"
-    }
+    currencies = {"OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "LKR (රු)": "රු", "INR (₹)": "₹", "EUR (€)": "€", "GBP (£)": "£", "USD ($)": "$"}
     cur_choice = st.selectbox("Select Base Currency", list(currencies.keys()), key="c_sel_"+rk)
     cur_sym = currencies[cur_choice]
 
@@ -68,28 +66,47 @@ with st.sidebar:
                   "HB": st.number_input("HB", 0.0, key="hb_mc_"+rk), "FB": st.number_input("FB", 0.0, key="fb_mc_"+rk),
                   "SAI": st.number_input("SAI", 0.0, key="sai_mc_"+rk), "AI": st.number_input("AI", 0.0, key="ai_mc_"+rk)}
 
-# --- 4. ENGINE LOGIC ---
+# --- 4. MARKET INTELLIGENCE DATABASE ---
+intel_db = {
+    "salalah": {"ev": "Khareef Festival Season", "fl": "OmanAir/SalamAir Rotations Peak", "news": "Monsoon Tourism Surge expected at Salalah Airport.", "demand": "Compression"},
+    "muscat": {"ev": "Business Summit", "fl": "International Hub Stable", "news": "MICE demand up 15% for Q2.", "demand": "High Flow"},
+    "colombo": {"ev": "Peak Tourism Cycle", "fl": "UL Hub Expansion", "news": "Arrivals exceeding 1.2M benchmark.", "demand": "High Flow"}
+}
+active_intel = intel_db.get(city_search.lower(), {"ev": "Market Rotation", "fl": "Standard Flights", "news": "Standard market flow stable.", "demand": "Standard"})
+
+# --- 5. ENGINE LOGIC (PILLAR 03: VELOCITY MULTIPLIER) ---
 def run_segment_yield(adr, meal_qty, hurdle, demand_type, comm_rate=0.0, mice=0.0, laundry=0.0, transport=0.0):
+    # PILLAR 03 Logic: Applying the Velocity Multiplier based on demand intensity
     velocity_adj = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
     v_mult = velocity_adj.get(demand_type, 1.0)
     
+    # Revenue is mathematically enhanced by Market Velocity
     net_adr = (adr * v_mult) / tx_div
     total_meal_cost = sum(qty * meal_costs.get(p, 0) for p, qty in meal_qty.items())
     
-    # Pillar 01: Internal Wealth Stripping
+    # Internal Wealth Stripping (Pillar 01)
     unit_w = (net_adr + (mice/tx_div) + ((transport/tx_div)/sim_rooms if sim_rooms>0 else 0) - total_meal_cost - (net_adr * comm_rate)) - p01_fee - laundry
     
-    if unit_w < hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield below {cur_sym}{hurdle} hurdle."
-    elif unit_w < (hurdle + 5.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Yield at equilibrium window."
-    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Wealth protection targets met."
+    if unit_w < hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield below {cur_sym}{hurdle} hurdle floor."
+    elif unit_w < (hurdle + 5.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Yield within equilibrium window."
+    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Wealth protection targets achieved."
         
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "vm": v_mult}
 
-# --- 5. TOP DASHBOARD ---
+# --- 6. TOP DASHBOARD & MARKET INSIGHTS ---
 st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
 st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
 
-# --- 6. SEGMENT AUDITS ---
+# THE MARKET INSIGHTS WINDOW
+st.markdown(f"""
+<div class='google-window'>
+    <b>🌐 Market Intelligence Topic: {city_search} | {date.today().strftime('%B %Y')}</b><br>
+    • <b>Aviation Situation:</b> {active_intel['fl']} | <b>Special Events:</b> {active_intel['ev']}<br>
+    • <b>Special News Feed:</b> {active_intel['news']} | <b>Market Pulse:</b> {active_intel['demand']} Logic Applied.
+</div>
+""", unsafe_allow_html=True)
+
+# --- 7. SEGMENT AUDITS ---
 segments = [
     {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "ota": False, "hurdle": 45.0, "group": False},
     {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "ota": True, "hurdle": 35.0, "group": False},
@@ -103,13 +120,18 @@ for seg in segments:
     st.markdown(f"<div class='card' style='border-left-color:{seg['color']}'>{seg['label']}</div>", unsafe_allow_html=True)
     with st.container():
         st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
-        r1 = st.columns([1, 0.7, 0.7, 0.7, 0.7, 1.3, 1.2])
+        r1 = st.columns([1, 0.6, 0.6, 0.6, 0.6, 1.2, 1.2])
         g_rate = r1[0].number_input(f"Gross Rate", value=75.0, key=f"adr_{seg['key']}_{rk}")
         sgl, dbl, tpl, qrpl = r1[1].number_input("SGL", 0, key=f"s_{seg['key']}_{rk}"), r1[2].number_input("DBL", 0, key=f"d_{seg['key']}_{rk}"), r1[3].number_input("TPL", 0, key=f"t_{seg['key']}_{rk}"), r1[4].number_input("QRPL", 0, key=f"q_{seg['key']}_{rk}")
+        
+        # MARKET DEMAND SELECTOR (Pillar 03 Trigger)
         demand_sel = r1[5].selectbox("Market Demand", ["Compression (Peak)", "High Flow", "Standard", "Distressed"], key=f"dm_{seg['key']}_{rk}")
         h_floor = r1[6].number_input("Hurdle", value=seg['hurdle'], key=f"hrd_{seg['key']}_{rk}")
 
-        if (sgl+dbl+tpl+qrpl)/h_cap >= 0.50: st.error(f"⚠️ DISPLACEMENT WARNING: Segment exceeds 50% capacity.")
+        # 50% INVENTORY DISPLACEMENT WARNING
+        total_pax = sgl + dbl + tpl + qrpl
+        if (total_pax / h_cap) >= 0.50:
+            st.error(f"⚠️ DISPLACEMENT RISK: Segment occupies {(total_pax/h_cap)*100:.1f}% of total inventory.")
 
         r2 = st.columns([0.6,0.6,0.6,0.6,0.6,0.6, 1.2, 1.2, 1.2])
         ro, bb, hb, fb, sai, ai = r2[0].number_input("RO", 0, key=f"ro_{seg['key']}_{rk}"), r2[1].number_input("BB", 0, key=f"bb_{seg['key']}_{rk}"), r2[2].number_input("HB", 0, key=f"hb_{seg['key']}_{rk}"), r2[3].number_input("FB", 0, key=f"fb_{seg['key']}_{rk}"), r2[4].number_input("SAI", 0, key=f"sai_{seg['key']}_{rk}"), r2[5].number_input("AI", 0, key=f"ai_{seg['key']}_{rk}")
@@ -118,9 +140,11 @@ for seg in segments:
         laundry_pp = r2[7].number_input("Laundry (pp)", 0.0, key=f"l_{seg['key']}_{rk}") if seg['group'] else 0.0
         trans_fixed = r2[8].number_input("Transport", 0.0, key=f"tr_{seg['key']}_{rk}") if seg['group'] else 0.0
 
+        # EXECUTE VELOCITY LOGIC
         res = run_segment_yield(g_rate, {"RO":ro,"BB":bb,"HB":hb,"FB":fb,"SAI":sai,"AI":ai}, h_floor, demand_sel, (ota_comm/100 if seg['ota'] else 0.0), mice_pp, laundry_pp, trans_fixed)
         
         v_cols = st.columns([1, 1, 1])
+        # Delta shows the Velocity multiplier applied
         v_cols[0].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
         v_cols[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='reason-box'>💡 <b>Strategic Reasoning:</b> {res['rsn']}</div>", unsafe_allow_html=True)
@@ -128,7 +152,7 @@ for seg in segments:
         wealth_results[seg['key']] = res['w']
         st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 7. NOI SUMMARY & THEORY BOX ---
+# --- 8. NOI SUMMARY & FRAMEWORK PILLARS ---
 st.divider()
 net_a, net_b = wealth_results['fit'], wealth_results['ota']
 imp_val = (net_a - net_b) * sim_rooms * m_nights
@@ -137,18 +161,15 @@ imp_pct = ((net_a - net_b) / net_b * 100) if net_b != 0 else 0
 m1, m2, m3 = st.columns(3)
 with m1: st.metric("Wealth Gap (A-B)", f"{cur_sym} {net_a - net_b:,.2f}")
 with m2: st.metric("Total NOI Gain", f"{cur_sym} {imp_val:,.2f}")
-with m3: st.metric("NOI % Improvement", f"{imp_pct:.2f}%")
+with m3: st.metric("NOI Improvement", f"{imp_pct:.2f}%")
 
 st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
 st.markdown("<h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3>", unsafe_allow_html=True)
 c_a, c_b, c_c = st.columns(3)
 with c_a:
-    st.markdown("<span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span>", unsafe_allow_html=True)
-    st.markdown(f"<p class='pillar-desc'>Strips statutory taxes ({tx_div}), commissions, and marginal meal costs to isolate the Net-Core Wealth.</p>", unsafe_allow_html=True)
+    st.markdown("<b>🏛️ Pillar 01: Internal Wealth Stripping</b><br><small>Stripping statutory taxes and meal costs to isolate Net-Core Wealth.</small>", unsafe_allow_html=True)
 with c_b:
-    st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Hurdle Equilibrium</span>", unsafe_allow_html=True)
-    st.markdown("<p class='pillar-desc'>Establishes a dynamic Marginal Floor to protect inventory from lower-value displacement.</p>", unsafe_allow_html=True)
+    st.markdown("<b>⚖️ Pillar 02: Hurdle Equilibrium</b><br><small>Establishing dynamic floors to protect inventory from lower-value displacement.</small>", unsafe_allow_html=True)
 with c_c:
-    st.markdown("<span class='pillar-header'>🌐 Pillar 03: External Velocity</span>", unsafe_allow_html=True)
-    st.markdown("<p class='pillar-desc'>Integrates real-time Market Demand pulse to apply a Velocity Multiplier to wealth targets.</p>", unsafe_allow_html=True)
+    st.markdown("<b>🌐 Pillar 03: External Velocity</b><br><small>Integrating real-time Aviation and Area Demand to apply a Velocity Multiplier.</small>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)

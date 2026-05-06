@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import date
 import google.generativeai as genai
 
-# --- 1. STYLING (Restoring the Executive Layout) ---
+# --- 1. STYLING (Executive Revenue Dashboard Aesthetic) ---
 st.set_page_config(layout="wide", page_title="Displacement Analyzer | Yield Equilibrium")
 st.markdown("""<style>
 .block-container{padding-top:1rem!important;}
@@ -14,7 +14,7 @@ st.markdown("""<style>
 .ai-badge {background: #4285f4; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; margin-bottom: 5px; display: inline-block;}
 </style>""", unsafe_allow_html=True)
 
-# --- 2. AUTHENTICATION & CACHE ---
+# --- 2. AUTHENTICATION ---
 if "auth" not in st.session_state: st.session_state["auth"] = False
 if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
 if "ai_unlocked" not in st.session_state: st.session_state["ai_unlocked"] = False
@@ -30,9 +30,9 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR (Global Controls) ---
+# --- 3. SIDEBAR (Global Pillar Controls) ---
 with st.sidebar:
-    st.markdown(f"### 👤 Developer: {st.session_state.get('user_name', 'Gayan Nugawela')}")
+    st.markdown("### 👤 Developer: Gayan Nugawela")
     if st.button("🧹 Clear Global Cache"):
         st.session_state["reset_key"] += 1
         st.rerun()
@@ -46,7 +46,7 @@ with st.sidebar:
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
     ota_comm = st.slider("OTA Commission %", 0, 40, 15, key="ota_v_"+rk)
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk)
-    bb_cost = st.number_input("BB Meal Cost", 0.0, value=5.0, key="bb_c_"+rk)
+    bb_cost = st.number_input("BB Meal Cost", 0.0, value=5.0, key="bb_mc_"+rk)
 
 # --- 4. ENGINE LOGIC ---
 def run_yield(rms, adr, hurdle, demand_type, is_ota=False):
@@ -63,13 +63,13 @@ def run_yield(rms, adr, hurdle, demand_type, is_ota=False):
     
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "eff": eff_hurdle}
 
-def ask_ai(data):
+def ask_ai_equilibrium(data):
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         model = genai.GenerativeModel('gemini-1.5-flash-latest')
-        resp = model.generate_content(f"Audit this revenue data: {data}")
+        resp = model.generate_content(f"Provide a strategic revenue audit for this decision based on Yield Equilibrium pillars: {data}")
         return resp.text
-    except Exception as e: return f"AI Offline: {str(e)}"
+    except Exception as e: return f"System Note: {str(e)}"
 
 # --- 5. MAIN DASHBOARD ---
 st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
@@ -93,9 +93,11 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False):
         if res:
             st.metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}")
             st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='reason-box'><b>Strategic Verdict:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='reason-box'>💡 <b>Strategic Verdict:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
+            
+            st.markdown("<div class='ai-badge'>🤖 AI-ASSISTED AUDIT</div>", unsafe_allow_html=True)
             if st.button("Ask Theory Audit", key=f"btn_{key}"):
-                st.info(ask_ai(res))
+                st.info(ask_ai_equilibrium(res))
         else:
             st.info("Enter 'Rooms' to see analysis.")
 

@@ -12,8 +12,9 @@ st.markdown("""<style>
 .google-window{background:#e8f0fe; padding:15px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.88rem; line-height:1.5;}
 .status-indicator{padding:12px; border-radius:8px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px; display:block;}
 .reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:8px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
-.noi-badge{background:#1e3799; color:white; padding:4px 8px; border-radius:5px; font-weight:700; font-size:0.9rem;}
+.noi-badge{background:#1e3799; color:white; padding:8px 12px; border-radius:8px; font-weight:700; font-size:1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
 .theory-box { background-color: #f1f4f9; padding: 25px; border-radius: 15px; border: 1px solid #d1d9e6; margin-top: 35px; }
+.pillar-header { color: #1e3799; font-weight: 800; font-size: 1rem; text-transform: uppercase; margin-bottom: 5px; display: block; }
 </style>""", unsafe_allow_html=True)
 
 # --- 2. AUTHENTICATION ---
@@ -46,10 +47,17 @@ with st.sidebar:
     st.info(f"Stay Duration: {m_nights} Nights")
 
     st.divider()
-    currencies = {"OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "LKR (රු)": "රු", "INR (₹)": "₹", "USD ($)": "$"}
+    st.markdown("### 🌍 Global Currency Suite")
+    # All Currencies Added
+    currencies = {
+        "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "QAR (﷼)": "﷼", "BHD (.د)": ".د", "KWD (د.ك)": "د.ك",
+        "USD ($)": "$", "EUR (€)": "€", "GBP (£)": "£", "LKR (රු)": "රු", "INR (₹)": "₹", "CHF (CHF)": "CHF", 
+        "JPY (¥)": "¥", "CNY (¥)": "¥", "RUB (₽)": "₽", "CAD ($)": "$", "AUD ($)": "$"
+    }
     cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()), key="c_sel_"+rk)]
 
     st.divider()
+    st.markdown("### 🏛️ Pillars Setup")
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00, step=0.1, key="p01_v_"+rk)
 
@@ -62,7 +70,14 @@ with st.sidebar:
         "AI": st.number_input("All-Inclusive (AI)", value=0.0, step=0.5, key="ai_mc_"+rk)
     }
 
-# --- 4. ENGINE LOGIC ---
+# --- 4. MARKET INTEL DATA ---
+intel_db = {
+    "salalah": {"ev": "Khareef Festival Season", "fl": "OmanAir/SalamAir Peak", "news": "Monsoon Tourism Surge expected.", "demand": "Compression"},
+    "muscat": {"ev": "Business Summit", "fl": "International Hub Stable", "news": "MICE demand up 15%.", "demand": "High Flow"}
+}
+active_intel = intel_db.get(city_search.lower(), {"ev": "Market Rotation", "fl": "Standard Flights", "news": "Standard flow stable.", "demand": "Standard"})
+
+# --- 5. ENGINE LOGIC ---
 def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, comm_rate=0.0, mice=0.0, laundry=0.0, transport=0.0):
     velocity_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
     v_mult = velocity_map.get(demand_type, 1.0)
@@ -73,6 +88,7 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     net_adr = (adr * v_mult) / tx_div
     total_meal_cost = sum(qty * meal_costs.get(p, 0) for p, qty in meal_qty.items())
     
+    # Pillar 01: Group stripping (min 10 rooms)
     divisor = max(total_rooms, 10) if is_group else max(total_rooms, 1)
     group_rev = (mice / tx_div) + ((transport / tx_div) / divisor) if is_group else 0
     
@@ -85,11 +101,20 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     total_noi = unit_w * divisor * m_nights
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "vm": v_mult, "dh": dynamic_hurdle, "noi": total_noi}
 
-# --- 5. TOP DASHBOARD ---
+# --- 6. TOP DASHBOARD & MARKET INSIGHTS ---
 st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
 st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
 
-# --- 6. SEGMENT AUDITS ---
+# RESTORED MARKET INSIGHTS
+st.markdown(f"""
+<div class='google-window'>
+    <b>🌐 Market Intelligence: {city_search} | {date.today().strftime('%B %Y')}</b><br>
+    • <b>Aviation Situation:</b> {active_intel['fl']} | <b>Special Events:</b> {active_intel['ev']}<br>
+    • <b>Special News Feed:</b> {active_intel['news']} | <b>Market Pulse:</b> {active_intel['demand']} Logic Applied.
+</div>
+""", unsafe_allow_html=True)
+
+# --- 7. SEGMENT AUDITS ---
 segments = [
     {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "ota": False, "hurdle": 45.0, "group": False},
     {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "ota": True, "hurdle": 35.0, "group": False},
@@ -105,7 +130,7 @@ for seg in segments:
         with st.container():
             st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
             
-            # OTA COMMISSION SLIDER (ONLY IN OTA SEGMENT)
+            # OTA COMMISSION SLIDER WITHIN SEGMENT
             c_ota = 0.0
             if seg['ota']:
                 c_ota = st.slider("OTA Commission %", 0, 40, 15, key=f"comm_{seg['key']}_{rk}")
@@ -124,16 +149,17 @@ for seg in segments:
 
             res = run_segment_yield(g_rate, {"BF":bf,"LN":ln,"DN":dn,"SAI":sai,"AI":ai}, h_base, demand_sel, seg['group'], rooms_total, c_ota, m_pp, l_pp, t_f)
             
+            # Metric Layout: Cleaned to prevent duplication
             v_cols = st.columns([1, 1.5, 1])
-            v_cols[0].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
+            v_cols[0].metric("Net Wealth (Pillar 01)", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
             v_cols[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
-            v_cols[2].markdown(f"<div style='text-align:right;'><span class='noi-badge'>Segment NOI: {cur_sym} {res['noi']:,.2f}</span></div>", unsafe_allow_html=True)
+            v_cols[2].markdown(f"<div style='text-align:right;'><span class='noi-badge'>Total NOI: {cur_sym} {res['noi']:,.2f}</span></div>", unsafe_allow_html=True)
             
-            st.markdown(f"<div class='reason-box'>💡 <b>Strategic Reasoning:</b> {res['rsn']} | <b>Effective Hurdle:</b> {cur_sym}{res['dh']:,.2f}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='reason-box'>💡 <b>Strategic Reasoning:</b> {res['rsn']} | <b>Effective Hurdle (Pillar 02):</b> {cur_sym}{res['dh']:,.2f}</div>", unsafe_allow_html=True)
             wealth_results[seg['key']] = {"w": res['w'], "rooms": max(rooms_total, min_v), "noi": res['noi']}
             st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 7. NOI SUMMARY & PILLARS ---
+# --- 8. NOI SUMMARY & PILLARS ---
 st.divider()
 e_keys = list(wealth_results.keys())
 if len(e_keys) >= 2:
@@ -147,4 +173,17 @@ if len(e_keys) >= 2:
     m_cols[2].metric("NOI Improvement", f"{((sa['w']-sb['w'])/sb['w']*100 if sb['w']!=0 else 0):.2f}%")
     m_cols[3].metric("Asset Efficiency", f"{eff:.2f}%")
 
-st.markdown("<div class='theory-box'><h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3><div style='display:flex; justify-content:space-between;'><div style='width:30%;'><span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span><p style='font-size:0.85rem; color:#4b6584;'>Strips statutory taxes (1.2327 divisor), commissions, and meal costs to isolate <b>Net-Core Wealth</b>.</p></div><div style='width:30%;'><span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span><p style='font-size:0.85rem; color:#4b6584;'>Protects inventory by scaling hurdles up to 2.5x during peak cycles to ensure high-value pickup.</p></div><div style='width:30%;'><span class='pillar-header'>🌐 Pillar 03: External Velocity</span><p style='font-size:0.85rem; color:#4b6584;'>Integrates market pulse data to apply demand multipliers based on real-time market flow.</p></div></div></div>", unsafe_allow_html=True)
+# THEORETICAL PILLARS EXPLANATION
+st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
+st.markdown("<h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3>", unsafe_allow_html=True)
+c_a, c_b, c_c = st.columns(3)
+with c_a:
+    st.markdown("<span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Strips statutory taxes (1.2327), commissions, and meal costs to isolate <b>Net-Core Wealth</b>.</p>", unsafe_allow_html=True)
+with c_b:
+    st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Protects inventory by scaling hurdles up to 2.5x during Peak cycles to ensure high-value pickup.</p>", unsafe_allow_html=True)
+with c_c:
+    st.markdown("<span class='pillar-header'>🌐 Pillar 03: External Velocity</span>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Integrates market pulse data to apply demand multipliers based on real-time market flow.</p>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)

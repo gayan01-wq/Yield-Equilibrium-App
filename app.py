@@ -98,7 +98,6 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
     unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
     total_w = (unit_w * rn) + (trans / tx_div)
     
-    # NOI Calculation based on your capacity
     noi_impact_pct = (total_w / (eff_hurdle * inventory * 30)) * 100 if eff_hurdle > 0 else 0
 
     if unit_w < eff_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym}{eff_hurdle} hurdle."
@@ -107,12 +106,12 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
     
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w, "noi_pct": noi_impact_pct, "data": locals()}
 
-# --- 5. AI LOGIC (Stability Update) ---
+# --- 5. AI LOGIC (Stability & Version Fix) ---
 def ask_ai_equilibrium(user_query, context_data):
     try:
-        # Securely retrieve key from Streamlit Secrets
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"]) 
-        model = genai.GenerativeModel('gemini-1.5-flash', system_instruction="You are Gayan Nugawela's Yield Equilibrium Assistant. Analyze displacement results using Pillar 01 (Wealth Stripping) and Pillar 02 (Hurdle Equilibrium).")
+        # Stable model name to fix the 404 error
+        model = genai.GenerativeModel('gemini-1.5-flash') 
         response = model.generate_content(f"Data: {context_data}. Question: {user_query}")
         return response.text
     except Exception as e:

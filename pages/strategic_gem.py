@@ -46,11 +46,11 @@ st.divider()
 st.subheader("🤖 Equilibrium Theory Audit")
 
 try:
-    # Use REST transport to bypass gRPC/v1beta errors often found in cloud environments
+    # Explicitly using REST transport and forcing a specific API version often solves the 404/v1beta loop
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"], transport='rest')
     
-    # Use the explicit model path
-    model = genai.GenerativeModel('models/gemini-1.5-flash')
+    # Using the specific stable model name
+    model = genai.GenerativeModel('gemini-1.5-flash')
     
     prompt = f"""
     As a senior AI Revenue Consultant, provide a professional audit for:

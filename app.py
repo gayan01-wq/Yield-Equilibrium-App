@@ -98,6 +98,7 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
     unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
     total_w = (unit_w * rn) + (trans / tx_div)
     
+    # NOI Calculation based on your capacity
     noi_impact_pct = (total_w / (eff_hurdle * inventory * 30)) * 100 if eff_hurdle > 0 else 0
 
     if unit_w < eff_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym}{eff_hurdle} hurdle."
@@ -106,16 +107,15 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
     
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w, "noi_pct": noi_impact_pct, "data": locals()}
 
-# --- 5. AI LOGIC (Updated Error Handling) ---
+# --- 5. AI LOGIC (Stability Update) ---
 def ask_ai_equilibrium(user_query, context_data):
     try:
         # Securely retrieve key from Streamlit Secrets
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"]) 
-        model = genai.GenerativeModel('gemini-1.5-pro', system_instruction="You are Gayan Nugawela's Yield Equilibrium Assistant. Analyze displacement results and give a verdict based on the 3 Pillars of Net-Flow and NOI protection.")
+        model = genai.GenerativeModel('gemini-1.5-flash', system_instruction="You are Gayan Nugawela's Yield Equilibrium Assistant. Analyze displacement results using Pillar 01 (Wealth Stripping) and Pillar 02 (Hurdle Equilibrium).")
         response = model.generate_content(f"Data: {context_data}. Question: {user_query}")
         return response.text
     except Exception as e:
-        # This will show the actual error message in the UI for debugging
         return f"System Note: {str(e)}"
 
 # --- 6. DASHBOARD DRAWING ---
@@ -156,7 +156,6 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
             
             if st.session_state["ai_unlocked"]:
                 if st.button("Ask Theory Audit", key=f"ai_btn_{key}"):
-                    # The blue box will now show the audit OR the error message
                     st.info(ask_ai_equilibrium("Provide an audit for this specific segment based on Yield Equilibrium Protocol.", res['data']))
             
             st.markdown(f"<div class='audit-box'>📊 {res['rn']} RN | Total Wealth: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)

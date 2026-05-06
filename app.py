@@ -10,21 +10,22 @@ st.markdown("""
         background-color: #f8f9fa; padding: 25px; border-radius: 12px; 
         border-left: 10px solid #1e3799; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: #2f3640;
     }
-    .stat-box { background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid #dee2e6; text-align: center; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. SIDEBAR: STATUTORY DEFLATORS (OMAN MARKET) ---
-st.sidebar.markdown("### 🏛️ Statutory Deflators")
+# --- 2. SIDEBAR: STATUTORY DEFLATORS & SIMULATION ---
+st.sidebar.markdown("### 🏛️ Statutory Deflators (Oman)")
+# Defaulting to Oman market standards (VAT 5%, Muni 4%, Service Charge 8%)
 vat = st.sidebar.number_input("VAT (%)", value=5.0) / 100
 muni_tax = st.sidebar.number_input("Municipality Tax (%)", value=4.0) / 100
 service_charge = st.sidebar.number_input("Service Charge (%)", value=8.0) / 100
 
 st.sidebar.divider()
 st.sidebar.markdown("### 📊 Pillar 01: Simulation")
+# Room inventory simulation bar (5 - 10,000)
 sim_rooms = st.sidebar.slider("Simulate Room Inventory Shift", 5, 10000, 40)
 
-# --- 3. INPUT DATA ---
+# --- 3. INPUT DATA: SEGMENTS & MEAL PACKAGES ---
 st.markdown("<h1 class='main-header'>Yield Equilibrium Displacement Analyzer</h1>", unsafe_allow_html=True)
 st.markdown("### Pillar 01: Total Net-Flow & Statutory Deflators")
 st.divider()
@@ -37,9 +38,9 @@ with col1:
     meal_a = st.number_input("Meal Package Cost (A)", value=5.0)
     commission_a = st.number_input("Comm/Transaction % (A)", value=0.0) / 100
     
-    # Net Flow Calculation (A)
-    # Removing statutory taxes from Gross to get Net Room Revenue
-    net_adr_a = adr_a / (1 + vat + muni_tax + service_charge)
+    # Calculation: Backing out taxes to get Net Room Revenue
+    total_tax_multiplier = 1 + vat + muni_tax + service_charge
+    net_adr_a = adr_a / total_tax_multiplier
     net_a = (net_adr_a * (1 - commission_a)) - meal_a
 
 with col2:
@@ -48,14 +49,16 @@ with col2:
     meal_b = st.number_input("Meal Package Cost (B)", value=8.0)
     commission_b = st.number_input("Comm/Transaction % (B)", value=15.0) / 100
     
-    # Net Flow Calculation (B)
-    net_adr_b = adr_b / (1 + vat + muni_tax + service_charge)
+    # Calculation: Backing out taxes to get Net Room Revenue
+    net_adr_b = adr_b / total_tax_multiplier
     net_b = (net_adr_b * (1 - commission_b)) - meal_b
 
 # --- 4. MARGINAL FLOOR & NOI LOGIC ---
-marginal_floor = net_b # Segment B acts as the hurdle
+# Segment B net-flow acts as the Marginal Floor (Hurdle)
+marginal_floor = net_b 
 displacement_risk = net_a - marginal_floor
 
+# NOI Improvement based on simulated room count
 baseline_noi = net_b * sim_rooms
 projected_noi = net_a * sim_rooms
 improvement_val = projected_noi - baseline_noi
@@ -84,14 +87,14 @@ st.markdown(f"""
     <h4>Executive Summary: {status}</h4>
     Based on the <b>{sim_rooms} room simulation</b>, Segment A yields a Net Flow of <b>﷼ {net_a:,.2f}</b> 
     against a Marginal Floor of <b>﷼ {net_b:,.2f}</b>. 
-    Statutory deflators and meal costs have been applied. 
+    Oman statutory deflators and meal costs have been applied. 
     Total improvement to bottom-line NOI: <b>{improvement_pct:.2f}%</b>.
 </div>
 """, unsafe_allow_html=True)
 
 # --- 6. DATA HANDOFF ---
 st.session_state["current_audit"] = {
-    "label": "Direct/FIT vs Group (With Taxes/Meals)",
+    "label": "Direct/FIT vs Group Simulation",
     "yield": net_a,
     "hurdle": net_b,
     "status": status,

@@ -85,7 +85,7 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
     unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
     total_w = (unit_w * rn) + (trans / tx_div)
     
-    # Pillar 02: NOI Impact Calculation
+    # Pillar 02: NOI Impact Calculation based on room inventory
     noi_impact_pct = (total_w / (eff_hurdle * inventory * 30)) * 100 if eff_hurdle > 0 else 0
 
     if unit_w < eff_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym}{eff_hurdle} hurdle."
@@ -100,7 +100,7 @@ def ask_ai_equilibrium(user_query, context_data):
         # Securely using your new key from the validated TOML secret
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"]) 
         model = genai.GenerativeModel('gemini-1.5-flash', 
-            system_instruction="You are Gayan Nugawela's Yield Equilibrium Assistant. Audit results based on Net-Flow pillars.")
+            system_instruction="You are Gayan Nugawela's Yield Equilibrium Assistant. Use the principles of Net-Flow and Pillar-based Revenue Governance to audit displacement results.")
         response = model.generate_content(f"Context: {context_data}. Question: {user_query}")
         return response.text
     except Exception as e:
@@ -140,7 +140,7 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
             st.markdown("<div class='ai-badge'>🤖 AI-ASSISTED FORECAST</div>", unsafe_allow_html=True)
             if st.session_state["ai_unlocked"]:
                 if st.button("Ask Theory Audit", key=f"ai_btn_{key}"):
-                    st.info(ask_ai_equilibrium("Audit this based on Yield Equilibrium Protocol.", res['data']))
+                    st.info(ask_ai_equilibrium("Audit this decision based on Yield Equilibrium pillars.", res['data']))
             st.markdown(f"<div class='audit-box'>📊 Total Wealth: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)
 
 draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")

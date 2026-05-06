@@ -5,19 +5,32 @@ st.set_page_config(page_title="Yield Equilibrium Analyzer", layout="wide")
 
 st.markdown("""
 <style>
-    .noi-card { background-color: #f0f2f6; padding: 20px; border-radius: 10px; border-left: 5px solid #1e3799; }
-    .main-header { color: #1e3799; font-weight: 900; text-transform: uppercase; }
+    .main-header { 
+        color: #1e3799; 
+        font-weight: 900; 
+        text-transform: uppercase; 
+        letter-spacing: 1px;
+    }
+    .noi-card { 
+        background-color: #f0f2f6; 
+        padding: 25px; 
+        border-radius: 12px; 
+        border-left: 10px solid #1e3799; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        color: #2f3640;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # --- 2. SIDEBAR SIMULATION CONTROLS ---
 st.sidebar.markdown("### 📊 Pillar 01: Simulation")
-# Simulation bar for 5 to 10,000 rooms as requested
+# The simulation bar for 5 to 10,000 rooms as requested
 sim_rooms = st.sidebar.slider("Simulate Room Inventory Shift", 5, 10000, 40)
-st.sidebar.info(f"Analyzing the impact of shifting {sim_rooms} rooms.")
+st.sidebar.info(f"Analyzing the impact of shifting {sim_rooms} rooms between segments.")
 
 # --- 3. INPUT DATA ---
 st.markdown("<h1 class='main-header'>Yield Equilibrium Displacement Analyzer</h1>", unsafe_allow_html=True)
+st.markdown("### Pillar 01: Total Net-Flow Logic")
 st.divider()
 
 col1, col2 = st.columns(2)
@@ -34,16 +47,18 @@ with col2:
     cost_b = st.number_input("Cost per Room (B)", value=10.0)
     net_b = adr_b - cost_b
 
-# --- 4. NOI IMPACT CALCULATIONS ---
-# Compare Segment A (Target) vs Segment B (Displaced)
+# --- 4. FORECASTING & NOI CALCULATIONS ---
+# Calculate the total value of the shift based on the Simulation Bar
 baseline_noi = net_b * sim_rooms
 projected_noi = net_a * sim_rooms
 improvement_val = projected_noi - baseline_noi
+
+# Calculate % Improvement (NOI Growth)
 improvement_pct = (improvement_val / baseline_noi) * 100 if baseline_noi != 0 else 0
 
 # --- 5. EXECUTIVE DASHBOARD ---
 st.divider()
-st.markdown("### 📈 Forecasting & NOI Impact")
+st.markdown("### 📈 Forecasting Impact & Equilibrium Audit")
 
 m1, m2, m3 = st.columns(3)
 with m1:
@@ -53,20 +68,24 @@ with m2:
 with m3:
     st.metric("NOI % Improvement", f"{improvement_pct:.2f}%")
 
-# Summary Card
+# Status Verdict
 status = "REJECT: DILUTIVE" if net_a < net_b else "ACCEPT: ACCRETIVE"
+
+# Summary Card
 st.markdown(f"""
 <div class='noi-card'>
-    <h4>Executive Verdict: {status}</h4>
-    By shifting <b>{sim_rooms} rooms</b> to Segment A, the protocol identifies a 
-    <b>{improvement_pct:.2f}%</b> improvement in departmental NOI, 
-    adding <b>﷼ {improvement_val:,.2f}</b> to the bottom line.
+    <h4>Executive Summary: {status}</h4>
+    By shifting <b>{sim_rooms} rooms</b> from Segment B to Segment A, the 
+    <b>Yield Equilibrium Protocol</b> identifies a <b>{improvement_pct:.2f}%</b> 
+    improvement in departmental NOI, contributing an additional 
+    <b>﷼ {improvement_val:,.2f}</b> to the total net-flow.
 </div>
 """, unsafe_allow_html=True)
 
 # --- 6. DATA HANDOFF & NAVIGATION ---
+# Ensuring variables are passed to Pillar 02 (Strategic Gem)
 st.session_state["current_audit"] = {
-    "label": "Direct vs Group Simulation",
+    "label": "Direct/FIT vs Group Simulation",
     "yield": net_a,
     "hurdle": net_b,
     "status": status,

@@ -140,7 +140,7 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
             st.markdown("<div class='ai-badge'>🤖 AI-ASSISTED FORECAST</div>", unsafe_allow_html=True)
             if st.session_state["ai_unlocked"]:
                 if st.button("Ask Theory Audit", key=f"ai_btn_{key}"):
-                    st.info(ask_ai_equilibrium("Audit this decision based on Yield Equilibrium pillars.", res['data']))
+                    st.info(ask_ai_equilibrium("Audit this based on Yield Equilibrium Protocol.", res['data']))
             st.markdown(f"<div class='audit-box'>📊 Total Wealth: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)
 
 draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")

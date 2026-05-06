@@ -1,9 +1,8 @@
 import streamlit as st
 from datetime import date
-import os
 
 # --- 1. SETTINGS & MINIMIZED STYLING ---
-st.set_page_config(layout="wide", page_title="Displacement Analyzer | Yield Equilibrium")
+st.set_page_config(layout="wide", page_title="Yield Equilibrium Displacement Analyzer")
 
 st.markdown("""<style>
 .block-container{padding-top:1rem!important; padding-bottom:0rem!important;}
@@ -35,7 +34,7 @@ if not st.session_state["auth"]:
 rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
-    h_name = st.text_input("Hotel", "Wyndham Garden Salalah", key="h_name_"+rk)
+    h_name = st.text_input("Hotel", "Wyndham Garden Salalah", key="h_nm_"+rk)
     h_cap = st.number_input("Inventory", 1, 1000, 237, key="cap_"+rk)
     city_search = st.text_input("📍 Location", "Salalah", key="city_"+rk)
     
@@ -70,12 +69,18 @@ def run_segment_yield(adr, meal_qty, hurdle, demand_type, comm_rate=0.0, mice=0.
     velocity_adj = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
     v_mult = velocity_adj.get(demand_type, 1.0)
     
+    # Pillar 01: Internal Wealth Stripping
     net_adr = (adr * v_mult) / tx_div
     total_meal_cost = sum(qty * meal_costs.get(p, 0) for p, qty in meal_qty.items())
     
-    unit_w = (net_adr + (mice/tx_div) + ((transport/tx_div)/sim_rooms if sim_rooms>0 else 0) - total_meal_cost - (net_adr * comm_rate)) - p01_fee - laundry
+    # Adding Group-Specific Revenue (Net of Tax)
+    net_mice = mice / tx_div
+    net_transport = (transport / tx_div) / (sim_rooms if sim_rooms > 0 else 1) 
     
-    if unit_w < hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield below {cur_sym}{hurdle} marginal floor."
+    # Total Unit Wealth calculation
+    unit_w = (net_adr + net_mice + net_transport - total_meal_cost - (net_adr * comm_rate)) - p01_fee - laundry
+    
+    if unit_w < hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield below {cur_sym}{hurdle} hurdle."
     elif unit_w < (hurdle + 5.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Yield at equilibrium window."
     else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Wealth protection targets met."
         
@@ -112,16 +117,21 @@ for seg in segments:
         demand_sel = r1[5].selectbox("Demand", ["Compression (Peak)", "High Flow", "Standard", "Distressed"], key=f"dm_{seg['key']}_{rk}")
         h_floor = r1[6].number_input("Hurdle", value=seg['hurdle'], key=f"hrd_{seg['key']}_{rk}")
 
-        r2 = st.columns([0.6,0.6,0.6,0.6,0.6,0.6, 1.2, 1.2])
+        r2 = st.columns([0.6,0.6,0.6,0.6,0.6,0.6, 1, 1, 1])
         ro, bb, hb, fb, sai, ai = r2[0].number_input("RO", 0, key=f"ro_{seg['key']}_{rk}"), r2[1].number_input("BB", 0, key=f"bb_{seg['key']}_{rk}"), r2[2].number_input("HB", 0, key=f"hb_{seg['key']}_{rk}"), r2[3].number_input("FB", 0, key=f"fb_{seg['key']}_{rk}"), r2[4].number_input("SAI", 0, key=f"sai_{seg['key']}_{rk}"), r2[5].number_input("AI", 0, key=f"ai_{seg['key']}_{rk}")
         
+        # RESTORED GROUP FIELDS
+        mice_pp = r2[6].number_input("Events (pp)", 0.0, key=f"m_{seg['key']}_{rk}") if seg['group'] else 0.0
+        laundry_pp = r2[7].number_input("Laundry (pp)", 0.0, key=f"l_{seg['key']}_{rk}") if seg['group'] else 0.0
+        trans_fixed = r2[8].number_input("Transport", 0.0, key=f"tr_{seg['key']}_{rk}") if seg['group'] else 0.0
+
         # Calculation
-        res = run_segment_yield(g_rate, {"RO":ro,"BB":bb,"HB":hb,"FB":fb,"SAI":sai,"AI":ai}, h_floor, demand_sel, (ota_comm/100 if seg['ota'] else 0.0))
+        res = run_segment_yield(g_rate, {"RO":ro,"BB":bb,"HB":hb,"FB":fb,"SAI":sai,"AI":ai}, h_floor, demand_sel, (ota_comm/100 if seg['ota'] else 0.0), mice_pp, laundry_pp, trans_fixed)
         
-        r2[6].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}")
-        r2[7].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
+        v_cols = st.columns([1, 1, 1])
+        v_cols[0].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
+        v_cols[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
         
-        # YELLOW REASON BOX (Restored)
         st.markdown(f"<div class='reason-box'>💡 <b>Strategic Reasoning:</b> {res['rsn']}</div>", unsafe_allow_html=True)
         
         wealth_results[seg['key']] = res['w']
@@ -141,7 +151,3 @@ with m3: st.metric("NOI Improvement", f"{imp_pct:.2f}%")
 st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
 st.markdown("<b>🏛️ PILLAR 01: THE NET-CORE</b> | Stripping taxes and meal costs. <b>⚖️ PILLAR 02: HURDLE GUARD</b> | Protecting peak inventory. <b>🌐 PILLAR 03: EXTERNAL VELOCITY</b> | Market demand integration.")
 st.markdown("</div>", unsafe_allow_html=True)
-
-if st.button("🚀 Run Pillar 02: Strategic AI Audit"):
-    st.session_state["current_audit"] = {"yield": net_a, "hurdle": net_b, "rooms": sim_rooms, "nights": m_nights}
-    st.switch_page("pages/strategic_gem.py")

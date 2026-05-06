@@ -1,12 +1,23 @@
 import streamlit as st
 from datetime import date
-import google.generativeai as genai  # Added for AI Integration
+import google.generativeai as genai
 
-# --- 1. STYLING (Unchanged as per your template) ---
+# --- 1. STYLING (The Global Executive Aesthetic) ---
 st.set_page_config(layout="wide", page_title="Displacement Analyzer | Yield Equilibrium")
 st.markdown("""<style>
-/* ... Your existing CSS remains exactly the same ... */
+.block-container{padding-top:1rem!important;}
+.main-title { font-size: 2.2rem!important; font-weight: 900; color: #1e3799; text-align: center!important; margin-top: -10px; text-transform: uppercase; letter-spacing: 2px; display: block; width: 100%; }
+.main-subtitle { font-size: 1.15rem!important; font-weight: 600; color: #4b6584; text-align: center!important; margin-top: -10px; margin-bottom: 30px; letter-spacing: 1px; display: block; width: 100%; }
+.card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
+.pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
+.google-window{background:#e8f0fe; padding:18px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.85rem; line-height:1.6;}
+.news-item{background:#ffffff; border-radius:8px; padding:10px; margin-bottom:8px; border-left:4px solid #ff4b4b; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+.status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
+.reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
+.audit-box{font-size:0.85rem; font-weight:700; color:#1e3799; margin-top:5px; border-top: 1px dotted #d1d9e6; padding-top: 5px;}
 .ai-badge {background: #4285f4; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; margin-bottom: 5px; display: inline-block;}
+.theory-box{background:#f9f9f9; padding:25px; border-radius:15px; border:1px solid #dee2e6; margin-top:30px}
+.contact-section{background:#1e3799; padding:30px; border-radius:15px; margin-top:40px; color:white;}
 </style>""", unsafe_allow_html=True)
 
 # --- 2. AUTHENTICATION & LEAD CAPTURE ---
@@ -25,24 +36,22 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR (STRATEGIC INPUTS & NEW SIMULATION SLIDER) ---
+# --- 3. SIDEBAR (STRATEGIC INPUTS & SIMULATION) ---
 with st.sidebar:
     st.markdown("### 👤 System Developer\nGayan Nugawela")
-    # LEAD CAPTURE FOR CONSULTING
     if not st.session_state["ai_unlocked"]:
         st.divider()
-        st.warning("🔒 Unlock AI Assistant")
-        with st.expander("Register for AI Insights"):
+        st.warning("🔒 AI Assistant Locked")
+        with st.expander("Register for Strategic AI"):
             with st.form("lead_gen"):
                 u_email = st.text_input("Work Email")
                 u_comp = st.text_input("Company")
                 if st.form_submit_button("Unlock AI"):
                     if "@" in u_email:
                         st.session_state["ai_unlocked"] = True
-                        # Analytics log can be triggered here
-                        st.success("AI Active!")
+                        st.success("AI Analytics Active!")
                         st.rerun()
-    
+
     if st.button("🧹 Clear Global Cache"):
         st.session_state["reset_key"] += 1
         st.rerun()
@@ -56,15 +65,12 @@ with st.sidebar:
     hotel_name = st.text_input("🏨 Hotel", "Wyndham Garden Salalah", key="h_nm_"+rk)
     city_search = st.text_input("📍 City Search", "Salalah", key="c_nm_"+rk)
     
-    # NEW: ROOM COUNT SIMULATION SLIDER
     st.markdown("### 🧪 Simulation Suite")
-    sim_room_count = st.slider("Simulate Group Room Count", 1, 100, 40, help="Adjust to see NOI impact vs original request")
+    sim_room_count = st.slider("Simulate Group Room Count", 1, 100, 40)
 
     d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
     d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    st.info(f"📅 **Stay Duration: {m_nights} Nights**")
-    
     inventory = st.number_input("Total Capacity", 1, 1000, 237, key="inv_c_"+rk)
     
     st.divider()
@@ -78,21 +84,9 @@ with st.sidebar:
     ota_comm = st.slider("OTA Commission %", 0, 40, 15, key="ota_v_"+rk)
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk)
 
-    st.markdown("### 🍽️ Unit Costs (Per Person Basis)")
-    meal_costs = {
-        "RO": 0.0, "BB": st.number_input("BB Cost", 0, key="bb_mc_"+rk),
-        "LN": st.number_input("LN Cost", 0, key="ln_mc_"+rk), "DN": st.number_input("DN Cost", 0, key="dn_mc_"+rk),
-        "SAI": st.number_input("SAI Cost", 0, key="sai_mc_"+rk), "AI": st.number_input("AI Cost", 0, key="ai_mc_"+rk)
-    }
+    meal_costs = {"RO": 0.0, "BB": st.number_input("BB Cost", 0, key="bb_mc_"+rk), "LN": st.number_input("LN Cost", 0, key="ln_mc_"+rk), "DN": st.number_input("DN Cost", 0, key="dn_mc_"+rk), "SAI": st.number_input("SAI Cost", 0, key="sai_mc_"+rk), "AI": st.number_input("AI Cost", 0, key="ai_mc_"+rk)}
 
-# --- 4. MARKET INTEL (Unchanged) ---
-intel_db = {
-    "salalah": {"ev": "Khareef Festival", "fl": "DXB/MCT Rotations", "news": ["Port: Stable", "Tourism: Surge", "Monsoon Rising"], "basis": "Microclimate"},
-    "colombo": {"ev": "Tourism Peak", "fl": "UL Hub Growth", "news": ["Arrivals 1.2M+", "LKR Stable", "MICE Demand"], "basis": "Recovery"}
-}
-active_intel = intel_db.get(city_search.lower(), {"ev": "Active Rotation", "fl": "Baseline", "news": ["Standard market flow."], "basis": "Equilibrium"})
-
-# --- 5. CALCULATION ENGINE (Modified for AI Awareness) ---
+# --- 4. CALCULATION ENGINE ---
 def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=0, mice=0, trans=0):
     tr = sum(rms); rn = tr * nts
     if tr <= 0: return None
@@ -104,51 +98,36 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
     unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
     total_w = (unit_w * rn) + (trans / tx_div)
     
-    # SIMULATION LOGIC: Projected NOI Impact
-    # Based on a 30-day projection involving the current inventory and wealth capture
-    monthly_cap = inventory * 30
-    noi_impact_pct = (total_w / (eff_hurdle * monthly_cap)) * 100 if eff_hurdle > 0 else 0
+    noi_impact_pct = (total_w / (eff_hurdle * inventory * 30)) * 100 if eff_hurdle > 0 else 0
 
     if unit_w < eff_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym}{eff_hurdle} hurdle."
     elif unit_w < (eff_hurdle + 3.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Yield at equilibrium window."
     else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Wealth targets met."
-    if (tr / inventory) >= 0.50: rsn += " | ⚠️ DISPLACEMENT: Segment ≥50% capacity."
     
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w, "noi_pct": noi_impact_pct, "data": locals()}
 
-# --- 6. DASHBOARD ---
+# --- 5. AI LOGIC (Updated Error Handling) ---
+def ask_ai_equilibrium(user_query, context_data):
+    try:
+        # Securely retrieve key from Streamlit Secrets
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"]) 
+        model = genai.GenerativeModel('gemini-1.5-pro', system_instruction="You are Gayan Nugawela's Yield Equilibrium Assistant. Analyze displacement results and give a verdict based on the 3 Pillars of Net-Flow and NOI protection.")
+        response = model.generate_content(f"Data: {context_data}. Question: {user_query}")
+        return response.text
+    except Exception as e:
+        # This will show the actual error message in the UI for debugging
+        return f"System Note: {str(e)}"
+
+# --- 6. DASHBOARD DRAWING ---
 st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
 st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
 
-# --- NEW: AI CONSULTANT CORE ---
-def ask_ai_equilibrium(user_query, context_data=None):
-    if not st.session_state["ai_unlocked"]: return "Unlock AI Assistant for full strategic audit."
-    try:
-        # Use your specific theory as system instructions
-        genai.configure(api_key="YOUR_API_KEY") # You will need to insert your key here
-        model = genai.GenerativeModel('gemini-1.5-pro', system_instruction="You are Gayan Nugawela's Yield Equilibrium Assistant. Use the principles of Net-Flow scaling, TRevPAR, and NOI Protection. Analyze displacement math provided and give a verdict based on the 3 Pillars.")
-        
-        full_prompt = f"Context: {context_data}. User Question: {user_query}"
-        response = model.generate_content(full_prompt)
-        return response.text
-    except:
-        return "AI Module is currently processing complex wealth patterns. Please try again in a moment."
-
-# TABS (Unchanged)
-t1, t2 = st.tabs(["🌐 Aviation & Events", "🗞️ Market News Feed"])
-with t1: st.markdown(f"<div class='google-window'><b>🌐 Aviation Intelligence: {city_search}</b><br>• <b>Events:</b> {active_intel['ev']} | <b>Basis:</b> {active_intel['basis']}<br>• <b>Velocity:</b> {v_mult}x Applied</div>", unsafe_allow_html=True)
-with t2:
-    st.markdown(f"<div class='google-window' style='background:#fdf2f2; border-color:#ff4b4b;'><b style='color:#ff4b4b;'>🗞️ Market Alerts: {city_search} | {date.today().strftime('%B %d, %Y')}</b></div>", unsafe_allow_html=True)
-    for item in active_intel['news']: st.markdown(f"<div class='news-item'>{item}</div>", unsafe_allow_html=True)
-
-# MODIFIED DRAW SEGMENT WITH AI ASSIST & SIMULATION
 def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=False):
     st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
     c_in, c_res = st.columns([2.6, 1])
     with c_in:
         st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
         r1, r2, r3, r4, r5 = st.columns([0.8,0.8,0.8,1.3,1.3])
-        # LINKED TO SIMULATION SLIDER FOR GROUPS
         init_rms = sim_room_count if (group and key != "fit" and key != "ota") else 0
         sgl = r1.number_input("SGL", 0, value=init_rms, key=f"s_{key}_{rk}")
         dbl = r2.number_input("DBL", 0, key=f"d_{key}_{rk}"); tpl = r3.number_input("TPL", 0, key=f"t_{key}_{rk}")
@@ -172,27 +151,18 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
             st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
             st.markdown(f"<div class='reason-box'>💡 <b>Strategic Verdict:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
             
-            # AI IMPACT FORECASTING
             st.markdown("<div class='ai-badge'>🤖 AI-ASSISTED FORECAST</div>", unsafe_allow_html=True)
             st.markdown(f"<div style='font-size:0.75rem; color:#4285f4; font-weight:bold;'>Projected 30-Day NOI Impact: +{res['noi_pct']:.2f}%</div>", unsafe_allow_html=True)
             
             if st.session_state["ai_unlocked"]:
                 if st.button("Ask Theory Audit", key=f"ai_btn_{key}"):
-                    audit = ask_ai_equilibrium("Should I accept this group based on current wealth capture?", res['data'])
-                    st.info(audit)
+                    # The blue box will now show the audit OR the error message
+                    st.info(ask_ai_equilibrium("Provide an audit for this specific segment based on Yield Equilibrium Protocol.", res['data']))
             
             st.markdown(f"<div class='audit-box'>📊 {res['rn']} RN | Total Wealth: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)
 
-# DRAW SEGMENTS (Unchanged)
 draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
 draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
 draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
 draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
 draw_seg("5. TOUR & TRAVEL (GROUPS)", "tnt", 45, 25, "#e67e22", group=True)
-
-# --- 7. METHODOLOGY & THEORY (Unchanged) ---
-st.divider()
-# ... (Your existing Theory Section) ...
-
-# --- 8. FOOTER (Unchanged) ---
-# ... (Your existing Footer Section) ...

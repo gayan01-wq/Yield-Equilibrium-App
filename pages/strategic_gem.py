@@ -46,11 +46,11 @@ st.divider()
 st.subheader("🤖 Equilibrium Theory Audit")
 
 try:
-    # Explicitly using REST transport and forcing a specific API version often solves the 404/v1beta loop
+    # Use REST transport to bypass gRPC/v1beta routing errors often found in cloud environments
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"], transport='rest')
     
-    # Using the specific stable model name
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    # Use the explicit model path to ensure compatibility
+    model = genai.GenerativeModel('models/gemini-1.5-flash')
     
     prompt = f"""
     As a senior AI Revenue Consultant, provide a professional audit for:
@@ -67,7 +67,9 @@ try:
         st.markdown(f"<div class='theory-card'>{response.text}</div>", unsafe_allow_html=True)
 
 except Exception as e:
+    # Properly captures the exception 'e' to avoid NameError crashes
     st.error(f"Audit Connection Error: {str(e)}")
+    st.info("Tip: Ensure your GEMINI_API_KEY is correctly set in Streamlit Secrets.")
 
 # --- 5. NAVIGATION ---
 st.markdown("<br>", unsafe_allow_html=True)

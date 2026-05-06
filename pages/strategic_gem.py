@@ -6,9 +6,27 @@ st.set_page_config(layout="wide", page_title="Executive Overview | Yield Equilib
 
 st.markdown("""
 <style>
-    .main-header { color: #1e3799; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
-    .theory-card { background: white; padding: 25px; border-radius: 12px; border-left: 10px solid #1e3799; box-shadow: 0 4px 6px rgba(0,0,0,0.1); line-height: 1.6; color: #2f3640; }
-    .metric-container { background: #f8faff; padding: 15px; border-radius: 10px; border: 1px solid #d1d9e6; }
+    .main-header { 
+        color: #1e3799; 
+        font-weight: 900; 
+        text-transform: uppercase; 
+        letter-spacing: 1px;
+    }
+    .theory-card { 
+        background: white; 
+        padding: 25px; 
+        border-radius: 12px; 
+        border-left: 10px solid #1e3799; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        line-height: 1.6;
+        color: #2f3640;
+    }
+    .metric-container {
+        background: #f8faff;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #d1d9e6;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -31,10 +49,12 @@ with c1:
     st.markdown("<div class='metric-container'>", unsafe_allow_html=True)
     st.metric("Net Wealth", f"﷼ {audit['yield']:,.2f}")
     st.markdown("</div>", unsafe_allow_html=True)
+
 with c2:
     st.markdown("<div class='metric-container'>", unsafe_allow_html=True)
     st.metric("Effective Hurdle", f"﷼ {audit['hurdle']:,.2f}")
     st.markdown("</div>", unsafe_allow_html=True)
+
 with c3:
     st.markdown("<div class='metric-container'>", unsafe_allow_html=True)
     st.metric("Verdict", audit['status'])
@@ -46,20 +66,22 @@ st.divider()
 st.subheader("🤖 Equilibrium Theory Audit")
 
 try:
-    # Use REST transport to bypass gRPC/v1beta routing errors often found in cloud environments
+    # Use REST transport to bypass gRPC/v1beta routing errors
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"], transport='rest')
     
-    # Use the explicit model path to ensure compatibility
+    # Use the explicit model path
     model = genai.GenerativeModel('models/gemini-1.5-flash')
     
     prompt = f"""
     As a senior AI Revenue Consultant, provide a professional audit for:
+    
     Segment: {audit['label']}
     Result: {audit['status']}
     Net Wealth: ﷼ {audit['yield']}
     Effective Hurdle: ﷼ {audit['hurdle']}
     
     Analyze based on Pillar 02: Wealth Protection and yield equilibrium optimization.
+    Keep the tone executive and focused on high-level hospitality revenue strategy.
     """
     
     with st.spinner("Consulting the Yield Equilibrium Protocol..."):
@@ -67,7 +89,7 @@ try:
         st.markdown(f"<div class='theory-card'>{response.text}</div>", unsafe_allow_html=True)
 
 except Exception as e:
-    # Properly captures the exception 'e' to avoid NameError crashes
+    # Properly defines 'e' to avoid NameError crashes
     st.error(f"Audit Connection Error: {str(e)}")
     st.info("Tip: Ensure your GEMINI_API_KEY is correctly set in Streamlit Secrets.")
 

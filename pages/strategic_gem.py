@@ -31,7 +31,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- 2. DATA VALIDATION ---
-# Checks for segment data from Pillar 01
 if "current_audit" not in st.session_state:
     st.warning("⚠️ No active analysis found. Please run a calculation on the Home page first.")
     if st.button("⬅ Back to Analyzer"):
@@ -67,10 +66,10 @@ st.divider()
 st.subheader("🤖 Equilibrium Theory Audit")
 
 try:
-    # Forces REST transport to fix the 404/v1beta routing loop seen in the screenshot
+    # Forces REST transport to bypass the v1beta routing issue seen in the screenshot
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"], transport='rest')
     
-    # Uses the explicit model path for maximum compatibility
+    # Explicitly targets the stable model directory
     model = genai.GenerativeModel('models/gemini-1.5-flash')
     
     prompt = f"""
@@ -81,6 +80,7 @@ try:
     Effective Hurdle: ﷼ {audit['hurdle']}
     
     Analyze based on Pillar 02: Wealth Protection and yield equilibrium optimization.
+    Keep the tone professional and focused on high-level hospitality revenue metrics.
     """
     
     with st.spinner("Consulting the Yield Equilibrium Protocol..."):
@@ -88,7 +88,7 @@ try:
         st.markdown(f"<div class='theory-card'>{response.text}</div>", unsafe_allow_html=True)
 
 except Exception as e:
-    # Correctly defines 'e' to avoid the NameError from your previous screenshot
+    # Captures 'e' correctly to prevent NameError crashes
     st.error(f"Audit Connection Error: {str(e)}")
     st.info("Tip: Ensure your GEMINI_API_KEY is correctly set in Streamlit Secrets.")
 

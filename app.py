@@ -1,7 +1,7 @@
 import streamlit as st
 
-# --- 1. SETTINGS & STYLING ---
-st.set_page_config(page_title="Yield Equilibrium Analyzer", layout="wide")
+# --- 1. FORCE WIDE LAYOUT & STYLING ---
+st.set_page_config(page_title="Yield Equilibrium Analyzer", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
 <style>
@@ -24,36 +24,33 @@ st.markdown("""
 
 # --- 2. SIDEBAR SIMULATION CONTROLS ---
 st.sidebar.markdown("### 📊 Pillar 01: Simulation")
-# The simulation bar for 5 to 10,000 rooms as requested
 sim_rooms = st.sidebar.slider("Simulate Room Inventory Shift", 5, 10000, 40)
 st.sidebar.info(f"Analyzing the impact of shifting {sim_rooms} rooms between segments.")
 
-# --- 3. INPUT DATA ---
+# --- 3. INPUT DATA (FORCED COLUMNS) ---
 st.markdown("<h1 class='main-header'>Yield Equilibrium Displacement Analyzer</h1>", unsafe_allow_html=True)
 st.markdown("### Pillar 01: Total Net-Flow Logic")
 st.divider()
 
-col1, col2 = st.columns(2)
+# Creating two distinct columns to ensure formatting doesn't collapse
+col1, col2 = st.columns(2, gap="large")
 
 with col1:
-    st.subheader("Segment A: Direct / FIT")
-    adr_a = st.number_input("ADR (A)", value=85.0)
-    cost_a = st.number_input("Cost per Room (A)", value=15.0)
+    st.markdown("### Segment A: Direct / FIT")
+    adr_a = st.number_input("ADR (A)", value=85.0, key="adr_a_input")
+    cost_a = st.number_input("Cost per Room (A)", value=15.0, key="cost_a_input")
     net_a = adr_a - cost_a
 
 with col2:
-    st.subheader("Segment B: Group / Wholesale")
-    adr_b = st.number_input("ADR (B)", value=65.0)
-    cost_b = st.number_input("Cost per Room (B)", value=10.0)
+    st.markdown("### Segment B: Group / Wholesale")
+    adr_b = st.number_input("ADR (B)", value=65.0, key="adr_b_input")
+    cost_b = st.number_input("Cost per Room (B)", value=10.0, key="cost_b_input")
     net_b = adr_b - cost_b
 
 # --- 4. FORECASTING & NOI CALCULATIONS ---
-# Calculate the total value of the shift based on the Simulation Bar
 baseline_noi = net_b * sim_rooms
 projected_noi = net_a * sim_rooms
 improvement_val = projected_noi - baseline_noi
-
-# Calculate % Improvement (NOI Growth)
 improvement_pct = (improvement_val / baseline_noi) * 100 if baseline_noi != 0 else 0
 
 # --- 5. EXECUTIVE DASHBOARD ---
@@ -83,7 +80,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- 6. DATA HANDOFF & NAVIGATION ---
-# Ensuring variables are passed to Pillar 02 (Strategic Gem)
 st.session_state["current_audit"] = {
     "label": "Direct/FIT vs Group Simulation",
     "yield": net_a,

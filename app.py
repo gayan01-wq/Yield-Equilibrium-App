@@ -10,14 +10,10 @@ st.markdown("""<style>
 .main-subtitle { font-size: 1.15rem!important; font-weight: 600; color: #4b6584; text-align: center!important; margin-top: -10px; margin-bottom: 30px; letter-spacing: 1px; display: block; width: 100%; }
 .card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
 .pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
-.google-window{background:#e8f0fe; padding:18px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.85rem; line-height:1.6;}
-.news-item{background:#ffffff; border-radius:8px; padding:10px; margin-bottom:8px; border-left:4px solid #ff4b4b; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
 .status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
 .reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
 .audit-box{font-size:0.85rem; font-weight:700; color:#1e3799; margin-top:5px; border-top: 1px dotted #d1d9e6; padding-top: 5px;}
 .ai-badge {background: #4285f4; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; margin-bottom: 5px; display: inline-block;}
-.theory-box{background:#f9f9f9; padding:25px; border-radius:15px; border:1px solid #dee2e6; margin-top:30px}
-.contact-section{background:#1e3799; padding:30px; border-radius:15px; margin-top:40px; color:white;}
 </style>""", unsafe_allow_html=True)
 
 # --- 2. AUTHENTICATION & LEAD CAPTURE ---
@@ -36,7 +32,7 @@ if not st.session_state["auth"]:
             else: st.error("Access Denied")
     st.stop()
 
-# --- 3. SIDEBAR (STRATEGIC INPUTS & SIMULATION) ---
+# --- 3. SIDEBAR ---
 with st.sidebar:
     st.markdown("### 👤 System Developer\nGayan Nugawela")
     if not st.session_state["ai_unlocked"]:
@@ -63,23 +59,14 @@ with st.sidebar:
     cur_sym = currencies[cur_choice]
 
     hotel_name = st.text_input("🏨 Hotel", "Wyndham Garden Salalah", key="h_nm_"+rk)
-    city_search = st.text_input("📍 City Search", "Salalah", key="c_nm_"+rk)
-    
-    st.markdown("### 🧪 Simulation Suite")
-    sim_room_count = st.slider("Simulate Group Room Count", 1, 100, 40)
-
-    d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
-    d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
-    m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     inventory = st.number_input("Total Capacity", 1, 1000, 237, key="inv_c_"+rk)
     
     st.divider()
-    st.markdown("### 📊 Pillar 03: Velocity")
+    st.markdown("### 📊 Velocity")
     otb_occ = st.slider("OTB %", 0, 100, 15, key="otb_s_"+rk)
     avg_hist = st.slider("Hist. Benchmark %", 0, 100, 45, key="hst_s_"+rk)
     v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
 
-    st.divider()
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
     ota_comm = st.slider("OTA Commission %", 0, 40, 15, key="ota_v_"+rk)
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk)
@@ -98,6 +85,7 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
     unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
     total_w = (unit_w * rn) + (trans / tx_div)
     
+    # Pillar 02: NOI Impact Calculation
     noi_impact_pct = (total_w / (eff_hurdle * inventory * 30)) * 100 if eff_hurdle > 0 else 0
 
     if unit_w < eff_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym}{eff_hurdle} hurdle."
@@ -106,18 +94,19 @@ def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=
     
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w, "noi_pct": noi_impact_pct, "data": locals()}
 
-# --- 5. AI LOGIC (Stability & Version Fix) ---
+# --- 5. AI LOGIC (Stability & Lead Capture) ---
 def ask_ai_equilibrium(user_query, context_data):
     try:
+        # Securely using your new key from the validated TOML secret
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"]) 
-        # Stable model name to fix the 404 error
-        model = genai.GenerativeModel('gemini-1.5-flash') 
-        response = model.generate_content(f"Data: {context_data}. Question: {user_query}")
+        model = genai.GenerativeModel('gemini-1.5-flash', 
+            system_instruction="You are Gayan Nugawela's Yield Equilibrium Assistant. Audit results based on Net-Flow pillars.")
+        response = model.generate_content(f"Context: {context_data}. Question: {user_query}")
         return response.text
     except Exception as e:
         return f"System Note: {str(e)}"
 
-# --- 6. DASHBOARD DRAWING ---
+# --- 6. DASHBOARD ---
 st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
 st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
 
@@ -127,8 +116,7 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
     with c_in:
         st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
         r1, r2, r3, r4, r5 = st.columns([0.8,0.8,0.8,1.3,1.3])
-        init_rms = sim_room_count if (group and key != "fit" and key != "ota") else 0
-        sgl = r1.number_input("SGL", 0, value=init_rms, key=f"s_{key}_{rk}")
+        sgl = r1.number_input("SGL", 0, key=f"s_{key}_{rk}")
         dbl = r2.number_input("DBL", 0, key=f"d_{key}_{rk}"); tpl = r3.number_input("TPL", 0, key=f"t_{key}_{rk}")
         applied_adr = r4.number_input(f"Rate ({cur_sym})", value=float(suggest_adr * v_mult), key=f"a_{key}_{rk}")
         floor = r5.number_input(f"Base Hurdle", value=float(floor_def), key=f"f_{key}_{rk}")
@@ -142,22 +130,18 @@ def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=Fals
             m_c = g_row[0].number_input(f"MICE", 0.0, key=f"mi_{key}_{rk}"); t_c = g_row[1].number_input(f"Trans", 0.0, key=f"tr_{key}_{rk}"); l_c = g_row[2].number_input(f"Laundry", 0.0, key=f"la_{key}_{rk}")
         st.markdown("</div>", unsafe_allow_html=True)
     
-    res = run_yield([sgl, dbl, tpl], m_nights, applied_adr, {"RO":p_ro,"BB":p_bb,"LN":p_ln,"DN":p_dn,"SAI":p_sai,"AI":p_ai}, floor, demand_sel, (ota_comm/100 if is_ota else 0.0), l_c, m_c, t_c)
+    res = run_yield([sgl, dbl, tpl], 1, applied_adr, {"RO":p_ro,"BB":p_bb,"LN":p_ln,"DN":p_dn,"SAI":p_sai,"AI":p_ai}, floor, demand_sel, (ota_comm/100 if is_ota else 0.0), l_c, m_c, t_c)
     
     if res:
         with c_res:
             st.metric(f"Net Wealth", f"{cur_sym} {res['w']:,.2f}")
             st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
             st.markdown(f"<div class='reason-box'>💡 <b>Strategic Verdict:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
-            
             st.markdown("<div class='ai-badge'>🤖 AI-ASSISTED FORECAST</div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='font-size:0.75rem; color:#4285f4; font-weight:bold;'>Projected 30-Day NOI Impact: +{res['noi_pct']:.2f}%</div>", unsafe_allow_html=True)
-            
             if st.session_state["ai_unlocked"]:
                 if st.button("Ask Theory Audit", key=f"ai_btn_{key}"):
-                    st.info(ask_ai_equilibrium("Provide an audit for this specific segment based on Yield Equilibrium Protocol.", res['data']))
-            
-            st.markdown(f"<div class='audit-box'>📊 {res['rn']} RN | Total Wealth: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)
+                    st.info(ask_ai_equilibrium("Audit this based on Yield Equilibrium Protocol.", res['data']))
+            st.markdown(f"<div class='audit-box'>📊 Total Wealth: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)
 
 draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
 draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)

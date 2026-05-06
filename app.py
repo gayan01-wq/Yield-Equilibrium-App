@@ -1,137 +1,79 @@
 import streamlit as st
-import google.generativeai as genai
 
-# --- 1. STYLING (The Global Executive Aesthetic) ---
-st.set_page_config(layout="wide", page_title="Displacement Analyzer | Yield Equilibrium")
-st.markdown("""<style>
-.block-container{padding-top:1rem!important;}
-.main-title { font-size: 2.2rem!important; font-weight: 900; color: #1e3799; text-align: center!important; margin-top: -10px; text-transform: uppercase; letter-spacing: 2px; display: block; width: 100%; }
-.main-subtitle { font-size: 1.15rem!important; font-weight: 600; color: #4b6584; text-align: center!important; margin-top: -10px; margin-bottom: 30px; letter-spacing: 1px; display: block; width: 100%; }
-.card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
-.pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
-.status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
-.reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
-</style>""", unsafe_allow_html=True)
+# --- 1. SETTINGS & STYLING ---
+st.set_page_config(page_title="Yield Equilibrium Analyzer", layout="wide")
 
-# --- 2. AUTHENTICATION ---
-if "auth" not in st.session_state: st.session_state["auth"] = False
-if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
+st.markdown("""
+<style>
+    .noi-card { background-color: #f0f2f6; padding: 20px; border-radius: 10px; border-left: 5px solid #1e3799; }
+    .main-header { color: #1e3799; font-weight: 900; text-transform: uppercase; }
+</style>
+""", unsafe_allow_html=True)
 
-if not st.session_state["auth"]:
-    st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
-    with st.form("login_gate"):
-        pwd = st.text_input("Access Key", type="password")
-        if st.form_submit_button("Unlock"):
-            if pwd == "Gayan2026": #
-                st.session_state["auth"] = True
-                st.rerun()
-            else: st.error("Access Denied")
-    st.stop()
+# --- 2. SIDEBAR SIMULATION CONTROLS ---
+st.sidebar.markdown("### 📊 Pillar 01: Simulation")
+# Simulation bar for 5 to 10,000 rooms as requested
+sim_rooms = st.sidebar.slider("Simulate Room Inventory Shift", 5, 10000, 40)
+st.sidebar.info(f"Analyzing the impact of shifting {sim_rooms} rooms.")
 
-# --- 3. SIDEBAR (Pillar 01: Governance Controls) ---
-with st.sidebar:
-    st.markdown("### 👤 System Developer\nGayan Nugawela") #
-    if st.button("🧹 Clear Global Cache"):
-        st.session_state["reset_key"] += 1
-        st.rerun()
-    st.divider()
-    rk = str(st.session_state["reset_key"]) 
-    
-    cur_sym = "﷼"
-    st.text_input("🏨 Hotel", "Wyndham Garden Salalah", key="h_nm_"+rk) #
-    inventory = st.number_input("Total Capacity", 1, 1000, 237, key="inv_c_"+rk) #
-    
-    st.divider()
-    st.markdown("### 📊 Market Velocity") #
-    otb_occ = st.slider("OTB %", 0, 100, 15, key="otb_s_"+rk) #
-    avg_hist = st.slider("Hist. Benchmark %", 0, 100, 45, key="hst_s_"+rk) #
-    v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
+# --- 3. INPUT DATA ---
+st.markdown("<h1 class='main-header'>Yield Equilibrium Displacement Analyzer</h1>", unsafe_allow_html=True)
+st.divider()
 
-    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk) #
-    ota_comm = st.slider("OTA Commission %", 0, 40, 15, key="ota_v_"+rk) #
-    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk) #
+col1, col2 = st.columns(2)
 
-    st.markdown("#### 🍲 Meal Basis Costs") #
-    m_costs = {
-        "BB": st.number_input("BB Cost", value=5.0, key="bb_mc_"+rk),
-        "HB": st.number_input("HB Cost", value=10.0, key="hb_mc_"+rk),
-        "FB": st.number_input("FB Cost", value=15.0, key="fb_mc_"+rk),
-        "SAI": st.number_input("SAI Cost", value=20.0, key="sai_mc_"+rk),
-        "AI": st.number_input("AI Cost", value=25.0, key="ai_mc_"+rk)
-    }
+with col1:
+    st.subheader("Segment A: Direct / FIT")
+    adr_a = st.number_input("ADR (A)", value=85.0)
+    cost_a = st.number_input("Cost per Room (A)", value=15.0)
+    net_a = adr_a - cost_a
 
-# --- 4. ENGINE LOGIC ---
-def run_yield(rms_list, adr, hurdle, demand_type, meals, is_ota=False):
-    tr = sum(rms_list)
-    if tr <= 0: return None
-    
-    # Pillar 02: Wealth Protection Logic
-    demand_adj = {"Compression (Peak)": 15.0, "High Flow": 5.0, "Standard": 0.0, "Distressed": -5.0}
-    eff_hurdle = hurdle + demand_adj.get(demand_type, 0)
-    
-    net_adr = adr / tx_div
-    comm = (net_adr * (ota_comm/100)) if is_ota else 0
-    total_meal_cost = sum(meals[k]*m_costs[k] for k in meals)
-    avg_meal_unit = total_meal_cost / tr
-    
-    unit_w = (net_adr - avg_meal_unit - comm) - p01_fee
-    
-    if unit_w < eff_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym}{eff_hurdle} hurdle."
-    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Wealth targets met."
-    
-    return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "eff": eff_hurdle}
+with col2:
+    st.subheader("Segment B: Group / Wholesale")
+    adr_b = st.number_input("ADR (B)", value=65.0)
+    cost_b = st.number_input("Cost per Room (B)", value=10.0)
+    net_b = adr_b - cost_b
 
-# --- 5. DASHBOARD ---
-st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
-st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
+# --- 4. NOI IMPACT CALCULATIONS ---
+# Compare Segment A (Target) vs Segment B (Displaced)
+baseline_noi = net_b * sim_rooms
+projected_noi = net_a * sim_rooms
+improvement_val = projected_noi - baseline_noi
+improvement_pct = (improvement_val / baseline_noi) * 100 if baseline_noi != 0 else 0
 
-def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False):
-    st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
-    c_in, c_res = st.columns([2.6, 1])
-    
-    with c_in:
-        st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
-        r1, r2, r3, r4 = st.columns([1,1,1,1.5])
-        sgl = r1.number_input("SGL", 0, key=f"s_{key}_{rk}")
-        dbl = r2.number_input("DBL", 0, key=f"d_{key}_{rk}")
-        tpl = r3.number_input("TPL", 0, key=f"t_{key}_{rk}")
-        rate = r4.number_input(f"Applied Rate ({cur_sym})", value=float(suggest_adr * v_mult), key=f"a_{key}_{rk}")
-        
-        m_row = st.columns([1,1,1,1,1,1.5])
-        m_bb = m_row[0].number_input("BB", 0, key=f"mbb_{key}_{rk}")
-        m_hb = m_row[1].number_input("HB", 0, key=f"mhb_{key}_{rk}")
-        m_fb = m_row[2].number_input("FB", 0, key=f"mfb_{key}_{rk}")
-        m_sai = m_row[3].number_input("SAI", 0, key=f"msai_{key}_{rk}")
-        m_ai = m_row[4].number_input("AI", 0, key=f"mai_{key}_{rk}")
-        demand = m_row[5].selectbox("Demand", ["Compression (Peak)", "High Flow", "Standard", "Distressed"], key=f"dm_{key}_{rk}")
-        
-        hurdle = st.number_input("Base Hurdle", value=float(floor_def), key=f"hrd_{key}_{rk}")
-        st.markdown("</div>", unsafe_allow_html=True)
+# --- 5. EXECUTIVE DASHBOARD ---
+st.divider()
+st.markdown("### 📈 Forecasting & NOI Impact")
 
-    meals = {"BB":m_bb, "HB":m_hb, "FB":m_fb, "SAI":m_sai, "AI":m_ai}
-    res = run_yield([sgl, dbl, tpl], rate, hurdle, demand, meals, is_ota)
-    
-    with c_res:
-        if res:
-            st.metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}")
-            st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='reason-box'>💡 <b>Verdict:</b> {res['rsn']}</div>", unsafe_allow_html=True)
-            
-            # --- STRATEGIC HANDOFF TO PAGES/STRATEGIC_GEM.PY ---
-            if st.button("View Detailed Overview ↗", key=f"gem_btn_{key}"):
-                st.session_state["current_audit"] = {
-                    "label": label,
-                    "yield": res['w'],
-                    "status": res['st'],
-                    "hurdle": res['eff']
-                }
-                st.switch_page("pages/strategic_gem.py")
-        else:
-            st.info("Input room count.")
+m1, m2, m3 = st.columns(3)
+with m1:
+    st.metric("Net Flow (A-B)", f"﷼ {net_a - net_b:,.2f}")
+with m2:
+    st.metric("Total NOI Gain", f"﷼ {improvement_val:,.2f}")
+with m3:
+    st.metric("NOI % Improvement", f"{improvement_pct:.2f}%")
 
-# --- 6. SEGMENT GENERATION ---
-draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
-draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
-draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e")
-draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6")
-draw_seg("5. TOUR & TRAVEL (GROUPS)", "tnt", 45, 25, "#e67e22")
+# Summary Card
+status = "REJECT: DILUTIVE" if net_a < net_b else "ACCEPT: ACCRETIVE"
+st.markdown(f"""
+<div class='noi-card'>
+    <h4>Executive Verdict: {status}</h4>
+    By shifting <b>{sim_rooms} rooms</b> to Segment A, the protocol identifies a 
+    <b>{improvement_pct:.2f}%</b> improvement in departmental NOI, 
+    adding <b>﷼ {improvement_val:,.2f}</b> to the bottom line.
+</div>
+""", unsafe_allow_html=True)
+
+# --- 6. DATA HANDOFF & NAVIGATION ---
+st.session_state["current_audit"] = {
+    "label": "Direct vs Group Simulation",
+    "yield": net_a,
+    "hurdle": net_b,
+    "status": status,
+    "improvement": improvement_pct,
+    "rooms": sim_rooms
+}
+
+st.markdown("<br>", unsafe_allow_html=True)
+if st.button("🚀 Run Pillar 02: Strategic AI Audit"):
+    st.switch_page("pages/strategic_gem.py")

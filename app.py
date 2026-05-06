@@ -35,7 +35,7 @@ rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
     h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah", key="h_nm_"+rk)
-    h_cap = st.number_input("Total Capacity", 1, 1000, 237, key="cap_"+rk)
+    h_cap = st.number_input("Total Capacity", min_value=1, value=237, step=1, key="cap_"+rk)
     city_search = st.text_input("📍 Market Location", "Salalah", key="city_"+rk)
     
     st.divider()
@@ -51,12 +51,17 @@ with st.sidebar:
 
     st.divider()
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
-    ota_comm = st.slider("OTA Comm %", 0, 40, 15, key="ota_v_"+rk)
-    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk)
+    ota_comm = st.number_input("OTA Comm %", min_value=0, max_value=100, value=15, step=1, key="ota_v_"+rk)
+    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00, step=0.1, key="p01_v_"+rk)
 
-    meal_costs = {"RO": 0.0, "BB": st.number_input("BB", 0.0, key="bb_mc_"+rk),
-                  "HB": st.number_input("HB", 0.0, key="hb_mc_"+rk), "FB": st.number_input("FB", 0.0, key="fb_mc_"+rk),
-                  "SAI": st.number_input("SAI", 0.0, key="sai_mc_"+rk), "AI": st.number_input("AI", 0.0, key="ai_mc_"+rk)}
+    st.markdown("### 🍽️ Meal Plan Cost (PP)")
+    meal_costs = {
+        "BF": st.number_input("Breakfast (BF)", value=2.00, step=0.5, key="bf_mc_"+rk),
+        "LN": st.number_input("Lunch (LN)", value=0.0, step=0.5, key="ln_mc_"+rk),
+        "DN": st.number_input("Dinner (DN)", value=0.0, step=0.5, key="dn_mc_"+rk),
+        "SAI": st.number_input("Soft All-In (SAI)", value=0.0, step=0.5, key="sai_mc_"+rk),
+        "AI": st.number_input("All-Inclusive (AI)", value=0.0, step=0.5, key="ai_mc_"+rk)
+    }
 
 # --- 4. MARKET INTEL DATA ---
 intel_db = {
@@ -79,7 +84,7 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     divisor = max(total_rooms, 10) if is_group else max(total_rooms, 1)
     group_rev = (mice / tx_div) + ((transport / tx_div) / divisor) if is_group else 0
     
-    unit_w = (net_adr + group_rev - total_meal_cost - (net_adr * comm_rate)) - p01_fee - laundry
+    unit_w = (net_adr + group_rev - total_meal_cost - (net_adr * (comm_rate/100))) - p01_fee - laundry
     
     if unit_w < dynamic_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", "Displaced by Dynamic Peak Hurdle."
     elif unit_w < (dynamic_hurdle + 5.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "At equilibrium window."
@@ -87,10 +92,9 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
         
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "vm": v_mult, "dh": dynamic_hurdle}
 
-# --- 6. TOP DASHBOARD ---
+# --- 6. TOP DASHBOARD & MARKET INSIGHTS ---
 st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
 st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
-
 st.markdown(f"""<div class='google-window'><b>🌐 Market Intelligence: {city_search}</b> | {active_intel['fl']} | {active_intel['ev']} | {active_intel['news']}</div>""", unsafe_allow_html=True)
 
 # --- 7. SEGMENT AUDITS ---
@@ -109,53 +113,47 @@ for seg in segments:
         with st.container():
             st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
             r1 = st.columns([1, 0.6, 0.6, 0.6, 0.6, 1.2, 1.2])
-            g_rate = r1[0].number_input(f"Gross Rate", value=29.0 if seg['key']=='tnt' else 75.0, key=f"adr_{seg['key']}_{rk}")
+            g_rate = r1[0].number_input(f"Gross Rate", value=29.0 if seg['key']=='tnt' else 75.0, step=0.5, key=f"adr_{seg['key']}_{rk}")
             min_v = 10 if seg['group'] else 1
-            sgl, dbl, tpl, qrpl = r1[1].number_input("SGL", 0, key=f"s_{seg['key']}_{rk}"), r1[2].number_input("DBL", min_v if seg['key']=='tnt' else 0, key=f"d_{seg['key']}_{rk}"), r1[3].number_input("TPL", 0, key=f"t_{seg['key']}_{rk}"), r1[4].number_input("QRPL", 0, key=f"q_{seg['key']}_{rk}")
+            sgl = r1[1].number_input("SGL", value=0, step=1, key=f"s_{seg['key']}_{rk}")
+            dbl = r1[2].number_input("DBL", value=min_v if seg['key']=='tnt' else 0, step=1, key=f"d_{seg['key']}_{rk}")
+            tpl = r1[3].number_input("TPL", value=0, step=1, key=f"t_{seg['key']}_{rk}")
+            qrpl = r1[4].number_input("QRPL", value=0, step=1, key=f"q_{seg['key']}_{rk}")
             rooms_total = sgl + dbl + tpl + qrpl
             demand_sel = r1[5].selectbox("Market Demand", ["Compression (Peak)", "High Flow", "Standard", "Distressed"], key=f"dm_{seg['key']}_{rk}")
-            h_base = r1[6].number_input("Base Hurdle", value=seg['hurdle'], key=f"hrd_{seg['key']}_{rk}")
+            h_base = r1[6].number_input("Base Hurdle", value=seg['hurdle'], step=1.0, key=f"hrd_{seg['key']}_{rk}")
 
-            r2 = st.columns([0.6,0.6,0.6,0.6,0.6,0.6, 1.1, 1.1, 1.1])
-            ro, bb, hb, fb, sai, ai = r2[0].number_input("RO", 0, key=f"ro_{seg['key']}_{rk}"), r2[1].number_input("BB", 1 if seg['key']=='tnt' else 0, key=f"bb_{seg['key']}_{rk}"), r2[2].number_input("HB", 0, key=f"hb_{seg['key']}_{rk}"), r2[3].number_input("FB", 0, key=f"fb_{seg['key']}_{rk}"), r2[4].number_input("SAI", 0, key=f"sai_{seg['key']}_{rk}"), r2[5].number_input("AI", 0, key=f"ai_{seg['key']}_{rk}")
-            m_pp, l_pp, t_f = r2[6].number_input("Events", 0.0, key=f"m_{seg['key']}_{rk}") if seg['group'] else 0.0, r2[7].number_input("Laundry", 0.0, key=f"l_{seg['key']}_{rk}") if seg['group'] else 0.0, r2[8].number_input("Transport", 0.0, key=f"tr_{seg['key']}_{rk}") if seg['group'] else 0.0
+            r2 = st.columns([0.6,0.6,0.6,0.6,0.6, 1.1, 1.1, 1.1])
+            bf = r2[0].number_input("BF", value=1 if seg['key']=='tnt' else 0, step=1, key=f"bf_in_{seg['key']}_{rk}")
+            ln = r2[1].number_input("LN", value=0, step=1, key=f"ln_in_{seg['key']}_{rk}")
+            dn = r2[2].number_input("DN", value=0, step=1, key=f"dn_in_{seg['key']}_{rk}")
+            sai = r2[3].number_input("SAI", value=0, step=1, key=f"sai_in_{seg['key']}_{rk}")
+            ai = r2[4].number_input("AI", value=0, step=1, key=f"ai_in_{seg['key']}_{rk}")
+            m_pp = r2[5].number_input("Events (pp)", value=0.0, step=0.5, key=f"m_{seg['key']}_{rk}") if seg['group'] else 0.0
+            l_pp = r2[6].number_input("Laundry (pp)", value=0.0, step=0.5, key=f"l_{seg['key']}_{rk}") if seg['group'] else 0.0
+            t_f = r2[7].number_input("Transport", value=0.0, step=1.0, key=f"tr_{seg['key']}_{rk}") if seg['group'] else 0.0
 
-            res = run_segment_yield(g_rate, {"RO":ro,"BB":bb,"HB":hb,"FB":fb,"SAI":sai,"AI":ai}, h_base, demand_sel, seg['group'], rooms_total, (ota_comm/100 if seg['ota'] else 0.0), m_pp, l_pp, t_f)
+            res = run_segment_yield(g_rate, {"BF":bf,"LN":ln,"DN":dn,"SAI":sai,"AI":ai}, h_base, demand_sel, seg['group'], rooms_total, ota_comm if seg['ota'] else 0.0, m_pp, l_pp, t_f)
             
-            # RESTORED STATUS INDICATOR BUTTON
             v_cols = st.columns([1, 1.5, 1])
             v_cols[0].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
             v_cols[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
-            
             st.markdown(f"<div class='reason-box'>💡 <b>Strategic Reasoning:</b> {res['rsn']} | <b>Effective Hurdle:</b> {cur_sym}{res['dh']:,.2f}</div>", unsafe_allow_html=True)
             wealth_results[seg['key']] = {"w": res['w'], "rooms": max(rooms_total, min_v)}
             st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 8. NOI SUMMARY & PILLAR EXPLANATIONS ---
+# --- 8. NOI SUMMARY & PILLARS ---
 st.divider()
 e_keys = list(wealth_results.keys())
 if len(e_keys) >= 2:
     sa, sb = wealth_results[e_keys[0]], wealth_results[e_keys[1]]
     total_gain = (sa['w'] - sb['w']) * sb['rooms'] * m_nights
     total_potential_wealth = sa['w'] * h_cap * m_nights
-    efficiency_gain = (total_gain / total_potential_wealth * 100) if total_potential_wealth != 0 else 0
+    eff = (total_gain / total_potential_wealth * 100) if total_potential_wealth != 0 else 0
+    m_cols = st.columns(4)
+    m_cols[0].metric("Wealth Gap", f"{cur_sym} {sa['w'] - sb['w']:,.2f}")
+    m_cols[1].metric("Total NOI Gain", f"{cur_sym} {total_gain:,.2f}")
+    m_cols[2].metric("NOI Improvement", f"{((sa['w']-sb['w'])/sb['w']*100 if sb['w']!=0 else 0):.2f}%")
+    m_cols[3].metric("Asset Efficiency", f"{eff:.2f}%")
 
-    m1, m2, m3, m4 = st.columns(4)
-    with m1: st.metric("Wealth Gap", f"{cur_sym} {sa['w'] - sb['w']:,.2f}")
-    with m2: st.metric(f"Total NOI Gain", f"{cur_sym} {total_gain:,.2f}")
-    with m3: st.metric("NOI Improvement", f"{((sa['w']-sb['w'])/sb['w']*100 if sb['w']!=0 else 0):.2f}%")
-    with m4: st.metric("Asset Efficiency Gain", f"{efficiency_gain:.2f}%")
-
-st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
-st.markdown("<h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3>", unsafe_allow_html=True)
-c_a, c_b, c_c = st.columns(3)
-with c_a:
-    st.markdown("<span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:0.88rem; color:#4b6584;'>Strips statutory taxes ({tx_div}), commissions, and marginal costs to isolate <b>Net-Core Wealth</b>.</p>", unsafe_allow_html=True)
-with c_b:
-    st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:0.88rem; color:#4b6584;'>Protects inventory by scaling the hurdle floor up to 2.5x during Peak cycles to ensure high-value pickup.</p>", unsafe_allow_html=True)
-with c_c:
-    st.markdown("<span class='pillar-header'>🌐 Pillar 03: External Velocity</span>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:0.88rem; color:#4b6584;'>Integrates <b>Market Pulse</b> and Aviation Situation to apply a Velocity Multiplier based on real-time demand.</p>", unsafe_allow_html=True)
-st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("<div class='theory-box'><h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3><div style='display:flex; justify-content:space-between;'><div style='width:30%;'><span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span><p style='font-size:0.85rem; color:#4b6584;'>Strips statutory taxes (1.2327 divisor), commissions, and meal costs to isolate <b>Net-Core Wealth</b>.</p></div><div style='width:30%;'><span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span><p style='font-size:0.85rem; color:#4b6584;'>Protects inventory by scaling hurdles up to 2.5x during peak cycles to ensure high-value pickup.</p></div><div style='width:30%;'><span class='pillar-header'>🌐 Pillar 03: External Velocity</span><p style='font-size:0.85rem; color:#4b6584;'>Integrates market pulse data to apply demand multipliers based on real-time market flow.</p></div></div></div>", unsafe_allow_html=True)

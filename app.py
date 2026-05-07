@@ -43,9 +43,8 @@ with st.sidebar:
 
     st.divider()
     curr_map = {
-        "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "QAR (﷼)": "﷼",
-        "BHD (.د)": ".د", "KWD (د.ك)": "د.ك", "USD ($)": "$", "EUR (€)": "€",
-        "GBP (£)": "£", "LKR (රු)": "රු", "INR (₹)": "₹", "AUD ($)": "$"
+        "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "USD ($)": "$", 
+        "EUR (€)": "€", "GBP (£)": "£", "LKR (රු)": "රු", "INR (₹)": "₹"
     }
     cur_sym = curr_map[st.selectbox("Select Currency", list(curr_map.keys()))]
 
@@ -66,7 +65,6 @@ def run_yield(adr, meal_qty, hurdle, demand, is_group, rooms, mice=0.0, laund=0.
     v_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
     v_mult = v_map.get(demand, 1.0)
     
-    # Meal Basis detection
     bf, ln, dn, sai, ai = meal_qty.get("BF",0), meal_qty.get("LN",0), meal_qty.get("DN",0), meal_qty.get("SAI",0), meal_qty.get("AI",0)
     if ai > 0: mp = "AI"
     elif sai > 0: mp = "SAI"
@@ -93,7 +91,63 @@ def run_yield(adr, meal_qty, hurdle, demand, is_group, rooms, mice=0.0, laund=0.
 # --- 5. TOP DASHBOARD ---
 st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
 
-# Full Market Intelligence Restoration
 intel_db = {
-    "salalah": {"ev": "Khareef Festival Season", "fl": "OmanAir Peak", "news": "Monsoon Surge Expected.", "demand": "Compression"},
-    "muscat": {"ev": "Business
+    "salalah": {"ev": "Khareef Season", "fl": "OmanAir Peak", "news": "Surge expected.", "dm": "Compression"},
+    "muscat": {"ev": "Business Summit", "fl": "Hub Stable", "news": "MICE demand up.", "dm": "High Flow"}
+}
+intel = intel_db.get(city_search.lower(), {"ev": "Standard", "fl": "Stable", "news": "Stable flow.", "dm": "Standard"})
+
+st.markdown(f"""
+<div class='google-window'>
+    <b>🌐 Market Intel: {city_search} | May 2026</b><br>
+    • <b>Events:</b> {intel['ev']} | <b>Pulse:</b> {intel['dm']} Logic Applied.
+</div>
+""", unsafe_allow_html=True)
+
+# --- 6. SEGMENTS ---
+segments = [
+    {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "h": 45.0, "grp": False},
+    {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "h": 35.0, "grp": False},
+    {"label": "3. CORPORATE / MICE", "key": "mice", "color": "#34495e", "h": 32.0, "grp": True},
+    {"label": "4. GROUP TOUR & TRAVEL", "key": "tnt", "color": "#e67e22", "h": 12.0, "grp": True}
+]
+
+for s in segments:
+    if st.checkbox(f"Activate {s['label']}", value=True, key=f"chk_{s['key']}"):
+        st.markdown(f"<div class='card' style='border-left-color:{s['color']}'>{s['label']}</div>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+            r1 = st.columns([1, 0.6, 0.6, 0.6, 0.6, 1.2, 1.2])
+            g_rate = r1[0].number_input("Gross Rate", min_value=0.0, value=75.0, key=f"adr_{s['key']}")
+            sgl, dbl, tpl, qrpl = r1[1].number_input("SGL", 0, key=f"s_{s['key']}"), r1[2].number_input("DBL", 1, key=f"d_{s['key']}"), r1[3].number_input("TPL", 0, key=f"t_{s['key']}"), r1[4].number_input("QRPL", 0, key=f"q_{s['key']}")
+            dem = r1[5].selectbox("Demand", ["Standard", "High Flow", "Compression (Peak)", "Distressed"], key=f"dm_{s['key']}")
+            hrd = r1[6].number_input("Hurdle", min_value=0.0, value=s['h'], key=f"hr_{s['key']}")
+
+            r2 = st.columns([0.6, 0.6, 0.6, 0.6, 0.6, 1.1, 1.1, 1.1])
+            v_bb = r2[0].number_input("BB", 0, key=f"bb_{s['key']}")
+            v_ln = r2[1].number_input("LN", 0, key=f"ln_{s['key']}")
+            v_dn = r2[2].number_input("DN", 0, key=f"dn_{s['key']}")
+            v_sai = r2[3].number_input("SAI", 0, key=f"sai_{s['key']}")
+            v_ai = r2[4].number_input("AI", 0, key=f"ai_{s['key']}")
+            
+            m_r = r2[5].number_input("MICE Rev", min_value=0.0, key=f"mice_{s['key']}") if s['grp'] else 0.0
+            l_c = r2[6].number_input("Laundry", min_value=0.0, key=f"lnd_{s['key']}") if s['grp'] else 0.0
+            t_c = r2[7].number_input("Transport", min_value=0.0, key=f"tra_{s['key']}") if s['grp'] else 0.0
+
+            res = run_yield(g_rate, {"BF":v_bb, "LN":v_ln, "DN":v_dn, "SAI":v_sai, "AI":v_ai}, hrd, dem, s['grp'], (sgl+dbl+tpl+qrpl), m_r, l_c, t_c)
+            
+            v = st.columns([1, 1.5, 1])
+            v[0].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
+            v[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']} ({res['mp']})</div>", unsafe_allow_html=True)
+            v[2].markdown(f"<div style='text-align:right;'><span class='noi-badge'>Total NOI: {cur_sym} {res['noi']:,.2f}</span></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='reason-box'>💡 Hurdle: {cur_sym} {res['dh']:.2f} | Basis: {res['mp']}</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# --- 7. PILLARS ---
+st.divider()
+st.markdown("<div class='theory-box'><h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3>", unsafe_allow_html=True)
+p1, p2, p3 = st.columns(3)
+p1.markdown("<span class='pillar-header'>🏛️ Pillar 01: Wealth Stripping</span>", unsafe_allow_html=True)
+p2.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle</span>", unsafe_allow_html=True)
+p3.markdown("<span class='pillar-header'>🌐 Pillar 03: Market Velocity</span>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)

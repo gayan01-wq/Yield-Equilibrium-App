@@ -33,9 +33,7 @@ if not st.session_state["auth"]:
 
 # --- 3. RESET LOGIC ---
 def clear_protocol_data():
-    # Keep auth, but increment reset_key to force UI refresh with blank inputs
     st.session_state["reset_key"] += 1
-    # Clear specific input keys if they exist
     for key in list(st.session_state.keys()):
         if key not in ["auth", "reset_key"]:
             del st.session_state[key]
@@ -44,9 +42,10 @@ def clear_protocol_data():
 rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
-    h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah", key="h_nm_"+rk)
+    # CHANGED: value is now "" and placeholder is used. This makes the reset button work.
+    h_name = st.text_input("Hotel Name", value="", placeholder="e.g. Wyndham Garden Salalah", key="h_nm_"+rk)
     h_cap = st.number_input("Total Capacity", min_value=1, value=237, step=1, key="cap_"+rk)
-    city_search = st.text_input("📍 Market Location", "Salalah", key="city_"+rk)
+    city_search = st.text_input("📍 Market Location", value="", placeholder="e.g. Salalah", key="city_"+rk)
     
     st.divider()
     st.markdown("### 📅 Stay Period")
@@ -79,7 +78,7 @@ with st.sidebar:
     }
 
     st.divider()
-    if st.button("🗑️ Reset Protocol Data", use_container_width=True):
+    if st.button("🗑️ Reset Protocol Data", use_container_width=True, type="primary"):
         clear_protocol_data()
         st.rerun()
 
@@ -95,7 +94,6 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     velocity_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
     v_mult = velocity_map.get(demand_type, 1.0)
     
-    # Identify Meal Basis Name
     bf, ln, dn, sai, ai = meal_qty.get("BF", 0), meal_qty.get("LN", 0), meal_qty.get("DN", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
     if ai > 0: mp_basis = "AI"
     elif sai > 0: mp_basis = "SAI"
@@ -123,12 +121,14 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "vm": v_mult, "dh": dynamic_hurdle, "noi": total_noi, "mp": mp_basis}
 
 # --- 7. TOP DASHBOARD & MARKET INSIGHTS ---
-st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
+# CHANGED: display_title allows for a "New Property" fallback when h_name is empty
+display_title = h_name if h_name else "New Property Analysis"
+st.markdown(f"<h1 class='main-title'>{display_title.upper()}</h1>", unsafe_allow_html=True)
 st.markdown("<div style='text-align:center; color:#4b6584; font-weight:700; margin-bottom:20px;'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
 
 st.markdown(f"""
 <div class='google-window'>
-    <b>🌐 Market Intelligence: {city_search} | {date.today().strftime('%B %Y')}</b><br>
+    <b>🌐 Market Intelligence: {city_search if city_search else 'Location Pending'} | {date.today().strftime('%B %Y')}</b><br>
     • <b>Aviation Situation:</b> {active_intel['fl']} | <b>Special Events:</b> {active_intel['ev']}<br>
     • <b>Special News Feed:</b> {active_intel['news']} | <b>Market Pulse:</b> {active_intel['demand']} Logic Applied.
 </div>
@@ -187,23 +187,4 @@ if len(e_keys) >= 2:
     sa, sb = wealth_results[e_keys[0]], wealth_results[e_keys[1]]
     total_gain = (sa['w'] - sb['w']) * sb['rooms'] * m_nights
     total_potential_wealth = sa['w'] * h_cap * m_nights
-    eff = (total_gain / total_potential_wealth * 100) if total_potential_wealth != 0 else 0
-    m_cols = st.columns(4)
-    m_cols[0].metric("Wealth Gap", f"{cur_sym} {sa['w'] - sb['w']:,.2f}")
-    m_cols[1].metric("Total NOI Gain", f"{cur_sym} {total_gain:,.2f}")
-    m_cols[2].metric("NOI Improvement", f"{((sa['w']-sb['w'])/sb['w']*100 if sb['w']!=0 else 0):.2f}%")
-    m_cols[3].metric("Asset Efficiency", f"{eff:.2f}%")
-
-st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
-st.markdown("<h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3>", unsafe_allow_html=True)
-c_a, c_b, c_c = st.columns(3)
-with c_a:
-    st.markdown("<span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Strips statutory taxes (1.2327), commissions, and meal costs to isolate <b>Net-Core Wealth</b>.</p>", unsafe_allow_html=True)
-with c_b:
-    st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Protects inventory by scaling hurdles up to 2.5x during Peak cycles to ensure high-value pickup.</p>", unsafe_allow_html=True)
-with c_c:
-    st.markdown("<span class='pillar-header'>🌐 Pillar 03: External Velocity</span>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Integrates market pulse data to apply demand multipliers based on real-time market flow.</p>", unsafe_allow_html=True)
-st.markdown("</div>", unsafe_allow_html=True)
+    eff = (total_

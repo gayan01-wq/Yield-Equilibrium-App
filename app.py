@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. SETTINGS & STYLING (Restored High-Fidelity Design) ---
+# --- 1. SETTINGS & STYLING ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Displacement Analyzer")
 
 st.markdown("""<style>
@@ -29,7 +29,7 @@ if not st.session_state["auth"]:
                 st.rerun()
     st.stop()
 
-# --- 3. SIDEBAR (Restored Stay Period & Market Setup) ---
+# --- 3. SIDEBAR (STAY PERIOD & COSTS) ---
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
     h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah")
@@ -48,95 +48,3 @@ with st.sidebar:
     cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()))]
 
     st.markdown("### 🏛️ Pillars Setup")
-    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f")
-    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00)
-
-    st.markdown("### 🍽️ Meal Plan Cost (PP)")
-    meal_costs = {
-        "BF": st.number_input("Breakfast (BF)", value=2.00),
-        "LN": st.number_input("Lunch (LN)", value=0.0),
-        "DN": st.number_input("Dinner (DN)", value=0.0),
-        "SAI": st.number_input("Soft All-In (SAI)", value=0.0),
-        "AI": st.number_input("All-Inclusive (AI)", value=0.0)
-    }
-
-# --- 4. ENGINE LOGIC (With BB, HB, FB, SAI, AI labels) ---
-def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms):
-    v_mult = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}.get(demand_type, 1.0)
-    
-    # Identify Meal Plan Basis
-    bf, ln, dn, sai, ai = meal_qty.get("BF",0), meal_qty.get("LN",0), meal_qty.get("DN",0), meal_qty.get("SAI",0), meal_qty.get("AI",0)
-    if ai > 0: mp_label = "AI"
-    elif sai > 0: mp_label = "SAI"
-    elif bf > 0 and ln > 0 and dn > 0: mp_label = "FB"
-    elif bf > 0 and dn > 0: mp_label = "HB"
-    elif bf > 0: mp_label = "BB"
-    else: mp_label = "RO"
-
-    dynamic_hurdle = base_hurdle * {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}.get(demand_type, 1.0)
-    net_adr = (adr * v_mult) / tx_div
-    total_meal_cost = sum(qty * meal_costs.get(p, 0) for p, qty in meal_qty.items())
-    
-    unit_w = (net_adr - total_meal_cost) - p01_fee
-    
-    if unit_w < dynamic_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Below Hurdle ({mp_label})"
-    elif unit_w < (dynamic_hurdle + 5.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", f"Equilibrium window ({mp_label})"
-    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", f"Optimal Wealth ({mp_label})"
-        
-    return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "vm": v_mult, "dh": dynamic_hurdle, "noi": unit_w * max(total_rooms, 1) * m_nights}
-
-# --- 5. MAIN UI DASHBOARD ---
-st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
-
-intel_db = {"salalah": {"ev": "Khareef Season", "demand": "Compression"}, "muscat": {"ev": "Business Summit", "demand": "High Flow"}}
-active_intel = intel_db.get(city_search.lower(), {"ev": "Standard Rotation", "demand": "Standard"})
-
-st.markdown(f"""<div class='google-window'><b>🌐 Market Intelligence: {city_search}</b><br>
-• <b>Pulse:</b> {active_intel['demand']} Logic Applied | <b>Stay Duration:</b> {m_nights} Nights Base.</div>""", unsafe_allow_html=True)
-
-segments = [
-    {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "hurdle": 45.0},
-    {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "hurdle": 35.0}
-]
-
-for seg in segments:
-    st.markdown(f"<div class='card' style='border-left-color:{seg['color']}'>{seg['label']}</div>", unsafe_allow_html=True)
-    with st.container():
-        st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
-        r1 = st.columns([1, 1, 1, 1])
-        g_rate = r1[0].number_input("Gross Rate", value=75.0, key=f"adr_{seg['key']}")
-        rooms = r1[1].number_input("Rooms", 1, key=f"rms_{seg['key']}")
-        demand_sel = r1[2].selectbox("Demand", ["Standard", "High Flow", "Compression (Peak)", "Distressed"], key=f"dm_{seg['key']}")
-        h_base = r1[3].number_input("Hurdle", value=seg['hurdle'], key=f"hr_{seg['key']}")
-
-        r2 = st.columns([1, 1, 1, 1, 1])
-        bb = r2[0].number_input("BB", 0, key=f"bb_{seg['key']}")
-        ln = r2[1].number_input("LN", 0, key=f"ln_{seg['key']}")
-        dn = r2[2].number_input("DN", 0, key=f"dn_{seg['key']}")
-        sai = r2[3].number_input("SAI", 0, key=f"sai_{seg['key']}")
-        ai = r2[4].number_input("AI", 0, key=f"ai_{seg['key']}")
-
-        res = run_segment_yield(g_rate, {"BF":bb,"LN":ln,"DN":dn,"SAI":sai,"AI":ai}, h_base, demand_sel, False, rooms)
-        
-        v_cols = st.columns([1, 1.5, 1])
-        v_cols[0].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}")
-        v_cols[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
-        v_cols[2].markdown(f"<div style='text-align:right;'><span class='noi-badge'>Total NOI: {cur_sym} {res['noi']:,.2f}</span></div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='reason-box'>💡 <b>Reasoning:</b> {res['rsn']} | <b>Effective Hurdle:</b> {cur_sym}{res['dh']:,.2f}</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-# --- 6. THEORETICAL PILLARS ---
-st.divider()
-st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
-st.markdown("<h3 style='color:#1e3799;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3>", unsafe_allow_html=True)
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.markdown("<span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:0.85rem; color:#4b6584;'>Isolates Net-Core Wealth after taxes and costs.</p>", unsafe_allow_html=True)
-with c2:
-    st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:0.85rem; color:#4b6584;'>Scales hurdles up to 2.5x during Peak cycles.</p>", unsafe_allow_html=True)
-with c3:
-    st.markdown("<span class='pillar-header'>🌐 Pillar 03: External Velocity</span>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:0.85rem; color:#4b6584;'>Integrates real-time market pulse flow.</p>", unsafe_allow_html=True)
-st.markdown("</div>", unsafe_allow_html=True)

@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. SETTINGS & STYLING ---
+# --- 1. SETTINGS & STYLING (Original High-Fidelity) ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Displacement Analyzer")
 
 st.markdown("""<style>
@@ -31,12 +31,12 @@ if not st.session_state["auth"]:
                 st.rerun()
     st.stop()
 
-# --- 3. SIDEBAR (CONTEXTUAL DATA) ---
+# --- 3. SIDEBAR (STAY PERIOD & COSTS) ---
 rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
     h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah", key="h_nm_"+rk)
-    h_cap = st.number_input("Total Capacity", min_value=1, value=237, step=1, key="cap_"+rk)
+    h_cap = st.number_input("Total Capacity", min_value=1, value=237, key="cap_"+rk)
     city_search = st.text_input("📍 Market Location", "Salalah", key="city_"+rk)
     
     st.divider()
@@ -47,41 +47,11 @@ with st.sidebar:
     st.info(f"Stay Duration: {m_nights} Nights")
 
     st.divider()
-    st.markdown("### 🌍 Global Currency Suite")
-    currencies = {
-        "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "QAR (﷼)": "﷼", "BHD (.د)": ".د", "KWD (د.ك)": "د.ك",
-        "USD ($)": "$", "EUR (€)": "€", "GBP (£)": "£", "LKR (රු)": "රු", "INR (₹)": "₹"
-    }
+    st.markdown("### 🌍 Global Currency")
+    currencies = {"OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "USD ($)": "$", "EUR (€)": "€", "LKR (රු)": "රු"}
     cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()), key="c_sel_"+rk)]
 
     st.divider()
     st.markdown("### 🏛️ Pillars Setup")
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
-    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00, step=0.1, key="p01_v_"+rk)
-
-    st.markdown("### 🍽️ Meal Plan Cost (PP)")
-    meal_costs = {
-        "BF": st.number_input("Breakfast (BF)", value=2.00, step=0.5, key="bf_mc_"+rk),
-        "LN": st.number_input("Lunch (LN)", value=0.0, step=0.5, key="ln_mc_"+rk),
-        "DN": st.number_input("Dinner (DN)", value=0.0, step=0.5, key="dn_mc_"+rk),
-        "SAI": st.number_input("Soft All-In (SAI)", value=0.0, step=0.5, key="sai_mc_"+rk),
-        "AI": st.number_input("All-Inclusive (AI)", value=0.0, step=0.5, key="ai_mc_"+rk)
-    }
-
-# --- 4. MARKET INTEL DATA ---
-intel_db = {
-    "salalah": {"ev": "Khareef Festival Season", "fl": "OmanAir/SalamAir Peak", "news": "Monsoon Tourism Surge expected.", "demand": "Compression"},
-    "muscat": {"ev": "Business Summit", "fl": "International Hub Stable", "news": "MICE demand up 15%.", "demand": "High Flow"}
-}
-active_intel = intel_db.get(city_search.lower(), {"ev": "Market Rotation", "fl": "Standard Flights", "news": "Standard flow stable.", "demand": "Standard"})
-
-# --- 5. ENGINE LOGIC ---
-def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, comm_rate=0.0, mice=0.0, laundry=0.0, transport=0.0):
-    velocity_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
-    v_mult = velocity_map.get(demand_type, 1.0)
-    
-    # Meal Plan Logic
-    bf, ln, dn, sai, ai = meal_qty.get("BF", 0), meal_qty.get("LN", 0), meal_qty.get("DN", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
-    if ai > 0: mp_basis = "AI"
-    elif sai > 0: mp_basis = "SAI"
-    elif
+    p01_fee = st.number_input

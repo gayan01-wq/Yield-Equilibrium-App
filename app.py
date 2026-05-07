@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. SETTINGS & STYLING (Original High-Fidelity) ---
+# --- 1. SETTINGS & STYLING (Restored Original) ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Displacement Analyzer")
 
 st.markdown("""<style>
@@ -19,8 +19,6 @@ st.markdown("""<style>
 
 # --- 2. AUTHENTICATION ---
 if "auth" not in st.session_state: st.session_state["auth"] = False
-if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
-
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     with st.form("login_gate"):
@@ -31,27 +29,15 @@ if not st.session_state["auth"]:
                 st.rerun()
     st.stop()
 
-# --- 3. SIDEBAR (STAY PERIOD & COSTS) ---
-rk = str(st.session_state["reset_key"])
+# --- 3. SIDEBAR (Restored Market & Stay Period) ---
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
-    h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah", key="h_nm_"+rk)
-    h_cap = st.number_input("Total Capacity", min_value=1, value=237, key="cap_"+rk)
-    city_search = st.text_input("📍 Market Location", "Salalah", key="city_"+rk)
+    h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah")
+    h_cap = st.number_input("Total Capacity", min_value=1, value=237)
+    city_search = st.text_input("📍 Market Location", "Salalah")
     
     st.divider()
     st.markdown("### 📅 Stay Period")
-    d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
-    d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
-    m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    st.info(f"Stay Duration: {m_nights} Nights")
-
-    st.divider()
-    st.markdown("### 🌍 Global Currency")
-    currencies = {"OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "USD ($)": "$", "EUR (€)": "€", "LKR (රු)": "රු"}
-    cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()), key="c_sel_"+rk)]
-
-    st.divider()
-    st.markdown("### 🏛️ Pillars Setup")
-    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
-    p01_fee = st.number_input
+    d1 = st.date_input("Check-In", date.today())
+    d2 = st.date_input("Check-Out", date(2026, 5, 8)) # Default to 1 night
+    m_nights = (d

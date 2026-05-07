@@ -18,7 +18,9 @@ st.markdown("""<style>
 </style>""", unsafe_allow_html=True)
 
 # --- 2. AUTHENTICATION ---
-if "auth" not in st.session_state: st.session_state["auth"] = False
+if "auth" not in st.session_state:
+    st.session_state["auth"] = False
+
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     with st.form("login_gate"):
@@ -47,23 +49,4 @@ with st.sidebar:
     currencies = {"OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "USD ($)": "$"}
     cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()))]
 
-    st.markdown("### 🏛️ Pillars Setup")
-    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f")
-    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00)
-
-    st.markdown("### 🍽️ Meal Plan Cost (PP)")
-    meal_costs = {
-        "BF": st.number_input("Breakfast (BF)", value=2.00),
-        "LN": st.number_input("Lunch (LN)", value=0.0),
-        "DN": st.number_input("Dinner (DN)", value=0.0),
-        "SAI": st.number_input("Soft All-In (SAI)", value=0.0),
-        "AI": st.number_input("All-Inclusive (AI)", value=0.0)
-    }
-
-# --- 4. ENGINE LOGIC ---
-def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, mice=0.0, laundry=0.0, transport=0.0):
-    v_mult = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}.get(demand_type, 1.0)
-    
-    # BASIS DETECTION
-    bf, ln, dn, sai, ai = meal_qty.get("BF", 0), meal_qty.get("LN", 0), meal_qty.get("DN", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
-    if ai > 0: mp_label
+    st.markdown("### 🏛️ Pillars

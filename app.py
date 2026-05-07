@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import date
 
 # --- 1. SETTINGS & STYLING ---
-st.set_page_config(layout="wide", page_title="Yield Equilibrium Displacement Analyzer")
+st.set_page_config(layout="wide", page_title="Yield Equilibrium")
 
 st.markdown("""<style>
 .block-container{padding-top:1rem!important; padding-bottom:0rem!important;}
@@ -28,7 +28,7 @@ if not st.session_state["auth"]:
                 st.rerun()
     st.stop()
 
-# --- 3. SIDEBAR (COMPREHENSIVE) ---
+# --- 3. SIDEBAR ---
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
     h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah")
@@ -36,29 +36,64 @@ with st.sidebar:
     city_search = st.text_input("📍 Market Location", "Salalah")
     
     st.divider()
-    st.markdown("### 📅 Stay Period")
     d1 = st.date_input("Check-In", date.today())
     d2 = st.date_input("Check-Out", date(2026, 5, 8))
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     st.info(f"Stay Duration: {m_nights} Nights")
 
     st.divider()
-    st.markdown("### 🌍 Global Currency Suite")
-    currencies = {
-        "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "QAR (﷼)": "﷼", "BHD (.د)": ".د", 
-        "KWD (د.ك)": "د.ك", "USD ($)": "$", "EUR (€)": "€", "GBP (£)": "£", "LKR (රු)": "රු", 
-        "INR (₹)": "₹", "CHF (CHF)": "CHF", "JPY (¥)": "¥", "CNY (¥)": "¥", "RUB (₽)": "₽"
+    curr_map = {
+        "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "QAR (﷼)": "﷼",
+        "BHD (.د)": ".د", "KWD (د.ك)": "د.ك", "USD ($)": "$", "EUR (€)": "€",
+        "GBP (£)": "£", "LKR (රු)": "රු", "INR (₹)": "₹", "AUD ($)": "$"
     }
-    cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()))]
+    cur_sym = curr_map[st.selectbox("Select Currency", list(curr_map.keys()))]
 
-    st.markdown("### 🏛️ Pillars Setup")
-    tx_div = st.number_input("Tax Divisor", min_value=1.0, value=1.2327, format="%.4f")
-    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", min_value=0.0, value=6.00)
+    tx_div = st.number_input("Tax Divisor", min_value=1.0, value=1.2327)
+    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", min_value=0.0, value=6.0)
 
-    st.markdown("### 🍽️ Meal Plan Cost (PP)")
-    meal_costs = {
-        "BF": st.number_input("Breakfast (BF)", min_value=0.0, value=2.00),
-        "LN": st.number_input("Lunch (LN)", min_value=0.0, value=0.0),
-        "DN": st.number_input("Dinner (DN)", min_value=0.0, value=0.0),
-        "SAI": st.number_input("Soft All-In (SAI)", min_value=0.0, value=0.0),
-        "AI": st.number_input("All-Inclusive (AI)", min_value=0.0, value
+    st.markdown("### 🍽️ Meal costs (PP)")
+    m_costs = {
+        "BF": st.number_input("Breakfast", min_value=0.0, value=2.0),
+        "LN": st.number_input("Lunch", min_value=0.0, value=0.0),
+        "DN": st.number_input("Dinner", min_value=0.0, value=0.0),
+        "SAI": st.number_input("SAI Cost", min_value=0.0, value=0.0),
+        "AI": st.number_input("AI Cost", min_value=0.0, value=0.0)
+    }
+
+# --- 4. ENGINE LOGIC ---
+def run_yield(adr, meal_qty, hurdle, demand, is_group, rooms, mice=0.0, laund=0.0, trans=0.0):
+    v_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
+    v_mult = v_map.get(demand, 1.0)
+    
+    # Meal Basis detection
+    bf, ln, dn, sai, ai = meal_qty.get("BF",0), meal_qty.get("LN",0), meal_qty.get("DN",0), meal_qty.get("SAI",0), meal_qty.get("AI",0)
+    if ai > 0: mp = "AI"
+    elif sai > 0: mp = "SAI"
+    elif bf > 0 and ln > 0 and dn > 0: mp = "FB"
+    elif bf > 0 and dn > 0: mp = "HB"
+    elif bf > 0: mp = "BB"
+    else: mp = "RO"
+
+    net_adr = (adr * v_mult) / tx_div
+    meal_tot = sum(qty * m_costs.get(p, 0) for p, qty in meal_qty.items())
+    
+    div = max(rooms, 10) if is_group else max(rooms, 1)
+    grp_rev = (mice / tx_div) + ((trans / tx_div) / div) if is_group else 0
+    unit_w = (net_adr + grp_rev - meal_tot) - p01_fee - laund
+    
+    h_map = {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}
+    dyn_h = hurdle * h_map.get(demand, 1.0)
+    
+    stt = "ACCEPT: OPTIMIZED" if unit_w >= dyn_h else "REJECT: DILUTIVE"
+    clr = "#27ae60" if unit_w >= dyn_h else "#e74c3c"
+    
+    return {"w": unit_w, "st": stt, "cl": clr, "mp": mp, "noi": unit_w * div * m_nights, "dh": dyn_h, "vm": v_mult}
+
+# --- 5. TOP DASHBOARD ---
+st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
+
+# Full Market Intelligence Restoration
+intel_db = {
+    "salalah": {"ev": "Khareef Festival Season", "fl": "OmanAir Peak", "news": "Monsoon Surge Expected.", "demand": "Compression"},
+    "muscat": {"ev": "Business

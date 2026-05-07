@@ -44,9 +44,9 @@ def clear_protocol_data():
 rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
-    h_name = st.text_input("Hotel Name", "Hotel/Resort Name", key="h_nm_"+rk)
-    h_cap = st.number_input("Total Capacity", min_value=1, value=0, step=1, key="cap_"+rk)
-    city_search = st.text_input("📍 Market Location", "City Name", key="city_"+rk)
+    h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah", key="h_nm_"+rk)
+    h_cap = st.number_input("Total Capacity", min_value=1, value=237, step=1, key="cap_"+rk)
+    city_search = st.text_input("📍 Market Location", "Salalah", key="city_"+rk)
     
     st.divider()
     st.markdown("### 📅 Stay Period")

@@ -9,21 +9,15 @@ st.markdown("""<style>
 .main-title { font-size: 2.2rem!important; font-weight: 900; color: #1e3799; text-align: center; text-transform: uppercase; margin-bottom: -5px; }
 .card{padding:10px; border-radius:10px; margin-bottom:5px; border-left:10px solid; background:#ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05)}
 .pricing-row{background:#f8faff; padding:15px; border-radius:12px; border:1px solid #d1d9e6; margin-top:2px;}
-.google-window{background:#e8f0fe; padding:15px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.88rem; line-height:1.5;}
 .status-indicator{padding:12px; border-radius:8px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px; display:block;}
-.reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:8px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
-.noi-badge{background:#1e3799; color:white; padding:8px 12px; border-radius:8px; font-weight:700; font-size:1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
-.theory-box { background-color: #f1f4f9; padding: 25px; border-radius: 15px; border: 1px solid #d1d9e6; margin-top: 35px; }
-.pillar-header { color: #1e3799; font-weight: 800; font-size: 1rem; text-transform: uppercase; margin-bottom: 5px; display: block; }
+.noi-badge{background:#1e3799; color:white; padding:8px 12px; border-radius:8px; font-weight:700; font-size:1rem;}
 </style>""", unsafe_allow_html=True)
 
 # --- 2. AUTHENTICATION ---
 if "auth" not in st.session_state: st.session_state["auth"] = False
-if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
-
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
-    with st.form("login_gate"):
+    with st.form("login"):
         pwd = st.text_input("Access Key", type="password")
         if st.form_submit_button("Unlock"):
             if pwd == "Gayan2026": 
@@ -32,43 +26,63 @@ if not st.session_state["auth"]:
     st.stop()
 
 # --- 3. SIDEBAR ---
-rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
-    h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah", key="h_nm_"+rk)
-    h_cap = st.number_input("Total Capacity", min_value=1, value=237, step=1, key="cap_"+rk)
-    city_search = st.text_input("📍 Market Location", "Salalah", key="city_"+rk)
+    h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah")
+    cur_sym = st.selectbox("Currency", ["OMR", "AED", "SAR", "USD"])
+    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f")
+    p01_fee = st.number_input("P01 Fee", value=6.00)
     
-    st.divider()
-    d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
-    d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
-    m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-
-    st.divider()
-    currencies = {"OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "USD ($)": "$"}
-    cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()), key="c_sel_"+rk)]
-
-    st.markdown("### 🏛️ Pillars Setup")
-    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
-    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00, step=0.1, key="p01_v_"+rk)
-
-    st.markdown("### 🍽️ Meal Plan Cost (PP)")
-    meal_costs = {
-        "BF": st.number_input("Breakfast (BF)", value=2.00, key="bf_mc_"+rk),
-        "LN": st.number_input("Lunch (LN)", value=0.0, key="ln_mc_"+rk),
-        "DN": st.number_input("Dinner (DN)", value=0.0, key="dn_mc_"+rk),
-        "SAI": st.number_input("Soft All-In (SAI)", value=0.0, key="sai_mc_"+rk),
-        "AI": st.number_input("All-Inclusive (AI)", value=0.0, key="ai_mc_"+rk)
-    }
+    st.markdown("### 🍽️ Meal costs")
+    m_bf = st.number_input("Cost: BF", value=2.0)
+    m_ln = st.number_input("Cost: LN", value=0.0)
+    m_dn = st.number_input("Cost: DN", value=0.0)
+    m_sai = st.number_input("Cost: SAI", value=0.0)
+    m_ai = st.number_input("Cost: AI", value=0.0)
 
 # --- 4. ENGINE LOGIC ---
-def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, comm_rate=0.0):
-    velocity_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
-    v_mult = velocity_map.get(demand_type, 1.0)
+def run_yield(adr, bf, ln, dn, sai, ai, hurdle, demand):
+    # Fixed Logic Block
+    if ai > 0: mp = "AI"
+    elif sai > 0: mp = "SAI"
+    elif bf > 0 and ln > 0 and dn > 0: mp = "FB"
+    elif bf > 0 and dn > 0: mp = "HB"
+    elif bf > 0: mp = "BB"
+    else: mp = "RO"
+
+    v_mult = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}.get(demand, 1.0)
+    net_adr = (adr * v_mult) / tx_div
+    meals = (bf*m_bf) + (ln*m_ln) + (dn*m_dn) + (sai*m_sai) + (ai*m_ai)
+    unit_w = net_adr - meals - p01_fee
     
-    # Meal Plan Logic
-    bf, ln, dn, sai, ai = meal_qty.get("BF", 0), meal_qty.get("LN", 0), meal_qty.get("DN", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
-    if ai > 0: mp_basis = "AI"
-    elif sai > 0: mp_basis = "SAI"
-    elif bf > 0 and ln > 0 and dn > 0: mp_basis = "FB"
-    elif bf > 0 and
+    dyn_hurdle = hurdle * {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}.get(demand, 1.0)
+    status = "ACCEPT: OPTIMIZED" if unit_w >= dyn_hurdle else "REJECT: DILUTIVE"
+    color = "#27ae60" if unit_w >= dyn_hurdle else "#e74c3c"
+    
+    return unit_w, status, color, mp
+
+# --- 5. MAIN UI ---
+st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
+
+for seg_name in ["1. DIRECT / FIT", "2. OTA CHANNELS"]:
+    st.markdown(f"<div class='card' style='border-left-color:#3498db'>{seg_name}</div>", unsafe_allow_html=True)
+    with st.container():
+        st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+        col1 = st.columns([1, 1, 1, 1])
+        rate = col1[0].number_input("Gross Rate", value=75.0, key=f"adr_{seg_name}")
+        dem = col1[2].selectbox("Demand", ["Standard", "High Flow", "Compression (Peak)", "Distressed"], key=f"dm_{seg_name}")
+        hrd = col1[3].number_input("Hurdle", value=45.0, key=f"hr_{seg_name}")
+        
+        col2 = st.columns([1, 1, 1, 1, 1])
+        q_bf = col2[0].number_input("BB", 0, key=f"bf_{seg_name}")
+        q_ln = col2[1].number_input("LN", 0, key=f"ln_{seg_name}")
+        q_dn = col2[2].number_input("DN", 0, key=f"dn_{seg_name}")
+        q_sai = col2[3].number_input("SAI", 0, key=f"sai_{seg_name}")
+        q_ai = col2[4].number_input("AI", 0, key=f"ai_{seg_name}")
+        
+        val, stat, clr, mp_label = run_yield(rate, q_bf, q_ln, q_dn, q_sai, q_ai, hrd, dem)
+        
+        res_cols = st.columns([1, 1, 1])
+        res_cols[0].metric("Net Wealth", f"{cur_sym} {val:.2f}")
+        res_cols[1].markdown(f"<div class='status-indicator' style='background:{clr}'>{stat} ({mp_label})</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)

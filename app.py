@@ -63,11 +63,11 @@ with st.sidebar:
 
     st.markdown("### 🍽️ Meal Plan Cost (PP)")
     meal_costs = {
-        "BF": st.number_input("Breakfast (BF)", value=2.00, step=0.5, key="bf_mc_"+rk),
-        "LN": st.number_input("Lunch (LN)", value=0.0, step=0.5, key="ln_mc_"+rk),
-        "DN": st.number_input("Dinner (DN)", value=0.0, step=0.5, key="dn_mc_"+rk),
-        "SAI": st.number_input("Soft All-In (SAI)", value=0.0, step=0.5, key="sai_mc_"+rk),
-        "AI": st.number_input("All-Inclusive (AI)", value=0.0, step=0.5, key="ai_mc_"+rk)
+    "BF": st.number_input("Breakfast (BB/BF)", min_value=0.0, value=2.00, step=0.5, key="bf_mc_"+rk),
+    "LN": st.number_input("Lunch (LN)", min_value=0.0, value=0.0, step=0.5, key="ln_mc_"+rk),
+    "DN": st.number_input("Dinner (DN)", min_value=0.0, value=0.0, step=0.5, key="dn_mc_"+rk),
+    "SAI": st.number_input("Soft All-In (SAI)", min_value=0.0, value=0.0, step=0.5, key="sai_mc_"+rk),
+    "AI": st.number_input("All-Inclusive (AI)", min_value=0.0, value=0.0, step=0.5, key="ai_mc_"+rk)
     }
 
 # --- 4. MARKET INTEL DATA ---

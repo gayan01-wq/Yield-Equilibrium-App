@@ -17,7 +17,7 @@ st.markdown("""<style>
 .pillar-header { color: #1e3799; font-weight: 800; font-size: 1rem; text-transform: uppercase; margin-bottom: 5px; display: block; }
 </style>""", unsafe_allow_html=True)
 
-# --- 2. AUTHENTICATION ---
+# --- 2. AUTHENTICATION & SESSION ISOLATION ---
 if "auth" not in st.session_state: st.session_state["auth"] = False
 if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
 
@@ -31,7 +31,16 @@ if not st.session_state["auth"]:
                 st.rerun()
     st.stop()
 
-# --- 3. SIDEBAR (CONTEXTUAL DATA) ---
+# --- 3. RESET LOGIC ---
+def clear_protocol_data():
+    # Keep auth, but increment reset_key to force UI refresh with blank inputs
+    st.session_state["reset_key"] += 1
+    # Clear specific input keys if they exist
+    for key in list(st.session_state.keys()):
+        if key not in ["auth", "reset_key"]:
+            del st.session_state[key]
+
+# --- 4. SIDEBAR (CONTEXTUAL DATA) ---
 rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
@@ -52,7 +61,8 @@ with st.sidebar:
         "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "QAR (﷼)": "﷼", "BHD (.د)": ".د", "KWD (د.ك)": "د.ك",
         "USD ($)": "$", "EUR (€)": "€", "GBP (£)": "£", "LKR (රු)": "රු", "INR (₹)": "₹", "CHF (CHF)": "CHF"
     }
-    cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()), key="c_sel_"+rk)]
+    cur_selection = st.selectbox("Select Currency", list(currencies.keys()), key="c_sel_"+rk)
+    cur_sym = currencies[cur_selection]
 
     st.divider()
     st.markdown("### 🏛️ Pillars Setup")
@@ -68,14 +78,19 @@ with st.sidebar:
         "AI": st.number_input("All-Inclusive Cost", min_value=0.0, value=0.0, step=0.5, key="ai_mc_"+rk)
     }
 
-# --- 4. MARKET INTEL DATA ---
+    st.divider()
+    if st.button("🗑️ Reset Protocol Data", use_container_width=True):
+        clear_protocol_data()
+        st.rerun()
+
+# --- 5. MARKET INTEL DATA ---
 intel_db = {
     "salalah": {"ev": "Khareef Festival Season", "fl": "OmanAir/SalamAir Peak", "news": "Monsoon Tourism Surge expected.", "demand": "Compression"},
     "muscat": {"ev": "Business Summit", "fl": "International Hub Stable", "news": "MICE demand up 15%.", "demand": "High Flow"}
 }
 active_intel = intel_db.get(city_search.lower(), {"ev": "Market Rotation", "fl": "Standard Flights", "news": "Standard flow stable.", "demand": "Standard"})
 
-# --- 5. ENGINE LOGIC ---
+# --- 6. ENGINE LOGIC ---
 def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, comm_rate=0.0, mice=0.0, laundry=0.0, transport=0.0):
     velocity_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
     v_mult = velocity_map.get(demand_type, 1.0)
@@ -107,9 +122,9 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     total_noi = unit_w * divisor * m_nights
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "vm": v_mult, "dh": dynamic_hurdle, "noi": total_noi, "mp": mp_basis}
 
-# --- 6. TOP DASHBOARD & MARKET INSIGHTS ---
+# --- 7. TOP DASHBOARD & MARKET INSIGHTS ---
 st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
-st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align:center; color:#4b6584; font-weight:700; margin-bottom:20px;'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
 
 st.markdown(f"""
 <div class='google-window'>
@@ -119,7 +134,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- 7. SEGMENT AUDITS ---
+# --- 8. SEGMENT AUDITS ---
 segments = [
     {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "ota": False, "hurdle": 45.0, "group": False},
     {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "ota": True, "hurdle": 35.0, "group": False},
@@ -146,15 +161,15 @@ for seg in segments:
             h_base = r1[6].number_input("Base Hurdle", value=seg['hurdle'], step=1.0, key=f"hrd_{seg['key']}_{rk}")
 
             r2 = st.columns([0.6,0.6,0.6,0.6,0.6, 1.1, 1.1, 1.1])
-            bf = r2[0].number_input("BB", 0, key=f"bf_in_{seg['key']}_{rk}")
-            ln = r2[1].number_input("LN", 0, key=f"ln_in_{seg['key']}_{rk}")
-            dn = r2[2].number_input("DN", 0, key=f"dn_in_{seg['key']}_{rk}")
-            sai = r2[3].number_input("SAI", 0, key=f"sai_in_{seg['key']}_{rk}")
-            ai = r2[4].number_input("AI", 0, key=f"ai_in_{seg['key']}_{rk}")
+            bf_in = r2[0].number_input("BB", 0, key=f"bf_in_{seg['key']}_{rk}")
+            ln_in = r2[1].number_input("LN", 0, key=f"ln_in_{seg['key']}_{rk}")
+            dn_in = r2[2].number_input("DN", 0, key=f"dn_in_{seg['key']}_{rk}")
+            sai_in = r2[3].number_input("SAI", 0, key=f"sai_in_{seg['key']}_{rk}")
+            ai_in = r2[4].number_input("AI", 0, key=f"ai_in_{seg['key']}_{rk}")
             
             m_pp, l_pp, t_f = r2[5].number_input("Events", 0.0, key=f"m_{seg['key']}_{rk}") if seg['group'] else 0.0, r2[6].number_input("Laundry", 0.0, key=f"l_{seg['key']}_{rk}") if seg['group'] else 0.0, r2[7].number_input("Transport", 0.0, key=f"tr_{seg['key']}_{rk}") if seg['group'] else 0.0
 
-            res = run_segment_yield(g_rate, {"BF":bf,"LN":ln,"DN":dn,"SAI":sai,"AI":ai}, h_base, demand_sel, seg['group'], rooms_total, c_ota, m_pp, l_pp, t_f)
+            res = run_segment_yield(g_rate, {"BF":bf_in,"LN":ln_in,"DN":dn_in,"SAI":sai_in,"AI":ai_in}, h_base, demand_sel, seg['group'], rooms_total, c_ota, m_pp, l_pp, t_f)
             
             v_cols = st.columns([1, 1.5, 1])
             v_cols[0].metric("Net Wealth (Pillar 01)", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
@@ -165,7 +180,7 @@ for seg in segments:
             wealth_results[seg['key']] = {"w": res['w'], "rooms": max(rooms_total, min_v), "noi": res['noi']}
             st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 8. NOI SUMMARY & PILLARS ---
+# --- 9. NOI SUMMARY & PILLARS ---
 st.divider()
 e_keys = list(wealth_results.keys())
 if len(e_keys) >= 2:

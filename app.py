@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. SETTINGS & STYLING (Restored High-Fidelity) ---
+# --- 1. SETTINGS & STYLING ---
 st.set_page_config(layout="wide", page_title="Universal Yield Equilibrium Engine")
 
 st.markdown("""<style>
@@ -23,18 +23,17 @@ if "auth" not in st.session_state: st.session_state["auth"] = False
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     with st.form("login"):
-        pwd = st.text_input("Access Key", type="password")
-        if st.form_submit_button("Unlock"):
-            if pwd == "Gayan2026":
+        if st.text_input("Access Key", type="password") == "Gayan2026":
+            if st.form_submit_button("Unlock"):
                 st.session_state["auth"] = True
                 st.rerun()
     st.stop()
 
-# --- 3. SIDEBAR (Restored Full Profile) ---
+# --- 3. SIDEBAR ---
 with st.sidebar:
     st.markdown("### 🏨 Hotel Profile")
     h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah")
-    h_cap = st.number_input("Total Capacity", min_value=1, value=237)
+    h_cap = st.number_input("Total Inventory", min_value=1, value=237)
     city_search = st.text_input("📍 Market Location", "Salalah")
     
     st.divider()
@@ -42,34 +41,38 @@ with st.sidebar:
     d1 = st.date_input("Check-In", date.today())
     d2 = st.date_input("Check-Out", date(2026, 5, 12))
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    los_type = "Long Stay (LOS High)" if m_nights >= 5 else "Short Stay (LOS Low)"
+    los_type = "Long Stay (5+ Nights)" if m_nights >= 5 else "Short Stay"
     st.info(f"Stay: {m_nights} Nights | {los_type}")
 
     st.divider()
-    curr_map = {"OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "QAR (﷼)": "﷼", "BHD (.د)": ".د", "KWD (د.ك)": "د.ك", "USD ($)": "$", "EUR (€)": "€", "GBP (£)": "£", "LKR (රු)": "රු", "INR (₹)": "₹"}
+    curr_map = {
+        "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "QAR (﷼)": "﷼",
+        "BHD (.د)": ".د", "KWD (د.ك)": "د.ك", "USD ($)": "$", "EUR (€)": "€",
+        "GBP (£)": "£", "LKR (රු)": "රු", "INR (₹)": "₹", "AUD ($)": "$"
+    }
     cur_sym = curr_map[st.selectbox("Select Currency", list(curr_map.keys()))]
 
-    # Flexible Tax Divisor
-    tax_formula = st.text_input("Tax Divisor Formula", value="1.2327")
-    try: current_tax_divisor = float(eval(tax_formula))
+    st.markdown("### 🏛️ Pillars Setup")
+    tax_input = st.text_input("Tax Divisor Formula", value="1.2327")
+    try: current_tax_divisor = float(eval(tax_input))
     except: current_tax_divisor = 1.2327
 
-    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", min_value=0.0, value=6.0)
+    p01_fee = st.number_input(f"P01 Fixed Fee ({cur_sym})", min_value=0.0, value=6.0)
 
-    st.markdown("### 🍽️ Meal costs (PP)")
+    st.markdown("### 🍽️ Meal Costs (PP)")
     m_costs = {
-        "BF": st.number_input("Breakfast", min_value=0.0, value=2.0),
-        "LN": st.number_input("Lunch", min_value=0.0, value=0.0),
-        "DN": st.number_input("Dinner", min_value=0.0, value=0.0),
-        "SAI": st.number_input("SAI Cost", min_value=0.0, value=0.0),
-        "AI": st.number_input("AI Cost", min_value=0.0, value=0.0)
+        "BF": st.number_input("Breakfast Cost", 0.0, value=2.0),
+        "LN": st.number_input("Lunch Cost", 0.0),
+        "DN": st.number_input("Dinner Cost", 0.0),
+        "SAI": st.number_input("SAI Add-on", 0.0),
+        "AI": st.number_input("AI Add-on", 0.0)
     }
 
 # --- 4. ENGINE LOGIC ---
 def run_yield_engine(adr, meal_qty, hurdle, demand, is_group, rooms, comm=0.0, mice=0.0, laund=0.0, trans=0.0):
     v_mult = {"Compression (Peak)": 1.25, "High Flow": 1.15, "Standard": 1.0, "Distressed": 0.85}.get(demand, 1.0)
     
-    # Meal Basis detection (Correct Industry Labels)
+    # Meal Basis Detection
     bf, ln, dn, sai, ai = meal_qty.get("BF",0), meal_qty.get("LN",0), meal_qty.get("DN",0), meal_qty.get("SAI",0), meal_qty.get("AI",0)
     if ai > 0: mp = "AI"
     elif sai > 0: mp = "SAI"
@@ -88,25 +91,27 @@ def run_yield_engine(adr, meal_qty, hurdle, demand, is_group, rooms, comm=0.0, m
     
     dyn_h = hurdle * {"Compression (Peak)": 2.5, "High Flow": 1.7, "Standard": 1.0, "Distressed": 0.65}.get(demand, 1.0)
     
-    if unit_w >= dyn_h: status, clr = "ACCEPT: OPTIMIZED", "#27ae60"
-    else: status, clr = "REJECT: DILUTIVE", "#e74c3c"
+    if m_nights >= 5 and unit_w >= (dyn_h * 0.9): status, color = "ACCEPT: STRATEGIC LONGSTAY", "#2980b9"
+    elif unit_w >= dyn_h: status, color = "ACCEPT: OPTIMIZED", "#27ae60"
+    else: status, color = "REJECT: DILUTIVE", "#e74c3c"
     
-    return {"w": unit_w, "st": status, "cl": clr, "mp": mp, "noi": unit_w * div * m_nights, "dh": dyn_h, "vm": v_mult}
+    return {"w": unit_w, "st": status, "cl": color, "mp": mp, "noi": unit_w * div * m_nights, "dh": dyn_h, "vm": v_mult}
 
-# --- 5. TOP DASHBOARD & INTEL ---
+# --- 5. TOP DASHBOARD ---
 st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
 
+# Comprehensive Market Insights
 intel_db = {
-    "salalah": {"ev": "Khareef Festival Season", "fl": "OmanAir Peak", "news": "Monsoon Tourism Surge expected.", "dm": "Compression"},
-    "muscat": {"ev": "Business Summit", "fl": "International Stable", "news": "MICE demand up 15%.", "dm": "High Flow"}
+    "salalah": {"ev": "Khareef Festival Season", "fl": "OmanAir/SalamAir Peak", "ns": "Monsoon Tourism Surge expected.", "dm": "Compression"},
+    "muscat": {"ev": "Business Summit", "fl": "International Hub Stable", "ns": "MICE demand up 15%.", "dm": "High Flow"}
 }
-intel = intel_db.get(city_search.lower(), {"ev": "Standard Market Rotation", "fl": "Standard Flights", "news": "Market flow stable.", "dm": "Standard"})
+intel = intel_db.get(city_search.lower(), {"ev": "Standard Market Rotation", "fl": "Standard Flights", "ns": "Market flow stable.", "dm": "Standard"})
 
 st.markdown(f"""<div class='google-window'><b>🌐 Market Intelligence: {city_search} | {date.today().strftime('%B %Y')}</b><br>
 • <b>Events:</b> {intel['ev']} | <b>Aviation:</b> {intel['fl']}<br>
-• <b>News:</b> {intel['news']} | <b>Pulse:</b> {intel['dm']} Logic Applied.</div>""", unsafe_allow_html=True)
+• <b>News:</b> {intel['ns']} | <b>Pulse:</b> {intel['dm']} Logic Applied.</div>""", unsafe_allow_html=True)
 
-# --- 6. SEGMENT AUDITS ---
+# --- 6. SEGMENTS ---
 segments = [
     {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "h": 45.0, "grp": False, "ota": False},
     {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "h": 35.0, "grp": False, "ota": True},
@@ -131,31 +136,31 @@ for s in segments:
             if not s['ota']: r1[4].info("Fixed Channel")
 
             r2 = st.columns([0.6, 0.6, 0.6, 0.6, 0.6, 1.1, 1.1, 1.1])
-            bb_v = r2[0].number_input("BB", 0, key=f"bb_{s['key']}")
-            ln_v = r2[1].number_input("LN", 0, key=f"ln_{s['key']}")
-            dn_v = r2[2].number_input("DN", 0, key=f"dn_{s['key']}")
-            sai_v = r2[3].number_input("SAI", 0, key=f"sai_{s['key']}")
-            ai_v = r2[4].number_input("AI", 0, key=f"ai_{s['key']}")
+            q_bf = r2[0].number_input("BB", 0, key=f"bf_{s['key']}")
+            q_ln = r2[1].number_input("LN", 0, key=f"ln_{s['key']}")
+            q_dn = r2[2].number_input("DN", 0, key=f"dn_{s['key']}")
+            q_sai = r2[3].number_input("SAI", 0, key=f"sai_{s['key']}")
+            q_ai = r2[4].number_input("AI", 0, key=f"ai_{s['key']}")
             
-            m_r = r2[5].number_input("Group Rev", 0.0, key=f"mice_rev_{s['key']}") if s['grp'] else 0.0
-            l_c = r2[6].number_input("Laundry", 0.0, key=f"lnd_{s['key']}")
-            t_c = r2[7].number_input("Transport", 0.0, key=f"tra_{s['key']}")
+            m_r = r2[5].number_input("Group Rev", 0.0, key=f"m_{s['key']}") if s['grp'] else 0.0
+            l_c = r2[6].number_input("Laundry", 0.0, key=f"l_{s['key']}")
+            t_c = r2[7].number_input("Transport", 0.0, key=f"tr_{s['key']}")
 
-            res = run_yield_engine(g_rate, {"BF":bb_v, "LN":ln_v, "DN":dn_v, "SAI":sai_v, "AI":ai_v}, hrd, dem, s['grp'], rms, comm_val, m_r, l_c, t_c)
+            res = run_yield_engine(g_rate, {"BF":q_bf, "LN":q_ln, "DN":q_dn, "SAI":q_sai, "AI":q_ai}, hrd, dem, s['grp'], rms, comm_val, m_r, l_c, t_c)
             
             v = st.columns([1, 1.5, 1])
             v[0].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
             v[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']} ({res['mp']})</div>", unsafe_allow_html=True)
             v[2].markdown(f"<div style='text-align:right;'><span class='noi-badge'>Segment NOI: {cur_sym} {res['noi']:,.2f}</span></div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='reason-box'>💡 Effective Hurdle: {cur_sym} {res['dh']:.2f} | Basis: {res['mp']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='reason-box'>💡 Strategic Logic: {los_type} | Effective Dynamic Hurdle: {cur_sym} {res['dh']:.2f}</div>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 7. OCCUPANCY ALERT SYSTEM ---
+# --- 7. OCCUPANCY ALERT ---
 occ_perc = (total_active_rooms / h_cap) * 100
 if occ_perc >= 50:
-    st.markdown(f"<div class='alert-box'>⚠️ HIGH OCCUPANCY ALERT: Simulation represents {occ_perc:.1f}% capacity. displacement risk is CRITICAL. Increase hurdles by 20%.</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='alert-box'>⚠️ HIGH OCCUPANCY WARNING: Simulation represents {occ_perc:.1f}% of total inventory. Yield displacement is critical. Protect remaining inventory!</div>", unsafe_allow_html=True)
 
-# --- 8. PILLARS (Restored Full Description) ---
+# --- 8. PILLARS ---
 st.divider()
 st.markdown("<div class='theory-box'><h2 style='color:#1e3799; text-align:center;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h2>", unsafe_allow_html=True)
 p1, p2, p3 = st.columns(3)
@@ -164,7 +169,7 @@ with p1:
     st.markdown("Isolates 'Pure Profit' by stripping statutory taxes, channel commissions, and incremental costs (Meals/Laundry). Ensures volume does not dilute profit.")
 with p2:
     st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
-    st.markdown("Acts as the inventory gatekeeper, automatically scaling entry price requirements based on demand compression to protect high-value demand.")
+    st.markdown("Acts as the inventory gatekeeper, automatically scaling entry price requirements based on demand compression to protect high-value last-minute demand.")
 with p3:
     st.markdown("<span class='pillar-header'>🌐 Pillar 03: External Velocity</span>", unsafe_allow_html=True)
     st.markdown("Integrates real-time city-wide flow data to weight inventory value. Fast market pickup (Compression) increases the value of remaining rooms exponentially.")

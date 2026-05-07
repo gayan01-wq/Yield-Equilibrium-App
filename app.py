@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. SETTINGS & STYLING (Original High-Fidelity) ---
+# --- 1. SETTINGS & STYLING ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Displacement Analyzer")
 
 st.markdown("""<style>
@@ -19,8 +19,6 @@ st.markdown("""<style>
 
 # --- 2. AUTHENTICATION ---
 if "auth" not in st.session_state: st.session_state["auth"] = False
-if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
-
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     with st.form("login_gate"):
@@ -31,53 +29,55 @@ if not st.session_state["auth"]:
                 st.rerun()
     st.stop()
 
-# --- 3. SIDEBAR (CONTEXTUAL DATA) ---
-rk = str(st.session_state["reset_key"])
+# --- 3. SIDEBAR ---
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
-    h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah", key="h_nm_"+rk)
-    h_cap = st.number_input("Total Capacity", min_value=1, value=237, step=1, key="cap_"+rk)
-    city_search = st.text_input("📍 Market Location", "Salalah", key="city_"+rk)
+    h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah")
+    h_cap = st.number_input("Total Capacity", min_value=1, value=237)
+    city_search = st.text_input("📍 Market Location", "Salalah")
     
     st.divider()
     st.markdown("### 📅 Stay Period")
-    d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
-    d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
+    d1 = st.date_input("Check-In", date.today())
+    d2 = st.date_input("Check-Out", date(2026, 5, 8))
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
     st.info(f"Stay Duration: {m_nights} Nights")
 
     st.divider()
-    st.markdown("### 🌍 Global Currency Suite")
     currencies = {"OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "USD ($)": "$"}
-    cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()), key="c_sel_"+rk)]
+    cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()))]
 
-    st.divider()
     st.markdown("### 🏛️ Pillars Setup")
-    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
-    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00, step=0.1, key="p01_v_"+rk)
+    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f")
+    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00)
 
-    # --- THE FIXED BLOCK ---
     st.markdown("### 🍽️ Meal Plan Cost (PP)")
     meal_costs = {
-        "BF": st.number_input("Breakfast (BF)", value=2.00, step=0.5, key="bf_mc_"+rk),
-        "LN": st.number_input("Lunch (LN)", value=0.0, step=0.5, key="ln_mc_"+rk),
-        "DN": st.number_input("Dinner (DN)", value=0.0, step=0.5, key="dn_mc_"+rk),
-        "SAI": st.number_input("Soft All-In (SAI)", value=0.0, step=0.5, key="sai_mc_"+rk),
-        "AI": st.number_input("All-Inclusive (AI)", value=0.0, step=0.5, key="ai_mc_"+rk)
+        "BF": st.number_input("Breakfast (BF)", value=2.00),
+        "LN": st.number_input("Lunch (LN)", value=0.0),
+        "DN": st.number_input("Dinner (DN)", value=0.0),
+        "SAI": st.number_input("Soft All-In (SAI)", value=0.0),
+        "AI": st.number_input("All-Inclusive (AI)", value=0.0)
     }
 
 # --- 4. ENGINE LOGIC ---
 def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, mice=0.0, laundry=0.0, transport=0.0):
     v_mult = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}.get(demand_type, 1.0)
     
-    # Identify Basis
-    bf, ln, dn, sai, ai = meal_qty.get("BF", 0), meal_qty.get("LN", 0), meal_qty.get("DN", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
-    if ai > 0: mp_basis = "AI"
-    elif sai > 0: mp_basis = "SAI"
-    elif bf > 0 and ln > 0 and dn > 0: mp_basis = "FB"
-    elif bf > 0 and dn > 0: mp_basis = "HB"
-    elif bf > 0: mp_basis = "BB"
-    else: mp_basis = "RO"
+    # MEAL PLAN LOGIC (Fixed for industry standards)
+    # Using 'bb' from UI input as the breakfast flag
+    bf = meal_qty.get("BF", 0)
+    ln = meal_qty.get("LN", 0)
+    dn = meal_qty.get("DN", 0)
+    sai = meal_qty.get("SAI", 0)
+    ai = meal_qty.get("AI", 0)
+
+    if ai > 0: mp_label = "AI"
+    elif sai > 0: mp_label = "SAI"
+    elif bf > 0 and ln > 0 and dn > 0: mp_label = "FB"
+    elif bf > 0 and dn > 0: mp_label = "HB"
+    elif bf > 0: mp_label = "BB"
+    else: mp_label = "RO"
 
     dynamic_hurdle = base_hurdle * {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}.get(demand_type, 1.0)
     net_adr = (adr * v_mult) / tx_div
@@ -87,57 +87,65 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     group_rev = (mice / tx_div) + ((transport / tx_div) / divisor) if is_group else 0
     unit_w = (net_adr + group_rev - total_meal_cost) - p01_fee - laundry
     
-    if unit_w < dynamic_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Below Hurdle ({mp_basis})"
-    elif unit_w < (dynamic_hurdle + 5.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", f"Equilibrium window ({mp_basis})"
-    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", f"Optimal Wealth ({mp_basis})"
+    if unit_w < dynamic_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Below Hurdle ({mp_label})"
+    elif unit_w < (dynamic_hurdle + 5.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", f"Equilibrium window ({mp_label})"
+    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", f"Optimal Wealth ({mp_label})"
         
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "vm": v_mult, "dh": dynamic_hurdle, "noi": unit_w * divisor * m_nights}
 
-# --- 5. TOP DASHBOARD ---
+# --- 5. MAIN UI ---
 st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
-st.markdown(f"""<div class='google-window'><b>🌐 Market Intelligence: {city_search} | {date.today().strftime('%B %Y')}</b><br>
+st.markdown(f"""<div class='google-window'><b>🌐 Market Intelligence: {city_search} | May 2026</b><br>
 • <b>Stay Duration:</b> {m_nights} Nights | <b>Currency:</b> {cur_sym}</div>""", unsafe_allow_html=True)
 
-# --- 6. SEGMENT AUDITS ---
 segments = [
     {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "hurdle": 45.0, "group": False},
+    {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "hurdle": 35.0, "group": False},
     {"label": "3. CORPORATE / MICE", "key": "mice", "color": "#34495e", "hurdle": 32.0, "group": True},
     {"label": "4. GROUP TOUR & TRAVEL", "key": "tnt", "color": "#e67e22", "hurdle": 12.0, "group": True}
 ]
 
 for seg in segments:
-    if st.checkbox(f"Activate {seg['label']}", value=True, key=f"act_{seg['key']}_{rk}"):
+    if st.checkbox(f"Activate {seg['label']}", value=True, key=f"act_chk_{seg['key']}"):
         st.markdown(f"<div class='card' style='border-left-color:{seg['color']}'>{seg['label']}</div>", unsafe_allow_html=True)
         with st.container():
             st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
             r1 = st.columns([1, 0.6, 0.6, 0.6, 0.6, 1.2, 1.2])
-            g_rate = r1[0].number_input(f"Gross Rate", value=75.0, key=f"adr_{seg['key']}_{rk}")
-            sgl, dbl, tpl, qrpl = r1[1].number_input("SGL", 0, key=f"s_{seg['key']}_{rk}"), r1[2].number_input("DBL", 1, key=f"d_{seg['key']}_{rk}"), r1[3].number_input("TPL", 0, key=f"t_{seg['key']}_{rk}"), r1[4].number_input("QRPL", 0, key=f"q_{seg['key']}_{rk}")
-            demand_sel = r1[5].selectbox("Demand", ["Standard", "High Flow", "Compression (Peak)", "Distressed"], key=f"dm_{seg['key']}_{rk}")
-            h_base = r1[6].number_input("Hurdle", value=seg['hurdle'], key=f"hrd_{seg['key']}_{rk}")
+            g_rate = r1[0].number_input(f"Gross Rate", value=75.0, key=f"adr_{seg['key']}")
+            sgl, dbl, tpl, qrpl = r1[1].number_input("SGL", 0, key=f"s_{seg['key']}"), r1[2].number_input("DBL", 1, key=f"d_{seg['key']}"), r1[3].number_input("TPL", 0, key=f"t_{seg['key']}"), r1[4].number_input("QRPL", 0, key=f"q_{seg['key']}")
+            demand_sel = r1[5].selectbox("Demand", ["Standard", "High Flow", "Compression (Peak)", "Distressed"], key=f"dm_{seg['key']}")
+            h_base = r1[6].number_input("Hurdle", value=seg['hurdle'], key=f"hr_{seg['key']}")
 
             r2 = st.columns([0.6, 0.6, 0.6, 0.6, 0.6, 1.1, 1.1, 1.1])
-            bf, ln, dn = r2[0].number_input("BB", 0, key=f"bf_in_{seg['key']}"), r2[1].number_input("LN", 0, key=f"ln_in_{seg['key']}"), r2[2].number_input("DN", 0, key=f"dn_in_{seg['key']}")
-            sai, ai = r2[3].number_input("SAI", 0, key=f"sai_in_{seg['key']}"), r2[4].number_input("AI", 0, key=f"ai_in_{seg['key']}")
-            m_pp, l_pp, t_f = r2[5].number_input("Events", 0.0, key=f"m_{seg['key']}") if seg['group'] else 0.0, r2[6].number_input("Laundry", 0.0, key=f"l_{seg['key']}") if seg['group'] else 0.0, r2[7].number_input("Transport", 0.0, key=f"tr_{seg['key']}") if seg['group'] else 0.0
+            bb_val = r2[0].number_input("BB", 0, key=f"bb_{seg['key']}")
+            ln_val = r2[1].number_input("LN", 0, key=f"ln_{seg['key']}")
+            dn_val = r2[2].number_input("DN", 0, key=f"dn_{seg['key']}")
+            sai_val = r2[3].number_input("SAI", 0, key=f"sai_{seg['key']}")
+            ai_val = r2[4].number_input("AI", 0, key=f"ai_{seg['key']}")
+            
+            mice_rev = r2[5].number_input("MICE", 0.0, key=f"m_{seg['key']}") if seg['group'] else 0.0
+            laundry = r2[6].number_input("Laundry", 0.0, key=f"l_{seg['key']}") if seg['group'] else 0.0
+            transport = r2[7].number_input("Transport", 0.0, key=f"tr_{seg['key']}") if seg['group'] else 0.0
 
-            res = run_segment_yield(g_rate, {"BF":bf,"LN":ln,"DN":dn,"SAI":sai,"AI":ai}, h_base, demand_sel, seg['group'], (sgl+dbl+tpl+qrpl), 0, m_pp, l_pp, t_f)
+            # FIX: Key "BF" mapping to UI input variable bb_val
+            res = run_segment_yield(g_rate, {"BF": bb_val, "LN": ln_val, "DN": dn_val, "SAI": sai_val, "AI": ai_val}, h_base, demand_sel, seg['group'], (sgl+dbl+tpl+qrpl), 0, mice_rev, laundry, transport)
             
             v_cols = st.columns([1, 1.5, 1])
             v_cols[0].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}")
             v_cols[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
             v_cols[2].markdown(f"<div style='text-align:right;'><span class='noi-badge'>Total NOI: {cur_sym} {res['noi']:,.2f}</span></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='reason-box'>💡 <b>Reasoning:</b> {res['rsn']} | <b>Effective Hurdle:</b> {cur_sym}{res['dh']:,.2f}</div>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 7. PILLARS ---
+# --- 6. PILLARS ---
 st.divider()
 st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
 st.markdown("<h3 style='color:#1e3799;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3>", unsafe_allow_html=True)
-c_a, c_b, c_c = st.columns(3)
-with c_a:
+c1, c2, c3 = st.columns(3)
+with c1:
     st.markdown("<span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span>", unsafe_allow_html=True)
-with c_b:
+with c2:
     st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
-with c_c:
+with c3:
     st.markdown("<span class='pillar-header'>🌐 Pillar 03: External Velocity</span>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)

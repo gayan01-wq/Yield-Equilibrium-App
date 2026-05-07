@@ -45,7 +45,7 @@ with st.sidebar:
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
 
     st.divider()
-    currencies = {"OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "USD ($)": "$", "EUR (€)": "€"}
+    currencies = {"OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "USD ($)": "$"}
     cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()), key="c_sel_"+rk)]
 
     st.markdown("### 🏛️ Pillars Setup")
@@ -54,39 +54,21 @@ with st.sidebar:
 
     st.markdown("### 🍽️ Meal Plan Cost (PP)")
     meal_costs = {
-        "BF": st.number_input("Breakfast (BF)", value=2.00, step=0.5, key="bf_mc_"+rk),
-        "LN": st.number_input("Lunch (LN)", value=0.0, step=0.5, key="ln_mc_"+rk),
-        "DN": st.number_input("Dinner (DN)", value=0.0, step=0.5, key="dn_mc_"+rk),
-        "SAI": st.number_input("Soft All-In (SAI)", value=0.0, step=0.5, key="sai_mc_"+rk),
-        "AI": st.number_input("All-Inclusive (AI)", value=0.0, step=0.5, key="ai_mc_"+rk)
+        "BF": st.number_input("Breakfast (BF)", value=2.00, key="bf_mc_"+rk),
+        "LN": st.number_input("Lunch (LN)", value=0.0, key="ln_mc_"+rk),
+        "DN": st.number_input("Dinner (DN)", value=0.0, key="dn_mc_"+rk),
+        "SAI": st.number_input("Soft All-In (SAI)", value=0.0, key="sai_mc_"+rk),
+        "AI": st.number_input("All-Inclusive (AI)", value=0.0, key="ai_mc_"+rk)
     }
 
-# --- 4. MARKET INTEL DATA (Fixed Line 74) ---
-intel_db = {
-    "salalah": {"ev": "Khareef Festival Season", "fl": "OmanAir/SalamAir Peak", "news": "Monsoon Tourism Surge expected.", "demand": "Compression"},
-    "muscat": {"ev": "Business Summit", "fl": "International Hub Stable", "news": "MICE demand up 15%.", "demand": "High Flow"}
-}
-active_intel = intel_db.get(city_search.lower(), {"ev": "Market Rotation", "fl": "Standard Flights", "news": "Standard flow stable.", "demand": "Standard"})
-
-# --- 5. ENGINE LOGIC ---
-def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, comm_rate=0.0, mice=0.0, laundry=0.0, transport=0.0):
+# --- 4. ENGINE LOGIC ---
+def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, comm_rate=0.0):
     velocity_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
     v_mult = velocity_map.get(demand_type, 1.0)
-    hurdle_multiplier = {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}
-    dynamic_hurdle = base_hurdle * hurdle_multiplier.get(demand_type, 1.0)
     
-    net_adr = (adr * v_mult) / tx_div
-    total_meal_cost = sum(qty * meal_costs.get(p, 0) for p, qty in meal_qty.items())
-    
-    # Meal Plan Detection
+    # Meal Plan Logic
     bf, ln, dn, sai, ai = meal_qty.get("BF", 0), meal_qty.get("LN", 0), meal_qty.get("DN", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
     if ai > 0: mp_basis = "AI"
     elif sai > 0: mp_basis = "SAI"
     elif bf > 0 and ln > 0 and dn > 0: mp_basis = "FB"
-    elif bf > 0 and dn > 0: mp_basis = "HB"
-    elif bf > 0: mp_basis = "BB"
-    else: mp_basis = "RO"
-
-    divisor = max(total_rooms, 10) if is_group else max(total_rooms, 1)
-    group_rev = (mice / tx_div) + ((transport / tx_div) / divisor) if is_group else 0
-    unit_w = (net_adr + group_rev - total_meal_cost - (net_adr * (comm_rate/100))) - p01
+    elif bf > 0 and

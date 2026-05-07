@@ -1,14 +1,13 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. INITIALIZE SESSION STATE (MUST BE FIRST) ---
-# This prevents the NameError you saw and manages user isolation
+# --- 1. INITIALIZE SESSION STATE (CRITICAL FOR ISOLATION) ---
 if "auth" not in st.session_state: 
     st.session_state["auth"] = False
 if "reset_key" not in st.session_state: 
     st.session_state["reset_key"] = 0
 
-# --- 2. SETTINGS & STYLING ---
+# --- 2. SETTINGS & STYLING (YOUR ORIGINAL FORMAT) ---
 st.set_page_config(layout="wide", page_title="Yield Equilibrium Displacement Analyzer")
 
 st.markdown("""<style>
@@ -35,11 +34,10 @@ if not st.session_state["auth"]:
                 st.rerun()
     st.stop()
 
-# --- 4. DATA RESET FUNCTION ---
-def clear_all_data():
-    # Increment the key to force-reset all widgets
+# --- 4. RESET LOGIC ---
+def reset_engine():
     st.session_state["reset_key"] += 1
-    # Clear all stored values except authentication
+    # Clear variables but keep auth
     for key in list(st.session_state.keys()):
         if key not in ["auth", "reset_key"]:
             del st.session_state[key]
@@ -48,8 +46,8 @@ def clear_all_data():
 rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
-    # Setting value="" makes it empty by default
-    h_name = st.text_input("Hotel Name", value="", placeholder="Enter Hotel Name...", key="h_nm_"+rk)
+    # value="" ensures it is empty after reset. Wyndham Garden Salalah is now a placeholder.
+    h_name = st.text_input("Hotel Name", value="", placeholder="e.g. Wyndham Garden Salalah", key="h_nm_"+rk)
     h_cap = st.number_input("Total Capacity", min_value=1, value=237, step=1, key="cap_"+rk)
     city_search = st.text_input("📍 Market Location", value="", placeholder="e.g. Salalah", key="city_"+rk)
     
@@ -63,4 +61,57 @@ with st.sidebar:
     st.divider()
     st.markdown("### 🌍 Global Currency Suite")
     currencies = {
-        "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "QAR (﷼)": "﷼", "BHD (.د)": ".د", "KWD (د.ك
+        "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "QAR (﷼)": "﷼", "BHD (.د)": ".د", "KWD (د.ك)": "د.ك",
+        "USD ($)": "$", "EUR (€)": "€", "GBP (£)": "£", "LKR (රු)": "රු", "INR (₹)": "₹", "CHF (CHF)": "CHF"
+    }
+    cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()), key="c_sel_"+rk)]
+
+    st.divider()
+    st.markdown("### 🏛️ Pillars Setup")
+    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
+    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00, step=0.1, key="p01_v_"+rk)
+
+    st.markdown("### 🍽️ Meal Plan Cost (PP)")
+    meal_costs = {
+        "BF": st.number_input("Breakfast Cost", min_value=0.0, value=2.00, step=0.5, key="bf_mc_"+rk),
+        "LN": st.number_input("Lunch Cost", min_value=0.0, value=0.0, step=0.5, key="ln_mc_"+rk),
+        "DN": st.number_input("Dinner Cost", min_value=0.0, value=0.0, step=0.5, key="dn_mc_"+rk),
+        "SAI": st.number_input("Soft All-In Cost", min_value=0.0, value=0.0, step=0.5, key="sai_mc_"+rk),
+        "AI": st.number_input("All-Inclusive Cost", min_value=0.0, value=0.0, step=0.5, key="ai_mc_"+rk)
+    }
+
+    st.divider()
+    if st.button("🗑️ RESET ALL DATA", use_container_width=True, type="primary"):
+        reset_engine()
+        st.rerun()
+
+# --- 6. MARKET INTEL DATA ---
+intel_db = {
+    "salalah": {"ev": "Khareef Festival Season", "fl": "OmanAir/SalamAir Peak", "news": "Monsoon Tourism Surge expected.", "demand": "Compression"},
+    "muscat": {"ev": "Business Summit", "fl": "International Hub Stable", "news": "MICE demand up 15%.", "demand": "High Flow"}
+}
+active_intel = intel_db.get(city_search.lower(), {"ev": "Market Rotation", "fl": "Standard Flights", "news": "Location data pending.", "demand": "Standard"})
+
+# --- 7. ENGINE LOGIC (YOUR ORIGINAL CALCULATIONS) ---
+def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, comm_rate=0.0, mice=0.0, laundry=0.0, transport=0.0):
+    velocity_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
+    v_mult = velocity_map.get(demand_type, 1.0)
+    
+    bf, ln, dn, sai, ai = meal_qty.get("BF", 0), meal_qty.get("LN", 0), meal_qty.get("DN", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
+    if ai > 0: mp_basis = "AI"
+    elif sai > 0: mp_basis = "SAI"
+    elif bf > 0 and ln > 0 and dn > 0: mp_basis = "FB"
+    elif bf > 0 and dn > 0: mp_basis = "HB"
+    elif bf > 0: mp_basis = "BB"
+    else: mp_basis = "RO"
+
+    hurdle_multiplier = {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}
+    dynamic_hurdle = base_hurdle * hurdle_multiplier.get(demand_type, 1.0)
+    
+    net_adr = (adr * v_mult) / tx_div
+    total_meal_cost = sum(qty * meal_costs.get(p, 0) for p, qty in meal_qty.items())
+    
+    divisor = max(total_rooms, 10) if is_group else max(total_rooms, 1)
+    group_rev = (mice / tx_div) + ((transport / tx_div) / divisor) if is_group else 0
+    
+    unit_w = (net_adr + group_rev - total_meal_cost - (net_adr * (comm_rate/100))) - p

@@ -187,4 +187,23 @@ if len(e_keys) >= 2:
     sa, sb = wealth_results[e_keys[0]], wealth_results[e_keys[1]]
     total_gain = (sa['w'] - sb['w']) * sb['rooms'] * m_nights
     total_potential_wealth = sa['w'] * h_cap * m_nights
-    eff = (total_
+    eff = (total_gain / total_potential_wealth * 100) if total_potential_wealth != 0 else 0
+    m_cols = st.columns(4)
+    m_cols[0].metric("Wealth Gap", f"{cur_sym} {sa['w'] - sb['w']:,.2f}")
+    m_cols[1].metric("Total NOI Gain", f"{cur_sym} {total_gain:,.2f}")
+    m_cols[2].metric("NOI Improvement", f"{((sa['w']-sb['w'])/sb['w']*100 if sb['w']!=0 else 0):.2f}%")
+    m_cols[3].metric("Asset Efficiency", f"{eff:.2f}%")
+
+st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
+st.markdown("<h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3>", unsafe_allow_html=True)
+c_a, c_b, c_c = st.columns(3)
+with c_a:
+    st.markdown("<span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Strips statutory taxes (1.2327), commissions, and meal costs to isolate <b>Net-Core Wealth</b>.</p>", unsafe_allow_html=True)
+with c_b:
+    st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Protects inventory by scaling hurdles up to 2.5x during Peak cycles to ensure high-value pickup.</p>", unsafe_allow_html=True)
+with c_c:
+    st.markdown("<span class='pillar-header'>🌐 Pillar 03: External Velocity</span>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Integrates market pulse data to apply demand multipliers based on real-time market flow.</p>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)

@@ -29,7 +29,7 @@ if not st.session_state["auth"]:
                 st.rerun()
     st.stop()
 
-# --- 3. SIDEBAR (STAY & COSTS) ---
+# --- 3. SIDEBAR (CONTEXTUAL DATA) ---
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
     h_name = st.text_input("Hotel Name", "Wyndham Garden Salalah")
@@ -64,14 +64,14 @@ with st.sidebar:
 def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, mice=0.0, laundry=0.0, transport=0.0):
     v_mult = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}.get(demand_type, 1.0)
     
-    # Identify Basis Label
+    # MEAL PLAN IDENTIFICATION (BB, HB, FB, AI, SAI)
     bf, ln, dn, sai, ai = meal_qty.get("BF", 0), meal_qty.get("LN", 0), meal_qty.get("DN", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
-    if ai > 0: mp_basis = "AI"
-    elif sai > 0: mp_basis = "SAI"
-    elif bf > 0 and ln > 0 and dn > 0: mp_basis = "FB"
-    elif bf > 0 and dn > 0: mp_basis = "HB"
-    elif bf > 0: mp_basis = "BB"
-    else: mp_basis = "RO"
+    if ai > 0: mp_label = "AI"
+    elif sai > 0: mp_label = "SAI"
+    elif bf > 0 and ln > 0 and dn > 0: mp_label = "FB"
+    elif bf > 0 and dn > 0: mp_label = "HB"
+    elif bf > 0: mp_label = "BB"
+    else: mp_label = "RO"
 
     dynamic_hurdle = base_hurdle * {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}.get(demand_type, 1.0)
     net_adr = (adr * v_mult) / tx_div
@@ -81,32 +81,15 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     group_rev = (mice / tx_div) + ((transport / tx_div) / divisor) if is_group else 0
     unit_w = (net_adr + group_rev - total_meal_cost) - p01_fee - laundry
     
-    if unit_w < dynamic_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Below Hurdle ({mp_basis})"
-    elif unit_w < (dynamic_hurdle + 5.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", f"Equilibrium window ({mp_basis})"
-    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", f"Optimal Wealth ({mp_basis})"
+    if unit_w < dynamic_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Below Hurdle ({mp_label})"
+    elif unit_w < (dynamic_hurdle + 5.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", f"Equilibrium window ({mp_label})"
+    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", f"Optimal Wealth ({mp_label})"
         
     return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "vm": v_mult, "dh": dynamic_hurdle, "noi": unit_w * divisor * m_nights}
 
 # --- 5. TOP DASHBOARD ---
 st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
 st.markdown(f"""<div class='google-window'><b>🌐 Market Intelligence: {city_search} | May 2026</b><br>
-• <b>Stay Duration:</b> {m_nights} Nights | <b>Currency:</b> {cur_sym} | <b>Market Pulse:</b> Standard Flow Applied.</div>""", unsafe_allow_html=True)
+• <b>Stay Duration:</b> {m_nights} Nights | <b>Currency:</b> {cur_sym}</div>""", unsafe_allow_html=True)
 
-# --- 6. SEGMENT AUDITS ---
-segments = [
-    {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "hurdle": 45.0, "group": False},
-    {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "hurdle": 35.0, "group": False},
-    {"label": "3. CORPORATE / MICE", "key": "mice", "color": "#34495e", "hurdle": 32.0, "group": True},
-    {"label": "4. GROUP TOUR & TRAVEL", "key": "tnt", "color": "#e67e22", "hurdle": 12.0, "group": True}
-]
-
-for seg in segments:
-    if st.checkbox(f"Activate {seg['label']}", value=True, key=f"act_{seg['key']}"):
-        st.markdown(f"<div class='card' style='border-left-color:{seg['color']}'>{seg['label']}</div>", unsafe_allow_html=True)
-        with st.container():
-            st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
-            r1 = st.columns([1, 0.6, 0.6, 0.6, 0.6, 1.2, 1.2])
-            g_rate = r1[0].number_input(f"Gross Rate", value=75.0, key=f"adr_{seg['key']}")
-            sgl, dbl, tpl, qrpl = r1[1].number_input("SGL", 0, key=f"s_{seg['key']}"), r1[2].number_input("DBL", 1, key=f"d_{seg['key']}"), r1[3].number_input("TPL", 0, key=f"t_{seg['key']}"), r1[4].number_input("QRPL", 0, key=f"q_{seg['key']}")
-            demand_sel = r1[5].selectbox("Demand", ["Standard", "High Flow", "Compression (Peak)", "Distressed"], key=f"dm_{seg['key']}")
-            h_base = r1[6].number_input("Base Hurdle", value=seg['hurdle'], key=f"hr_{seg['key
+#

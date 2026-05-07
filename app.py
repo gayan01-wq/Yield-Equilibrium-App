@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import date
 
 # --- 1. SETTINGS & STYLING ---
-st.set_page_config(layout="wide", page_title="Yield Equilibrium Displacement Analyzer")
+st.set_page_config(layout="wide", page_title="Yield Equilibrium")
 
 st.markdown("""<style>
 .block-container{padding-top:1rem!important; padding-bottom:0rem!important;}
@@ -64,7 +64,9 @@ with st.sidebar:
 
 # --- 4. ENGINE LOGIC ---
 def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, mice=0.0, laundry=0.0, transport=0.0):
-    v_mult = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}.get(demand_type, 1.0)
+    # Determine Velocity
+    v_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
+    v_mult = v_map.get(demand_type, 1.0)
     
     # Meal Basis detection logic
     bf, ln, dn, sai, ai = meal_qty.get("BF", 0), meal_qty.get("LN", 0), meal_qty.get("DN", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
@@ -75,7 +77,10 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     elif bf > 0: mp_basis = "BB"
     else: mp_basis = "RO"
 
-    dynamic_hurdle = base_hurdle * {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}.get(demand_type, 1.0)
+    # Hurdle Logic
+    h_map = {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}
+    dynamic_hurdle = base_hurdle * h_map.get(demand_type, 1.0)
+    
     net_adr = (adr * v_mult) / tx_div
     total_meal_cost = sum(qty * meal_costs.get(p, 0) for p, qty in meal_qty.items())
     
@@ -83,6 +88,79 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     group_rev = (mice / tx_div) + ((transport / tx_div) / divisor) if is_group else 0
     unit_w = (net_adr + group_rev - total_meal_cost) - p01_fee - laundry
     
+    # Status Logic
     if unit_w < dynamic_hurdle:
         stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Below Hurdle ({mp_basis})"
-    elif unit_w < (dynamic
+    elif unit_w < (dynamic_hurdle + 5.0):
+        stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", f"Equilibrium window ({mp_basis})"
+    else:
+        stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", f"Wealth Targets Achievement ({mp_basis})"
+        
+    return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "vm": v_mult, "dh": dynamic_hurdle, "noi": unit_w * divisor * m_nights}
+
+# --- 5. TOP DASHBOARD ---
+st.markdown(f"<h1 class='main-title'>{h_name.upper()}</h1>", unsafe_allow_html=True)
+st.markdown(f"""
+<div class='google-window'>
+    <b>🌐 Market Intelligence: {city_search} | May 2026</b><br>
+    • <b>Stay Duration:</b> {m_nights} Nights | <b>Currency:</b> {cur_sym}
+</div>
+""", unsafe_allow_html=True)
+
+# --- 6. SEGMENT AUDITS ---
+segments = [
+    {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "hurdle": 45.0, "group": False},
+    {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "hurdle": 35.0, "group": False},
+    {"label": "3. CORPORATE / MICE", "key": "mice", "color": "#34495e", "hurdle": 32.0, "group": True},
+    {"label": "4. GROUP TOUR & TRAVEL", "key": "tnt", "color": "#e67e22", "hurdle": 12.0, "group": True}
+]
+
+for seg in segments:
+    if st.checkbox(f"Activate {seg['label']}", value=True, key=f"active_{seg['key']}"):
+        st.markdown(f"<div class='card' style='border-left-color:{seg['color']}'>{seg['label']}</div>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+            r1 = st.columns([1, 0.6, 0.6, 0.6, 0.6, 1.2, 1.2])
+            g_rate = r1[0].number_input("Gross Rate", value=75.0, key=f"r_v_{seg['key']}")
+            sgl = r1[1].number_input("SGL", 0, key=f"s_v_{seg['key']}")
+            dbl = r1[2].number_input("DBL", 1, key=f"d_v_{seg['key']}")
+            tpl = r1[3].number_input("TPL", 0, key=f"t_v_{seg['key']}")
+            qrpl = r1[4].number_input("QRPL", 0, key=f"q_v_{seg['key']}")
+            demand_sel = r1[5].selectbox("Demand", ["Standard", "High Flow", "Compression (Peak)", "Distressed"], key=f"dm_v_{seg['key']}")
+            h_base = r1[6].number_input("Hurdle", value=seg['hurdle'], key=f"hr_v_{seg['key']}")
+
+            r2 = st.columns([0.6, 0.6, 0.6, 0.6, 0.6, 1.1, 1.1, 1.1])
+            v_bb = r2[0].number_input("BB", 0, key=f"bb_m_{seg['key']}")
+            v_ln = r2[1].number_input("LN", 0, key=f"ln_m_{seg['key']}")
+            v_dn = r2[2].number_input("DN", 0, key=f"dn_m_{seg['key']}")
+            v_sai = r2[3].number_input("SAI", 0, key=f"sai_m_{seg['key']}")
+            v_ai = r2[4].number_input("AI", 0, key=f"ai_m_{seg['key']}")
+            
+            m_r = r2[5].number_input("MICE", 0.0, key=f"m_r_{seg['key']}") if seg['group'] else 0.0
+            l_c = r2[6].number_input("Laundry", 0.0, key=f"l_c_{seg['key']}") if seg['group'] else 0.0
+            t_c = r2[7].number_input("Transport", 0.0, key=f"t_c_{seg['key']}") if seg['group'] else 0.0
+
+            res = run_segment_yield(g_rate, {"BF": v_bb, "LN": v_ln, "DN": v_dn, "SAI": v_sai, "AI": v_ai}, h_base, demand_sel, seg['group'], (sgl+dbl+tpl+qrpl), 0, m_r, l_c, t_c)
+            
+            v_cols = st.columns([1, 1.5, 1])
+            v_cols[0].metric("Net Wealth", f"{cur_sym} {res['w']:,.2f}")
+            v_cols[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
+            v_cols[2].markdown(f"<div style='text-align:right;'><span class='noi-badge'>Total NOI: {cur_sym} {res['noi']:,.2f}</span></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='reason-box'>💡 <b>Reasoning:</b> {res['rsn']} | <b>Effective Hurdle:</b> {cur_sym}{res['dh']:,.2f}</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# --- 7. PILLARS ---
+st.divider()
+st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
+st.markdown("<h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3>", unsafe_allow_html=True)
+c_a, c_b, c_c = st.columns(3)
+with c_a:
+    st.markdown("<span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; color:#4b6584;'>Strips statutory taxes, commissions, and meal costs.</p>", unsafe_allow_html=True)
+with c_b:
+    st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; color:#4b6584;'>Scales hurdles dynamically during Peak cycles.</p>", unsafe_allow_html=True)
+with c_c:
+    st.markdown("<span class='pillar-header'>🌐 Pillar 03: External Velocity</span>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; color:#4b6584;'>Integrates market pulse to adjust effective yields.</p>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)

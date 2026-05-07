@@ -31,7 +31,7 @@ if not st.session_state["auth"]:
                 st.rerun()
     st.stop()
 
-# --- 3. SIDEBAR (CONTEXTUAL DATA) ---
+# --- 3. SIDEBAR ---
 rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
@@ -40,22 +40,14 @@ with st.sidebar:
     city_search = st.text_input("📍 Market Location", "Salalah", key="city_"+rk)
     
     st.divider()
-    st.markdown("### 📅 Stay Period")
     d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
     d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    st.info(f"Stay Duration: {m_nights} Nights")
 
     st.divider()
-    st.markdown("### 🌍 Global Currency Suite")
-    currencies = {
-        "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "QAR (﷼)": "﷼", "BHD (.د)": ".د", "KWD (د.ك)": "د.ك",
-        "USD ($)": "$", "EUR (€)": "€", "GBP (£)": "£", "LKR (රු)": "රු", "INR (₹)": "₹", "CHF (CHF)": "CHF", 
-        "JPY (¥)": "¥", "CNY (¥)": "¥", "RUB (₽)": "₽", "CAD ($)": "$", "AUD ($)": "$"
-    }
+    currencies = {"OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "USD ($)": "$", "EUR (€)": "€"}
     cur_sym = currencies[st.selectbox("Select Currency", list(currencies.keys()), key="c_sel_"+rk)]
 
-    st.divider()
     st.markdown("### 🏛️ Pillars Setup")
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00, step=0.1, key="p01_v_"+rk)
@@ -69,6 +61,32 @@ with st.sidebar:
         "AI": st.number_input("All-Inclusive (AI)", value=0.0, step=0.5, key="ai_mc_"+rk)
     }
 
-# --- 4. MARKET INTEL DATA ---
+# --- 4. MARKET INTEL DATA (Fixed Line 74) ---
 intel_db = {
-    "salalah": {"ev": "Khareef Festival
+    "salalah": {"ev": "Khareef Festival Season", "fl": "OmanAir/SalamAir Peak", "news": "Monsoon Tourism Surge expected.", "demand": "Compression"},
+    "muscat": {"ev": "Business Summit", "fl": "International Hub Stable", "news": "MICE demand up 15%.", "demand": "High Flow"}
+}
+active_intel = intel_db.get(city_search.lower(), {"ev": "Market Rotation", "fl": "Standard Flights", "news": "Standard flow stable.", "demand": "Standard"})
+
+# --- 5. ENGINE LOGIC ---
+def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, comm_rate=0.0, mice=0.0, laundry=0.0, transport=0.0):
+    velocity_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
+    v_mult = velocity_map.get(demand_type, 1.0)
+    hurdle_multiplier = {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}
+    dynamic_hurdle = base_hurdle * hurdle_multiplier.get(demand_type, 1.0)
+    
+    net_adr = (adr * v_mult) / tx_div
+    total_meal_cost = sum(qty * meal_costs.get(p, 0) for p, qty in meal_qty.items())
+    
+    # Meal Plan Detection
+    bf, ln, dn, sai, ai = meal_qty.get("BF", 0), meal_qty.get("LN", 0), meal_qty.get("DN", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
+    if ai > 0: mp_basis = "AI"
+    elif sai > 0: mp_basis = "SAI"
+    elif bf > 0 and ln > 0 and dn > 0: mp_basis = "FB"
+    elif bf > 0 and dn > 0: mp_basis = "HB"
+    elif bf > 0: mp_basis = "BB"
+    else: mp_basis = "RO"
+
+    divisor = max(total_rooms, 10) if is_group else max(total_rooms, 1)
+    group_rev = (mice / tx_div) + ((transport / tx_div) / divisor) if is_group else 0
+    unit_w = (net_adr + group_rev - total_meal_cost - (net_adr * (comm_rate/100))) - p01

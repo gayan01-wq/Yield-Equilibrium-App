@@ -67,13 +67,14 @@ with st.sidebar:
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00, step=0.1, key="p01_v_"+rk)
 
+    # UPDATED: Sidebar labels to match image_d3dbba.png
     st.markdown("### 🍽️ Meal Plan Cost (PP)")
     meal_costs = {
         "BB": st.number_input("Breakfast Cost", min_value=0.0, value=2.00, step=0.5, key="bb_mc_"+rk),
         "HB": st.number_input("Half Board Cost", min_value=0.0, value=5.00, step=0.5, key="hb_mc_"+rk),
         "FB": st.number_input("Full Board Cost", min_value=0.0, value=10.00, step=0.5, key="fb_mc_"+rk),
-        "SAI": st.number_input("Soft All-In Cost", min_value=0.0, value=15.00, step=0.5, key="sai_mc_"+rk),
-        "AI": st.number_input("All-Inclusive Cost", min_value=0.0, value=20.00, step=0.5, key="ai_mc_"+rk)
+        "SAI": st.number_input("Soft All-In Cost", min_value=0.0, value=0.0, step=0.5, key="sai_mc_"+rk),
+        "AI": st.number_input("All-Inclusive Cost", min_value=0.0, value=0.0, step=0.5, key="ai_mc_"+rk)
     }
 
     st.divider()
@@ -93,7 +94,7 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     velocity_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
     v_mult = velocity_map.get(demand_type, 1.0)
     
-    # Identify Meal Basis for display
+    # Identify Meal Basis for display using the updated keys
     bb, hb, fb, sai, ai = meal_qty.get("BB", 0), meal_qty.get("HB", 0), meal_qty.get("FB", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
     if ai > 0: mp_basis = "AI"
     elif sai > 0: mp_basis = "SAI"
@@ -106,6 +107,8 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     dynamic_hurdle = base_hurdle * hurdle_multiplier.get(demand_type, 1.0)
     
     net_adr = (adr * v_mult) / tx_div
+    
+    # Calculate total meal cost using the specific per-plan cost from sidebar
     total_meal_cost = sum(qty * meal_costs.get(p, 0) for p, qty in meal_qty.items())
     
     divisor = max(total_rooms, 10) if is_group else max(total_rooms, 1)
@@ -151,7 +154,6 @@ for seg in segments:
             
             c_ota = st.slider("OTA Commission %", 0, 40, 15, key=f"comm_{seg['key']}_{rk}") if seg['ota'] else 0.0
             
-            # Row 1: Core Rates and Demand
             r1 = st.columns([1, 0.6, 0.6, 0.6, 0.6, 1.2, 1.2])
             g_rate = r1[0].number_input(f"Gross Rate", value=29.0 if seg['key']=='tnt' else 75.0, step=0.5, key=f"adr_{seg['key']}_{rk}")
             min_v = 10 if seg['group'] else 1
@@ -160,7 +162,7 @@ for seg in segments:
             demand_sel = r1[5].selectbox("Market Demand", ["Compression (Peak)", "High Flow", "Standard", "Distressed"], key=f"dm_{seg['key']}_{rk}")
             h_base = r1[6].number_input("Base Hurdle", value=seg['hurdle'], step=1.0, key=f"hrd_{seg['key']}_{rk}")
 
-            # Row 2: Updated Meal Inputs (BB, HB, FB, SAI, AI) and Supplements
+            # UPDATED: Row 2 inputs to reflect the per-basis plan quantity
             r2 = st.columns([0.6,0.6,0.6,0.6,0.6, 1.1, 1.1, 1.1])
             bb_in = r2[0].number_input("BB", 0, key=f"bb_in_{seg['key']}_{rk}")
             hb_in = r2[1].number_input("HB", 0, key=f"hb_in_{seg['key']}_{rk}")
@@ -170,10 +172,8 @@ for seg in segments:
             
             m_pp, l_pp, t_f = r2[5].number_input("Events", 0.0, key=f"m_{seg['key']}_{rk}") if seg['group'] else 0.0, r2[6].number_input("Laundry", 0.0, key=f"l_{seg['key']}_{rk}") if seg['group'] else 0.0, r2[7].number_input("Transport", 0.0, key=f"tr_{seg['key']}_{rk}") if seg['group'] else 0.0
 
-            # Calculation using updated meal basis
             res = run_segment_yield(g_rate, {"BB":bb_in,"HB":hb_in,"FB":fb_in,"SAI":sai_in,"AI":ai_in}, h_base, demand_sel, seg['group'], rooms_total, c_ota, m_pp, l_pp, t_f)
             
-            # Display Results
             v_cols = st.columns([1, 1.5, 1])
             v_cols[0].metric("Net Wealth (Pillar 01)", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
             v_cols[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']} ({res['mp']})</div>", unsafe_allow_html=True)

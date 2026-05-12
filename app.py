@@ -67,14 +67,14 @@ with st.sidebar:
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
     p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00, step=0.1, key="p01_v_"+rk)
 
-    # UPDATED: Sidebar labels to match image_d3dbba.png
+    # UPDATED: Short-form labels as per image_d3d496.png
     st.markdown("### 🍽️ Meal Plan Cost (PP)")
     meal_costs = {
-        "BB": st.number_input("Breakfast Cost", min_value=0.0, value=2.00, step=0.5, key="bb_mc_"+rk),
-        "HB": st.number_input("Half Board Cost", min_value=0.0, value=5.00, step=0.5, key="hb_mc_"+rk),
-        "FB": st.number_input("Full Board Cost", min_value=0.0, value=10.00, step=0.5, key="fb_mc_"+rk),
-        "SAI": st.number_input("Soft All-In Cost", min_value=0.0, value=0.0, step=0.5, key="sai_mc_"+rk),
-        "AI": st.number_input("All-Inclusive Cost", min_value=0.0, value=0.0, step=0.5, key="ai_mc_"+rk)
+        "BF": st.number_input("BF Cost (PP)", min_value=0.0, value=2.00, step=0.5, key="bf_mc_"+rk),
+        "LN": st.number_input("LN Cost (PP)", min_value=0.0, value=3.00, step=0.5, key="ln_mc_"+rk),
+        "DN": st.number_input("DN Cost (PP)", min_value=0.0, value=5.00, step=0.5, key="dn_mc_"+rk),
+        "SAI": st.number_input("SAI Cost (PP)", min_value=0.0, value=12.00, step=0.5, key="sai_mc_"+rk),
+        "AI": st.number_input("AI Cost (PP)", min_value=0.0, value=15.00, step=0.5, key="ai_mc_"+rk)
     }
 
     st.divider()
@@ -94,7 +94,7 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     velocity_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
     v_mult = velocity_map.get(demand_type, 1.0)
     
-    # Identify Meal Basis for display using the updated keys
+    # Identify Meal Basis for display logic
     bb, hb, fb, sai, ai = meal_qty.get("BB", 0), meal_qty.get("HB", 0), meal_qty.get("FB", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
     if ai > 0: mp_basis = "AI"
     elif sai > 0: mp_basis = "SAI"
@@ -108,8 +108,13 @@ def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_r
     
     net_adr = (adr * v_mult) / tx_div
     
-    # Calculate total meal cost using the specific per-plan cost from sidebar
-    total_meal_cost = sum(qty * meal_costs.get(p, 0) for p, qty in meal_qty.items())
+    # Calculation logic for total meal cost based on selected basis
+    total_meal_cost = 0
+    if ai > 0: total_meal_cost = ai * meal_costs["AI"]
+    elif sai > 0: total_meal_cost = sai * meal_costs["SAI"]
+    elif fb > 0: total_meal_cost = fb * (meal_costs["BF"] + meal_costs["LN"] + meal_costs["DN"])
+    elif hb > 0: total_meal_cost = hb * (meal_costs["BF"] + meal_costs["DN"])
+    elif bb > 0: total_meal_cost = bb * meal_costs["BF"]
     
     divisor = max(total_rooms, 10) if is_group else max(total_rooms, 1)
     group_rev = (mice / tx_div) + ((transport / tx_div) / divisor) if is_group else 0
@@ -162,7 +167,6 @@ for seg in segments:
             demand_sel = r1[5].selectbox("Market Demand", ["Compression (Peak)", "High Flow", "Standard", "Distressed"], key=f"dm_{seg['key']}_{rk}")
             h_base = r1[6].number_input("Base Hurdle", value=seg['hurdle'], step=1.0, key=f"hrd_{seg['key']}_{rk}")
 
-            # UPDATED: Row 2 inputs to reflect the per-basis plan quantity
             r2 = st.columns([0.6,0.6,0.6,0.6,0.6, 1.1, 1.1, 1.1])
             bb_in = r2[0].number_input("BB", 0, key=f"bb_in_{seg['key']}_{rk}")
             hb_in = r2[1].number_input("HB", 0, key=f"hb_in_{seg['key']}_{rk}")

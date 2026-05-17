@@ -51,7 +51,7 @@ with st.sidebar:
     st.info(f"Length of Stay: {m_nights} Night(s)")
     
     st.divider()
-    st.markdown("### ### 🏛️ Pillars Setup")
+    st.markdown("### 🏛️ Pillars Setup")
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
     p01_fee = st.number_input("P01 Fee (Per Room)", value=6.00, step=0.1, key="p01_v_"+rk)
     
@@ -67,7 +67,6 @@ with st.sidebar:
         st.rerun()
 
 # --- 4. MARKET INTEL ---
-# Cleanly broken down dictionary lines to avoid editor clipping errors
 intel_db = {
     "salalah": {
         "ev": "Khareef Season", 
@@ -107,7 +106,32 @@ def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, c
     
     unit_w = (net_adr + anc_net) - (meal_unit + comm_val + p01_fee + laundry)
     
+    # Vertically broken down conditions to insulate strings from editor truncation
     if unit_w < dh: 
-        stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", "Wealth below market equilibrium."
+        stt = "REJECT: DILUTIVE"
+        clr = "#e74c3c"
+        rsn = "Wealth below market equilibrium."
     elif unit_w < (dh + 5.0): 
-        stt, clr, rsn = "REVIEW: MARGINAL", "#f39c
+        stt = "REVIEW: MARGINAL"
+        clr = "#f39c12"
+        rsn = "At hurdle equilibrium threshold."
+    else: 
+        stt = "ACCEPT: OPTIMIZED"
+        clr = "#27ae60"
+        rsn = "Wealth targets successfully achieved."
+    
+    mp_basis = "RO"
+    for p in ["AI", "SAI", "FB", "HB", "BB"]:
+        if room_counts.get(p, 0) > 0: mp_basis = p; break
+
+    total_noi = unit_w * total_rooms * m_nights
+    
+    return {"w": unit_w, "st": stt, "cl": clr, "dh": dh, "noi": total_noi, "mp": mp_basis, "rsn": rsn}
+
+# --- 6. DASHBOARD MAIN ---
+st.markdown(f"<h1 class='main-title'>{h_name.upper() if h_name else 'YIELD ENGINE'}</h1>", unsafe_allow_html=True)
+st.markdown("<div style='text-align:center; color:#4b6584; font-weight:700; margin-bottom:20px;'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
+
+st.markdown(f"""
+<div class='google-window'>
+    <b>🌐 Market Intelligence: {city_search if city_search else 'Location Pending'} | {date.today().strftime('%

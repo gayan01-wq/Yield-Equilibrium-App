@@ -1,23 +1,47 @@
 import streamlit as st
 from datetime import date
 
-# --- 1. SETTINGS & STYLING ---
-st.set_page_config(layout="wide", page_title="Yield Equilibrium Displacement Analyzer")
-
+# --- 1. STYLING (The Global Executive Aesthetic) ---
+st.set_page_config(layout="wide", page_title="Displacement Analyzer | Yield Equilibrium")
 st.markdown("""<style>
-.block-container{padding-top:1rem!important; padding-bottom:0rem!important;}
-.main-title { font-size: 2.2rem!important; font-weight: 900; color: #1e3799; text-align: center; text-transform: uppercase; margin-bottom: -5px; }
-.card{padding:10px; border-radius:10px; margin-bottom:5px; border-left:10px solid; background:#ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05)}
-.pricing-row{background:#f8faff; padding:15px; border-radius:12px; border:1px solid #d1d9e6; margin-top:2px;}
-.google-window{background:#e8f0fe; padding:15px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.88rem; line-height:1.5;}
-.status-indicator{padding:12px; border-radius:8px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px; display:block;}
-.reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:8px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
-.noi-badge{background:#1e3799; color:white; padding:8px 12px; border-radius:8px; font-weight:700; font-size:1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
-.theory-box { background-color: #f1f4f9; padding: 25px; border-radius: 15px; border: 1px solid #d1d9e6; margin-top: 35px; }
-.pillar-header { color: #1e3799; font-weight: 800; font-size: 1rem; text-transform: uppercase; margin-bottom: 5px; display: block; }
+.block-container{padding-top:1rem!important;}
+.main-title {
+    font-size: 2.2rem!important;
+    font-weight: 900;
+    color: #1e3799;
+    text-align: center!important;
+    margin-top: -10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: block;
+    width: 100%;
+}
+.main-subtitle {
+    font-size: 1.15rem!important;
+    font-weight: 600;
+    color: #4b6584;
+    text-align: center!important;
+    margin-top: -10px;
+    margin-bottom: 30px;
+    letter-spacing: 1px;
+    display: block;
+    width: 100%;
+}
+.small-framework-header{font-size:0.95rem!important; font-weight:700; color:#4b6584; text-align:center; margin-bottom:15px; letter-spacing:1px;}
+.card{padding:10px;border-radius:10px;margin-bottom:8px;border-left:10px solid;background:#ffffff;box-shadow: 0 2px 4px rgba(0,0,0,0.1)}
+.pricing-row{background:#f8faff;padding:12px;border-radius:10px;border:1px solid #d1d9e6; margin-top:5px;}
+.google-window{background:#e8f0fe; padding:18px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.85rem; line-height:1.6;}
+.news-item{background:#ffffff; border-radius:8px; padding:10px; margin-bottom:8px; border-left:4px solid #ff4b4b; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+.status-indicator{padding:12px; border-radius:10px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px;}
+.reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:5px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
+.audit-box{font-size:0.85rem; font-weight:700; color:#1e3799; margin-top:5px; border-top: 1px dotted #d1d9e6; padding-top: 5px;}
+.theory-box{background:#f9f9f9; padding:25px; border-radius:15px; border:1px solid #dee2e6; margin-top:30px}
+.theory-card{background:white; padding:12px; border-radius:10px; border:1px solid #eee; margin-bottom:8px;}
+[data-testid="stSidebar"]{background:#f1f4f9; border-right:1px solid #dee2e6}
+.contact-section{background:#1e3799; padding:30px; border-radius:15px; margin-top:40px; color:white;}
 </style>""", unsafe_allow_html=True)
 
-# --- 2. AUTHENTICATION & SESSION ISOLATION ---
+# --- 2. AUTHENTICATION ---
 if "auth" not in st.session_state: st.session_state["auth"] = False
 if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
 
@@ -29,182 +53,169 @@ if not st.session_state["auth"]:
             if pwd == "Gayan2026": 
                 st.session_state["auth"] = True
                 st.rerun()
+            else: st.error("Access Denied")
     st.stop()
 
-# --- 3. RESET LOGIC ---
-def clear_protocol_data():
-    st.session_state["reset_key"] += 1
-    for key in list(st.session_state.keys()):
-        if key not in ["auth", "reset_key"]:
-            del st.session_state[key]
-
-# --- 4. SIDEBAR (CONTEXTUAL DATA) ---
-rk = str(st.session_state["reset_key"])
+# --- 3. SIDEBAR (STRATEGIC GLOBAL INPUTS) ---
 with st.sidebar:
-    st.markdown("### 🏨 Property Profile")
-    # CHANGED: value is now "" and placeholder is used. This makes the reset button work.
-    h_name = st.text_input("Hotel Name", value="", placeholder="e.g. Wyndham Garden Salalah", key="h_nm_"+rk)
-    h_cap = st.number_input("Total Capacity", min_value=1, value=237, step=1, key="cap_"+rk)
-    city_search = st.text_input("📍 Market Location", value="", placeholder="e.g. Salalah", key="city_"+rk)
-    
+    st.markdown("### 👤 System Developer\nGayan Nugawela")
+    if st.button("🧹 Clear Global Cache"):
+        st.session_state["reset_key"] += 1
+        st.rerun()
     st.divider()
-    st.markdown("### 📅 Stay Period")
+    rk = str(st.session_state["reset_key"]) 
+    
+    # REPAIRED LINE 69:
+    currencies = {"OMR (﷼)": "﷼", "LKR (රු)": "රු", "THB (฿)": "฿", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "INR (₹)": "₹", "USD ($)": "$"}
+    cur_choice = st.selectbox("🌍 Base Currency", list(currencies.keys()), key="c_sel_"+rk)
+    cur_sym = currencies[cur_choice]
+
+    hotel_name = st.text_input("🏨 Hotel", "Wyndham Garden Salalah", key="h_nm_"+rk)
+    city_search = st.text_input("📍 City Search", "Salalah", key="c_nm_"+rk)
+    
     d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
     d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
     m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
-    st.info(f"Stay Duration: {m_nights} Nights")
+    st.info(f"📅 **Stay Duration: {m_nights} Nights**")
+    
+    inventory = st.number_input("Total Capacity", 1, 1000, 237, key="inv_c_"+rk)
+    
+    st.divider()
+    st.markdown("### 📊 Pillar 03: Velocity")
+    otb_occ = st.slider("OTB %", 0, 100, 15, key="otb_s_"+rk)
+    avg_hist = st.slider("Hist. Benchmark %", 0, 100, 45, key="hst_s_"+rk)
+    v_mult = 1.35 if otb_occ > avg_hist else 0.85 if otb_occ < (avg_hist - 15) else 1.0
 
     st.divider()
-    st.markdown("### 🌍 Global Currency Suite")
-    currencies = {
-        "OMR (﷼)": "﷼", "AED (د.إ)": "د.إ", "SAR (﷼)": "﷼", "QAR (﷼)": "﷼", "BHD (.د)": ".د", "KWD (د.ك)": "د.ك",
-        "USD ($)": "$", "EUR (€)": "€", "GBP (£)": "£", "LKR (රු)": "රු", "INR (₹)": "₹", "CHF (CHF)": "CHF"
-    }
-    cur_selection = st.selectbox("Select Currency", list(currencies.keys()), key="c_sel_"+rk)
-    cur_sym = currencies[cur_selection]
-
-    st.divider()
-    st.markdown("### 🏛️ Pillars Setup")
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
-    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", value=6.00, step=0.1, key="p01_v_"+rk)
+    ota_comm = st.slider("OTA Commission %", 0, 40, 15, key="ota_v_"+rk)
+    p01_fee = st.number_input(f"P01 Fee ({cur_sym})", 0.0, value=6.90, key="p01_v_"+rk)
 
-    st.markdown("### 🍽️ Meal Plan Cost (PP)")
+    st.markdown("### 🍽️ Unit Costs (Per Person Basis)")
     meal_costs = {
-        "BF": st.number_input("Breakfast Cost", min_value=0.0, value=2.00, step=0.5, key="bf_mc_"+rk),
-        "LN": st.number_input("Lunch Cost", min_value=0.0, value=0.0, step=0.5, key="ln_mc_"+rk),
-        "DN": st.number_input("Dinner Cost", min_value=0.0, value=0.0, step=0.5, key="dn_mc_"+rk),
-        "SAI": st.number_input("Soft All-In Cost", min_value=0.0, value=0.0, step=0.5, key="sai_mc_"+rk),
-        "AI": st.number_input("All-Inclusive Cost", min_value=0.0, value=0.0, step=0.5, key="ai_mc_"+rk)
+        "RO": 0.0, "BB": st.number_input("BB Cost", 2.5, key="bb_mc_"+rk),
+        "LN": st.number_input("LN Cost", 4.5, key="ln_mc_"+rk), "DN": st.number_input("DN Cost", 5.5, key="dn_mc_"+rk),
+        "SAI": st.number_input("SAI Cost", 8.5, key="sai_mc_"+rk), "AI": st.number_input("AI Cost", 10.5, key="ai_mc_"+rk)
     }
 
-    st.divider()
-    if st.button("🗑️ Reset Protocol Data", use_container_width=True, type="primary"):
-        clear_protocol_data()
-        st.rerun()
-
-# --- 5. MARKET INTEL DATA ---
+# --- 4. MARKET INTEL ---
 intel_db = {
-    "salalah": {"ev": "Khareef Festival Season", "fl": "OmanAir/SalamAir Peak", "news": "Monsoon Tourism Surge expected.", "demand": "Compression"},
-    "muscat": {"ev": "Business Summit", "fl": "International Hub Stable", "news": "MICE demand up 15%.", "demand": "High Flow"}
+    "salalah": {"ev": "Khareef Festival", "fl": "DXB/MCT Rotations", "news": ["Port: Stable", "Tourism: Surge", "Monsoon Rising"], "basis": "Microclimate"},
+    "colombo": {"ev": "Tourism Peak", "fl": "UL Hub Growth", "news": ["Arrivals 1.2M+", "LKR Stable", "MICE Demand"], "basis": "Recovery"}
 }
-active_intel = intel_db.get(city_search.lower(), {"ev": "Market Rotation", "fl": "Standard Flights", "news": "Standard flow stable.", "demand": "Standard"})
+active_intel = intel_db.get(city_search.lower(), {"ev": "Active Rotation", "fl": "Baseline", "news": ["Standard market flow."], "basis": "Equilibrium"})
 
-# --- 6. ENGINE LOGIC ---
-def run_segment_yield(adr, meal_qty, base_hurdle, demand_type, is_group, total_rooms, comm_rate=0.0, mice=0.0, laundry=0.0, transport=0.0):
-    velocity_map = {"Compression (Peak)": 1.25, "High Flow": 1.10, "Standard": 1.0, "Distressed": 0.85}
-    v_mult = velocity_map.get(demand_type, 1.0)
-    
-    bf, ln, dn, sai, ai = meal_qty.get("BF", 0), meal_qty.get("LN", 0), meal_qty.get("DN", 0), meal_qty.get("SAI", 0), meal_qty.get("AI", 0)
-    if ai > 0: mp_basis = "AI"
-    elif sai > 0: mp_basis = "SAI"
-    elif bf > 0 and ln > 0 and dn > 0: mp_basis = "FB"
-    elif bf > 0 and dn > 0: mp_basis = "HB"
-    elif bf > 0: mp_basis = "BB"
-    else: mp_basis = "RO"
+# --- 5. CALCULATION ENGINE ---
+def run_yield(rms, nts, adr, meals, hurdle, demand_type, comm_rate=0.0, laundry=0, mice=0, trans=0):
+    tr = sum(rms); rn = tr * nts
+    if tr <= 0: return None
+    demand_adj = {"Compression (Peak)": 15.0, "High Flow": 5.0, "Standard": 0.0, "Distressed": -5.0}
+    eff_hurdle = hurdle + demand_adj.get(demand_type, 0)
+    net_adr = adr / tx_div
+    total_m = sum(qty * meal_costs.get(p, 0) for p, qty in meals.items())
+    avg_m = (total_m / tr)
+    unit_w = (net_adr - avg_m - (net_adr * comm_rate)) - p01_fee - laundry + (mice / tx_div)
+    total_w = (unit_w * rn) + (trans / tx_div)
+    if unit_w < eff_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Yield < {cur_sym}{eff_hurdle} hurdle."
+    elif unit_w < (eff_hurdle + 3.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "Yield at equilibrium window."
+    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Wealth targets met."
+    if (tr / inventory) >= 0.50: rsn += " | ⚠️ DISPLACEMENT: Segment ≥50% capacity."
+    return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "rn": rn, "total": total_w}
 
-    hurdle_multiplier = {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}
-    dynamic_hurdle = base_hurdle * hurdle_multiplier.get(demand_type, 1.0)
-    
-    net_adr = (adr * v_mult) / tx_div
-    total_meal_cost = sum(qty * meal_costs.get(p, 0) for p, qty in meal_qty.items())
-    
-    divisor = max(total_rooms, 10) if is_group else max(total_rooms, 1)
-    group_rev = (mice / tx_div) + ((transport / tx_div) / divisor) if is_group else 0
-    
-    unit_w = (net_adr + group_rev - total_meal_cost - (net_adr * (comm_rate/100))) - p01_fee - laundry
-    
-    if unit_w < dynamic_hurdle: stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", f"Displaced by {demand_type} Hurdle."
-    elif unit_w < (dynamic_hurdle + 5.0): stt, clr, rsn = "REVIEW: MARGINAL", "#f39c12", "At equilibrium window."
-    else: stt, clr, rsn = "ACCEPT: OPTIMIZED", "#27ae60", "Wealth targets achieved."
-        
-    total_noi = unit_w * divisor * m_nights
-    return {"w": unit_w, "st": stt, "cl": clr, "rsn": rsn, "vm": v_mult, "dh": dynamic_hurdle, "noi": total_noi, "mp": mp_basis}
+# --- 6. DASHBOARD ---
+st.markdown("<h1 class='main-title'>DISPLACEMENT ANALYZER</h1>", unsafe_allow_html=True)
+st.markdown("<div class='main-subtitle'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
 
-# --- 7. TOP DASHBOARD & MARKET INSIGHTS ---
-# CHANGED: display_title allows for a "New Property" fallback when h_name is empty
-display_title = h_name if h_name else "New Property Analysis"
-st.markdown(f"<h1 class='main-title'>{display_title.upper()}</h1>", unsafe_allow_html=True)
-st.markdown("<div style='text-align:center; color:#4b6584; font-weight:700; margin-bottom:20px;'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
+t1, t2 = st.tabs(["🌐 Aviation & Events", "🗞️ Market News Feed"])
+with t1: st.markdown(f"<div class='google-window'><b>🌐 Aviation Intelligence: {city_search}</b><br>• <b>Events:</b> {active_intel['ev']} | <b>Basis:</b> {active_intel['basis']}<br>• <b>Velocity:</b> {v_mult}x Applied</div>", unsafe_allow_html=True)
+with t2:
+    st.markdown(f"<div class='google-window' style='background:#fdf2f2; border-color:#ff4b4b;'><b style='color:#ff4b4b;'>🗞️ Market Alerts: {city_search} | {date.today().strftime('%B %d, %Y')}</b></div>", unsafe_allow_html=True)
+    for item in active_intel['news']: st.markdown(f"<div class='news-item'>{item}</div>", unsafe_allow_html=True)
+
+def draw_seg(label, key, suggest_adr, floor_def, color, is_ota=False, group=False):
+    st.markdown(f"<div class='card' style='border-left-color:{color}'>{label}</div>", unsafe_allow_html=True)
+    c_in, c_res = st.columns([2.6, 1])
+    with c_in:
+        st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+        r1, r2, r3, r4, r5 = st.columns([0.8,0.8,0.8,1.3,1.3])
+        sgl = r1.number_input("SGL", 0, key=f"s_{key}_{rk}"); dbl = r2.number_input("DBL", 0, key=f"d_{key}_{rk}"); tpl = r3.number_input("TPL", 0, key=f"t_{key}_{rk}")
+        applied_adr = r4.number_input(f"Rate ({cur_sym})", value=float(suggest_adr * v_mult), key=f"a_{key}_{rk}")
+        floor = r5.number_input(f"Base Hurdle", value=float(floor_def), key=f"f_{key}_{rk}")
+        m_row = st.columns([1.5, 1, 1, 1, 1, 1, 1])
+        demand_sel = m_row[0].selectbox("Demand", ["Compression (Peak)", "High Flow", "Standard", "Distressed"], key=f"dm_{key}_{rk}")
+        p_ro = m_row[1].number_input("RO", 0, key=f"ro_{key}_{rk}"); p_bb = m_row[2].number_input("BB", 0, key=f"bb_{key}_{rk}"); p_ln = m_row[3].number_input("LN", 0, key=f"ln_{key}_{rk}"); p_dn = m_row[4].number_input("DN", 0, key=f"dn_{key}_{rk}"); p_sai = m_row[5].number_input("SAI", 0, key=f"sai_{key}_{rk}"); p_ai = m_row[6].number_input("AI", 0, key=f"ai_{key}_{rk}")
+        l_c, m_c, t_c = 0.0, 0.0, 0.0
+        if group:
+            g_row = st.columns(3)
+            m_c = g_row[0].number_input(f"MICE", 0.0, key=f"mi_{key}_{rk}"); t_c = g_row[1].number_input(f"Trans", 0.0, key=f"tr_{key}_{rk}"); l_c = g_row[2].number_input(f"Laundry", 0.0, key=f"la_{key}_{rk}")
+        st.markdown("</div>", unsafe_allow_html=True)
+    res = run_yield([sgl, dbl, tpl], m_nights, applied_adr, {"RO":p_ro,"BB":p_bb,"LN":p_ln,"DN":p_dn,"SAI":p_sai,"AI":p_ai}, floor, demand_sel, (ota_comm/100 if is_ota else 0.0), l_c, m_c, t_c)
+    if res:
+        with c_res:
+            st.metric(f"Net Wealth", f"{cur_sym} {res['w']:,.2f}")
+            st.markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='reason-box'>💡 <b>Strategic Verdict:</b><br>{res['rsn']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='audit-box'>📊 {res['rn']} RN | Total Wealth: {cur_sym} {res['total']:,.2f}</div>", unsafe_allow_html=True)
+
+# DRAW SEGMENTS
+draw_seg("1. DIRECT / FIT", "fit", 65, 40, "#3498db")
+draw_seg("2. OTA CHANNELS", "ota", 60, 35, "#2ecc71", is_ota=True)
+draw_seg("3. CORPORATE GROUPS", "corp", 55, 32, "#34495e", group=True)
+draw_seg("4. MICE GROUPS", "mice", 50, 30, "#9b59b6", group=True)
+draw_seg("5. TOUR & TRAVEL (GROUPS)", "tnt", 45, 25, "#e67e22", group=True)
+
+# --- 7. DETAILED METHODOLOGY & THEORY ---
+st.divider()
+st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
+st.markdown(f"<div class='small-framework-header'>The Yield Equilibrium Strategic Framework (Live Tax Basis: {tx_div})</div>", unsafe_allow_html=True)
 
 st.markdown(f"""
-<div class='google-window'>
-    <b>🌐 Market Intelligence: {city_search if city_search else 'Location Pending'} | {date.today().strftime('%B %Y')}</b><br>
-    • <b>Aviation Situation:</b> {active_intel['fl']} | <b>Special Events:</b> {active_intel['ev']}<br>
-    • <b>Special News Feed:</b> {active_intel['news']} | <b>Market Pulse:</b> {active_intel['demand']} Logic Applied.
+<div class='theory-card' style='background:#f1f4f9; border: 1px solid #1e3799; padding:25px;'>
+    <h4 style='color:#1e3799; margin-top:0; text-align:center;'>THEORY OF YIELD EQUILIBRIUM</h4>
+    <p style='font-size:0.92rem; color:#333; line-height:1.6;'>
+        The <b>Yield Equilibrium</b> model identifies the exact point where a hotel captures maximum wealth without diluting asset value. This tool deconstructs every booking into three core pillars:
+    </p>
+    <div style='margin-top:15px;'>
+        <p style='font-size:0.88rem; color:#333; margin-bottom:10px;'>
+            <b>🏛️ PILLAR 01: INTERNAL WEALTH STRIPPING (THE NET-CORE)</b><br>
+            Gross revenue is an illusion. The engine strips statutory taxes, commissions, and marginal production costs to isolate 'Net Wealth'.
+        </p>
+        <p style='font-size:0.88rem; color:#333; margin-bottom:10px;'>
+            <b>⚖️ PILLAR 02: HURDLE EQUILIBRIUM (THE DISPLACEMENT GUARD)</b><br>
+            Hurdles are adjusted based on demand type to protect peak inventory from lower-value business displacement.
+        </p>
+        <p style='font-size:0.88rem; color:#333; margin-bottom:10px;'>
+            <b>🌐 PILLAR 03: EXTERNAL VELOCITY (THE MARKET PULSE)</b><br>
+            Integrates Market Intelligence—Aviation, local events, and OTB pace—to apply a Velocity Multiplier ({v_mult}x).
+        </p>
+        <hr style='border: 0.5px solid #d1d9e6; margin: 20px 0;'>
+        <p style='font-size:0.85rem; color:#4b6584; font-style: italic;'>
+            <b>⚙️ SYSTEM GOVERNANCE:</b> This tool includes a 50% Segment Concentration alert. This is an indirect optimization feature ensuring that no single segment request monopolizes remaining inventory, thereby maintaining the balance required for Pillar 02 integrity.
+        </p>
+    </div>
 </div>
 """, unsafe_allow_html=True)
-
-# --- 8. SEGMENT AUDITS ---
-segments = [
-    {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "ota": False, "hurdle": 45.0, "group": False},
-    {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "ota": True, "hurdle": 35.0, "group": False},
-    {"label": "3. CORPORATE / MICE GROUPS", "key": "mice", "color": "#34495e", "ota": False, "hurdle": 32.0, "group": True},
-    {"label": "4. GROUP TOUR & TRAVEL", "key": "tnt", "color": "#e67e22", "ota": False, "hurdle": 12.0, "group": True}
-]
-
-wealth_results = {}
-
-for seg in segments:
-    if st.checkbox(f"Activate {seg['label']}", value=(seg['key'] in ['fit', 'tnt']), key=f"act_{seg['key']}_{rk}"):
-        st.markdown(f"<div class='card' style='border-left-color:{seg['color']}'>{seg['label']}</div>", unsafe_allow_html=True)
-        with st.container():
-            st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
-            
-            c_ota = st.slider("OTA Commission %", 0, 40, 15, key=f"comm_{seg['key']}_{rk}") if seg['ota'] else 0.0
-            
-            r1 = st.columns([1, 0.6, 0.6, 0.6, 0.6, 1.2, 1.2])
-            g_rate = r1[0].number_input(f"Gross Rate", value=29.0 if seg['key']=='tnt' else 75.0, step=0.5, key=f"adr_{seg['key']}_{rk}")
-            min_v = 10 if seg['group'] else 1
-            sgl, dbl, tpl, qrpl = r1[1].number_input("SGL", 0, key=f"s_{seg['key']}_{rk}"), r1[2].number_input("DBL", min_v if seg['key']=='tnt' else 0, key=f"d_{seg['key']}_{rk}"), r1[3].number_input("TPL", 0, key=f"t_{seg['key']}_{rk}"), r1[4].number_input("QRPL", 0, key=f"q_{seg['key']}_{rk}")
-            rooms_total = sgl + dbl + tpl + qrpl
-            demand_sel = r1[5].selectbox("Market Demand", ["Compression (Peak)", "High Flow", "Standard", "Distressed"], key=f"dm_{seg['key']}_{rk}")
-            h_base = r1[6].number_input("Base Hurdle", value=seg['hurdle'], step=1.0, key=f"hrd_{seg['key']}_{rk}")
-
-            r2 = st.columns([0.6,0.6,0.6,0.6,0.6, 1.1, 1.1, 1.1])
-            bf_in = r2[0].number_input("BB", 0, key=f"bf_in_{seg['key']}_{rk}")
-            ln_in = r2[1].number_input("LN", 0, key=f"ln_in_{seg['key']}_{rk}")
-            dn_in = r2[2].number_input("DN", 0, key=f"dn_in_{seg['key']}_{rk}")
-            sai_in = r2[3].number_input("SAI", 0, key=f"sai_in_{seg['key']}_{rk}")
-            ai_in = r2[4].number_input("AI", 0, key=f"ai_in_{seg['key']}_{rk}")
-            
-            m_pp, l_pp, t_f = r2[5].number_input("Events", 0.0, key=f"m_{seg['key']}_{rk}") if seg['group'] else 0.0, r2[6].number_input("Laundry", 0.0, key=f"l_{seg['key']}_{rk}") if seg['group'] else 0.0, r2[7].number_input("Transport", 0.0, key=f"tr_{seg['key']}_{rk}") if seg['group'] else 0.0
-
-            res = run_segment_yield(g_rate, {"BF":bf_in,"LN":ln_in,"DN":dn_in,"SAI":sai_in,"AI":ai_in}, h_base, demand_sel, seg['group'], rooms_total, c_ota, m_pp, l_pp, t_f)
-            
-            v_cols = st.columns([1, 1.5, 1])
-            v_cols[0].metric("Net Wealth (Pillar 01)", f"{cur_sym} {res['w']:,.2f}", delta=f"{res['vm']}x Velocity")
-            v_cols[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']} ({res['mp']})</div>", unsafe_allow_html=True)
-            v_cols[2].markdown(f"<div style='text-align:right;'><span class='noi-badge'>Total NOI: {cur_sym} {res['noi']:,.2f}</span></div>", unsafe_allow_html=True)
-            
-            st.markdown(f"<div class='reason-box'>💡 <b>Strategic Reasoning:</b> {res['rsn']} | <b>Basis:</b> {res['mp']} | <b>Effective Hurdle:</b> {cur_sym}{res['dh']:,.2f}</div>", unsafe_allow_html=True)
-            wealth_results[seg['key']] = {"w": res['w'], "rooms": max(rooms_total, min_v), "noi": res['noi']}
-            st.markdown("</div>", unsafe_allow_html=True)
-
-# --- 9. NOI SUMMARY & PILLARS ---
-st.divider()
-e_keys = list(wealth_results.keys())
-if len(e_keys) >= 2:
-    sa, sb = wealth_results[e_keys[0]], wealth_results[e_keys[1]]
-    total_gain = (sa['w'] - sb['w']) * sb['rooms'] * m_nights
-    total_potential_wealth = sa['w'] * h_cap * m_nights
-    eff = (total_gain / total_potential_wealth * 100) if total_potential_wealth != 0 else 0
-    m_cols = st.columns(4)
-    m_cols[0].metric("Wealth Gap", f"{cur_sym} {sa['w'] - sb['w']:,.2f}")
-    m_cols[1].metric("Total NOI Gain", f"{cur_sym} {total_gain:,.2f}")
-    m_cols[2].metric("NOI Improvement", f"{((sa['w']-sb['w'])/sb['w']*100 if sb['w']!=0 else 0):.2f}%")
-    m_cols[3].metric("Asset Efficiency", f"{eff:.2f}%")
-
-st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
-st.markdown("<h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3>", unsafe_allow_html=True)
-c_a, c_b, c_c = st.columns(3)
-with c_a:
-    st.markdown("<span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Strips statutory taxes (1.2327), commissions, and meal costs to isolate <b>Net-Core Wealth</b>.</p>", unsafe_allow_html=True)
-with c_b:
-    st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Protects inventory by scaling hurdles up to 2.5x during Peak cycles to ensure high-value pickup.</p>", unsafe_allow_html=True)
-with c_c:
-    st.markdown("<span class='pillar-header'>🌐 Pillar 03: External Velocity</span>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Integrates market pulse data to apply demand multipliers based on real-time market flow.</p>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
+# --- 8. FOOTER ---
+st.markdown("<div class='contact-section'>", unsafe_allow_html=True)
+st.subheader("✉️ Contact the System Developer")
+st.write("Direct queries to Gayan Nugawela regarding custom logic or tool modifications.")
+col1, col2 = st.columns([1, 1])
+with col1:
+    contact_form = f"""
+    <form action="https://formspree.io/f/mkoywogq" method="POST" style="display: flex; flex-direction: column; gap: 15px; background: white; padding: 20px; border-radius: 10px;">
+        <input type="text" name="name" placeholder="Full Name" style="padding: 10px; border-radius: 5px; border: 1px solid #ddd; color: black;" required>
+        <input type="email" name="email" placeholder="Work Email" style="padding: 10px; border-radius: 5px; border: 1px solid #ddd; color: black;" required>
+        <textarea name="message" placeholder="Technical query..." style="padding: 10px; border-radius: 5px; border: 1px solid #ddd; height: 100px; color: black;" required></textarea>
+        <button type="submit" style="background-color: #1e3799; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1rem;">🚀 Submit to Developer</button>
+    </form>
+    """
+    st.markdown(contact_form, unsafe_allow_html=True)
+with col2:
+    st.markdown("""
+    ### Logic Desk Details
+    * **Email:** gayan01@gmail.com
+    * **Scope:** Algorithm updates, Displacement logic tweaks.
+    """)
+st.markdown("</div>", unsafe_allow_html=True)

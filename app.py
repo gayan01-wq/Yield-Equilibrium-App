@@ -85,15 +85,6 @@ def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, c
     meal_sum = (
         (room_counts['BB'] * c_bf) +
         (room_counts['HB'] * (c_bf + c_dn)) +
-        (room_counts['FB'] * (c_bf + r1_dummy_ln if 'r1_dummy_ln' in locals() else c_ln) + c_dn) + # structural preservation
-        (room_counts['SAI'] * c_sai) +
-        (room_counts['AI'] * c_ai)
-    )
-    
-    # Recalculate true structural meal sum
-    meal_sum = (
-        (room_counts['BB'] * c_bf) +
-        (room_counts['HB'] * (c_bf + c_dn)) +
         (room_counts['FB'] * (c_bf + c_ln + c_dn)) +
         (room_counts['SAI'] * c_sai) +
         (room_counts['AI'] * c_ai)
@@ -174,9 +165,11 @@ st.markdown("<h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRA
 ca, cb, cc = st.columns(3)
 with ca:
     st.markdown("<span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Strips statutory taxes, commissions, and meal costs to isolate <b>Net-Core Wealth</b> per unit.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; color:#4b6584;'>Strips statutory taxes, commissions, and meal costs to isolate <b>Net-Core Wealth</b> per unit.</p>", unsafe_allow_html=True)
 with cb:
     st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Protects inventory by scaling hurdles (up to 2.5x) to ensure optimal asset utilization in Peak cycles.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; color:#4b6584;'>Protects inventory by scaling hurdles (up to 2.5x) to ensure optimal asset utilization in Peak cycles.</p>", unsafe_allow_html=True)
 with cc:
-    st.markdown("<span class='pillar-header'>🌐 Pillar 03: Market Intelligence
+    st.markdown("<span class='pillar-header'>🌐 Pillar 03: Market Intelligence Integration</span>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; color:#4b6584;'>Cross-references aviation flow and special event data with deal profitability to guide acceptance logic.</p>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)

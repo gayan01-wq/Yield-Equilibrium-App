@@ -18,5 +18,42 @@ st.markdown("""<style>
 </style>""", unsafe_allow_html=True)
 
 # --- 2. AUTHENTICATION ---
-if "auth" not in st.session_state: st.session_state["auth"] = False
-if "reset_key" not in st.session_state:
+if "auth" not in st.session_state: 
+    st.session_state["auth"] = False
+
+if "reset_key" not in st.session_state: 
+    st.session_state["reset_key"] = 0
+
+if not st.session_state["auth"]:
+    st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
+    with st.form("login_gate"):
+        pwd = st.text_input("Access Key", type="password")
+        if st.form_submit_button("Unlock"):
+            if pwd == "Gayan2026": 
+                st.session_state["auth"] = True
+                st.rerun()
+    st.stop()
+
+def clear_protocol_data():
+    st.session_state["reset_key"] += 1
+    for key in list(st.session_state.keys()):
+        if key not in ["auth", "reset_key"]: del st.session_state[key]
+
+# --- 3. SIDEBAR (COST CENTER) ---
+rk = str(st.session_state["reset_key"])
+with st.sidebar:
+    st.markdown("### 🏨 Property Profile")
+    h_name = st.text_input("Hotel Name", value="", placeholder="e.g. Wyndham Garden Salalah", key="h_nm_"+rk)
+    city_search = st.text_input("📍 Market Location", value="", placeholder="e.g. Salalah", key="city_"+rk)
+    
+    st.divider()
+    st.markdown("### 📅 Stay Period (LOS)")
+    d1 = st.date_input("Check-In", date.today(), key="d_in_"+rk)
+    d2 = st.date_input("Check-Out", date.today(), key="d_out_"+rk)
+    m_nights = (d2 - d1).days if (d2 - d1).days > 0 else 1
+    st.info(f"Length of Stay: {m_nights} Night(s)")
+
+    st.divider()
+    st.markdown("### 🏛️ Pillars Setup")
+    tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
+    p01_fee = st

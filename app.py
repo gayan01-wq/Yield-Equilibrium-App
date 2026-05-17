@@ -39,7 +39,6 @@ def clear_protocol_data():
 # --- 3. SIDEBAR (COST CENTER) ---
 rk = str(st.session_state["reset_key"])
 with st.sidebar:
-    # Render Logo asset at the absolute top of the sidebar
     st.sidebar.image("Logo.png", use_container_width=True)
     st.sidebar.markdown("---")
     
@@ -57,4 +56,8 @@ with st.sidebar:
     st.divider()
     st.markdown("### 🏛️ Pillars Setup")
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
-    p01_fee = st.number_input("
+    p01_fee = st.number_input("P01 Fee (Per Room)", value=6.00, step=0.1, key="p01_v_"+rk)
+
+    st.markdown("### 🍽️ Meal Plan Cost (PP)")
+    c_bf = st.number_input("BF Cost (PP)", value=2.00, key="bf_mc_"+rk)
+    c_ln = st.number_input("LN Cost (PP)", value=3.00, key="ln_mc_"+

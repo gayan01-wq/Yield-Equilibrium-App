@@ -24,7 +24,6 @@ if "reset_key" not in st.session_state:
     st.session_state["reset_key"] = 0
 
 # --- 3. SIDEBAR INITIALIZATION ---
-# Instantiated before the login check to ensure sidebar inputs populate on first paint
 rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
@@ -60,7 +59,7 @@ with st.sidebar:
         clear_protocol_data()
         st.rerun()
 
-# Restrict main dashboard frame view if not authenticated
+# Authentication filter boundary placement
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     with st.form("login_gate"):
@@ -80,15 +79,12 @@ active_intel = intel_db.get(city_search.lower(), {"ev": "Stable", "fl": "Normal"
 
 # --- 5. LOGIC ENGINE (STRATEGIC AUDIT) ---
 def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, comm_rate=0.0, anc_prpn=0.0, laundry=0.0):
-    # Dynamic Hurdle Scaling Configuration Matrix
+    vm = 1.0 
+    
     dh = base_hurdle * {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}.get(demand, 1.0)
     
-    # Core Revenue Wealth Stripping Math
     net_adr = adr / tx_div
-    anc_net = anc_prpn / tx_div
-    comm_val = net_adr * (comm_rate / 100)
     
-    # Room Count Weighted Meal Plan Deductions
     meal_sum = (
         (room_counts['BB'] * c_bf) +
         (room_counts['HB'] * (c_bf + c_dn)) +
@@ -98,10 +94,12 @@ def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, c
     )
     meal_unit = meal_sum / max(total_rooms, 1)
     
-    # Pillar 01: Unit Net Wealth Extraction
+    anc_net = anc_prpn / tx_div
+    
+    comm_val = net_adr * (comm_rate / 100)
+    
     unit_w = (net_adr + anc_net) - (meal_unit + comm_val + p01_fee + laundry)
     
-    # Equilibrium Optimization Filter
     if unit_w < dh: 
         stt = "REJECT: DILUTIVE"
         clr = "#e74c3c"
@@ -115,14 +113,12 @@ def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, c
         clr = "#27ae60"
         rsn = "Wealth targets successfully achieved."
     
-    # Primary Meal Plan Basis Qualifier
     mp_basis = "RO"
     for p in ["AI", "SAI", "FB", "HB", "BB"]:
         if room_counts.get(p, 0) > 0: 
             mp_basis = p
             break
 
-    # Net Operating Income Summation Matrix
     total_noi = unit_w * total_rooms * m_nights
     
     return {"w": unit_w, "st": stt, "cl": clr, "dh": dh, "noi": total_noi, "mp": mp_basis, "rsn": rsn}
@@ -131,11 +127,10 @@ def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, c
 st.markdown(f"<h1 class='main-title'>{h_name.upper() if h_name else 'YIELD ENGINE'}</h1>", unsafe_allow_html=True)
 st.markdown("<div style='text-align:center; color:#4b6584; font-weight:700; margin-bottom:20px;'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
 
-# Secure short line configuration to force correct HTML parsing
 intel_html = f"<div class='google-window'><b>🌐 Market Intelligence: {city_search if city_search else 'Location Pending'} | {date.today().strftime('%B %Y')}</b><br>• <b>Aviation Situation:</b> {active_intel['fl']} | <b>Special Events:</b> {active_intel['ev']}<br>• <b>Special News Feed:</b> {active_intel['news']} | <b>Market Pulse:</b> {active_intel['demand']} Logic Applied.</div>"
 st.markdown(intel_html, unsafe_allow_html=True)
 
-# Segment Configuration
+# Define Audited Segments
 segments = [
     {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "hurdle": 45.0, "ota": False, "grp": False},
     {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "hurdle": 35.0, "ota": True, "grp": False},
@@ -164,7 +159,6 @@ for seg in segments:
             lnd = r2[6].number_input("Laundry/Room", value=0.0, key=f"l_{seg['key']}")
             oth = r2[7].number_input("Other Fees", value=0.0, key=f"o_{seg['key']}")
 
-            # Fire internal optimization audit
             res = run_equilibrium_engine(g_adr, {"BB":bb,"HB":hb,"FB":fb,"SAI":sai,"AI":ai}, h_b, dem, t_rooms, comm_rate=c_rate, anc_prpn=anc, laundry=lnd+oth)
             
             v = st.columns([1, 1.5, 1])

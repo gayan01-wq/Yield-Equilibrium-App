@@ -1,4 +1,41 @@
+import streamlit as st
+from datetime import date
+
+# --- 1. SETTINGS & STYLING ---
+st.set_page_config(layout="wide", page_title="Yield Equilibrium Strategic Intelligence Engine")
+
+st.markdown("""<style>
+.block-container{padding-top:1rem!important; padding-bottom:0rem!important;}
+.main-title { font-size: 2.2rem!important; font-weight: 900; color: #1e3799; text-align: center; text-transform: uppercase; margin-bottom: -5px; }
+.card{padding:10px; border-radius:10px; margin-bottom:5px; border-left:10px solid; background:#ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05)}
+.pricing-row{background:#f8faff; padding:15px; border-radius:12px; border:1px solid #d1d9e6; margin-top:2px;}
+.google-window{background:#e8f0fe; padding:15px; border-radius:12px; border:2px solid #4285f4; margin-bottom:15px; font-size:0.88rem; line-height:1.5;}
+.status-indicator{padding:12px; border-radius:8px; text-align:center; font-weight:900; font-size:1.1rem; color:white; margin-top:10px; display:block;}
+.reason-box{background:#fff9c4; border:1px solid #fbc02d; padding:10px; border-radius:8px; margin-top:8px; text-align:left; font-weight:500; color:#5f4300; font-size:0.8rem;}
+.noi-badge{background:#1e3799; color:white; padding:8px 12px; border-radius:8px; font-weight:700; font-size:1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+.theory-box { background-color: #f1f4f9; padding: 25px; border-radius: 15px; border: 1px solid #d1d9e6; margin-top: 35px; }
+.pillar-header { color: #1e3799; font-weight: 800; font-size: 1rem; text-transform: uppercase; margin-bottom: 5px; display: block; }
+</style>""", unsafe_allow_html=True)
+
+# --- 2. AUTHENTICATION & STATE INITIALIZATION ---
+if "auth" not in st.session_state: 
+    st.session_state["auth"] = False
+if "reset_key" not in st.session_state: 
+    st.session_state["reset_key"] = 0
+
+# Authentication filter boundary placement
+if not st.session_state["auth"]:
+    st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
+    with st.form("login_gate"):
+        pwd = st.text_input("Access Key", type="password")
+        if st.form_submit_button("Unlock"):
+            if pwd == "Gayan2026": 
+                st.session_state["auth"] = True
+                st.rerun()
+    st.stop()
+
 # --- 3. SIDEBAR INITIALIZATION ---
+# This now runs safely because session state keys are initialized above!
 rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
@@ -33,3 +70,116 @@ with st.sidebar:
     if st.button("🗑️ Reset Engine", use_container_width=True, type="primary"):
         clear_protocol_data()
         st.rerun()
+
+# --- 4. MARKET INTEL ---
+intel_db = {
+    "salalah": {"ev": "Khareef Season", "fl": "OmanAir Peak", "news": "Monsoon Surge.", "demand": "Compression"},
+    "muscat": {"ev": "Business Summit", "fl": "Hub Stable", "news": "MICE demand up.", "demand": "High Flow"}
+}
+active_intel = intel_db.get(city_search.lower(), {"ev": "Stable", "fl": "Normal", "news": "Stable.", "demand": "Standard"})
+
+# --- 5. LOGIC ENGINE (STRATEGIC AUDIT) ---
+def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, comm_rate=0.0, anc_prpn=0.0, laundry=0.0):
+    dh = base_hurdle * {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}.get(demand, 1.0)
+    
+    net_adr = adr / tx_div
+    
+    meal_sum = (
+        (room_counts['BB'] * c_bf) +
+        (room_counts['HB'] * (c_bf + c_dn)) +
+        (room_counts['FB'] * (c_bf + c_ln + c_dn)) +
+        (room_counts['SAI'] * c_sai) +
+        (room_counts['AI'] * c_ai)
+    )
+    meal_unit = meal_sum / max(total_rooms, 1)
+    
+    anc_net = anc_prpn / tx_div
+    
+    comm_val = net_adr * (comm_rate / 100)
+    
+    unit_w = (net_adr + anc_net) - (meal_unit + comm_val + p01_fee + laundry)
+    
+    if unit_w < dh: 
+        stt = "REJECT: DILUTIVE"
+        clr = "#e74c3c"
+        rsn = "Wealth below market equilibrium."
+    elif unit_w < (dh + 5.0): 
+        stt = "REVIEW: MARGINAL"
+        clr = "#f39c12"
+        rsn = "At hurdle equilibrium threshold."
+    else: 
+        stt = "ACCEPT: OPTIMIZED"
+        clr = "#27ae60"
+        rsn = "Wealth targets successfully achieved."
+    
+    mp_basis = "RO"
+    for p in ["AI", "SAI", "FB", "HB", "BB"]:
+        if room_counts.get(p, 0) > 0: 
+            mp_basis = p
+            break
+
+    total_noi = unit_w * total_rooms * m_nights
+    
+    return {"w": unit_w, "st": stt, "cl": clr, "dh": dh, "noi": total_noi, "mp": mp_basis, "rsn": rsn}
+
+# --- 6. DASHBOARD MAIN ---
+st.markdown(f"<h1 class='main-title'>{h_name.upper() if h_name else 'YIELD ENGINE'}</h1>", unsafe_allow_html=True)
+st.markdown("<div style='text-align:center; color:#4b6584; font-weight:700; margin-bottom:20px;'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
+
+# --- GLOBAL CURRENCY MATRIX ---
+currency_matrix = {
+    # Middle East
+    "OMR (Omani Rial - ﷼)": {"symbol": "OMR", "format": "OMR {:,.3f}"},
+    "AED (UAE Dirham - د.إ)": {"symbol": "AED", "format": "AED {:,.2f}"},
+    "SAR (Saudi Riyal - ﷼)": {"symbol": "SAR", "format": "SAR {:,.2f}"},
+    "BHD (Bahraini Dinar - .د.ب)": {"symbol": "BHD", "format": "BHD {:,.3f}"},
+    "KWD (Kuwaiti Dinar - د.ك)": {"symbol": "KWD", "format": "KWD {:,.3f}"},
+    "QAR (Qatari Riyal - ﷼)": {"symbol": "QAR", "format": "QAR {:,.2f}"},
+    "JOD (Jordanian Dinar - د.ا)": {"symbol": "JOD", "format": "JOD {:,.3f}"},
+    # Europe
+    "EUR (Euro - €)": {"symbol": "€", "format": "€{:,.2f}"},
+    "GBP (British Pound - £)": {"symbol": "£", "format": "£{:,.2f}"},
+    "CHF (Swiss Franc - CHF)": {"symbol": "CHF", "format": "CHF {:,.2f}"},
+    # Asia & International
+    "LKR (Sri Lankan Rupee - रू)": {"symbol": "LKR", "format": "Rs {:,.2f}"},
+    "USD (US Dollar - $)": {"symbol": "$", "format": "${:,.2f}"},
+    "SGD (Singapore Dollar - S$)": {"symbol": "S$", "format": "S${:,.2f}"},
+    "HKD (Hong Kong Dollar - HK$)": {"symbol": "HK$", "format": "HK${:,.2f}"},
+    "JPY (Japanese Yen - ¥)": {"symbol": "¥", "format": "¥{:,.0f}"},
+    "THB (Thai Baht - ฿)": {"symbol": "฿", "format": "฿{:,.2f}"},
+    "INR (Indian Rupee - ₹)": {"symbol": "₹", "format": "₹{:,.2f}"}
+}
+
+c_col1, c_col2 = st.columns([1, 2])
+with c_col1:
+    selected_curr = st.selectbox(
+        "🌐 System Operating Currency", 
+        options=list(currency_matrix.keys()), 
+        index=0, 
+        key="global_currency_selector"
+    )
+c_symbol = currency_matrix[selected_curr]["symbol"]
+c_format = currency_matrix[selected_curr]["format"]
+
+st.write("") # Layout Spacer
+
+intel_html = f"<div class='google-window'><b>🌐 Market Intelligence: {city_search if city_search else 'Location Pending'} | {date.today().strftime('%B %Y')}</b><br>• <b>Aviation Situation:</b> {active_intel['fl']} | <b>Special Events:</b> {active_intel['ev']}<br>• <b>Special News Feed:</b> {active_intel['news']} | <b>Market Pulse:</b> {active_intel['demand']} Logic Applied.</div>"
+st.markdown(intel_html, unsafe_allow_html=True)
+
+# Define Audited Segments
+segments = [
+    {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "hurdle": 45.0, "ota": False, "grp": False},
+    {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "hurdle": 35.0, "ota": True, "grp": False},
+    {"label": "3. GROUPS / MICE / TOURS", "key": "grp", "color": "#34495e", "hurdle": 25.0, "ota": False, "grp": True}
+]
+
+for seg in segments:
+    if st.checkbox(f"Activate {seg['label']}", value=True, key=f"act_{seg['key']}"):
+        st.markdown(f"<div class='card' style='border-left-color:{seg['color']}'>{seg['label']}</div>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown("<div class='pricing-row'>", unsafe_allow_html=True)
+            
+            c_rate = st.slider("Commission %", 0, 40, 15, key=f"c_{seg['key']}") if seg['ota'] else 0.0
+
+            r1 = st.columns([1, 0.5, 0.5, 0.5, 0.5, 1.2, 1.2])
+            g_adr = r1[0].number_input(f"Gross Rate ({

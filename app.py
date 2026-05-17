@@ -127,5 +127,31 @@ def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, c
     return {"w": unit_w, "st": stt, "cl": clr, "dh": dh, "noi": total_noi, "mp": mp_basis, "rsn": rsn}
 
 # --- 6. DASHBOARD MAIN ---
-st.markdown(f"<h1 class='main-title'>{h_name.upper() if h_name else 'YIELD ENGINE'}</h1>", unsafe_allow_html=True)
-st.markdown("<div style='text-align:center; color:#4b6584; font-weight:700; margin-bottom:20px;'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=
+final_h_name = h_name.upper() if h_name else 'YIELD ENGINE'
+title_tag = f"<h1 class='main-title'>{final_h_name}</h1>"
+st.markdown(title_tag, unsafe_allow_html=True)
+
+subtitle_tag = "<div style='text-align:center; color:#4b6584; font-weight:700; margin-bottom:20px;'>Yield Equilibrium Strategic Intelligence Engine</div>"
+st.markdown(subtitle_tag, unsafe_allow_html=True)
+
+# Vertically isolated short lines to prevent tail truncation
+loc_label = city_search if city_search else 'Location Pending'
+intel_box = f"<div class='google-window'>"
+intel_box += f"<b>🌐 Market Intelligence: {loc_label} | {date.today().strftime('%B %Y')}</b><br>"
+intel_box += f"• <b>Aviation Situation:</b> {active_intel['fl']} | <b>Special Events:</b> {active_intel['ev']}<br>"
+intel_box += f"• <b>Special News Feed:</b> {active_intel['news']} | <b>Market Pulse:</b> {active_intel['demand']} Logic Applied."
+intel_box += f"</div>"
+st.markdown(intel_box, unsafe_allow_html=True)
+
+# Define Audited Segments
+segments = [
+    {"label": "1. DIRECT / FIT", "key": "fit", "color": "#3498db", "hurdle": 45.0, "ota": False, "grp": False},
+    {"label": "2. OTA CHANNELS", "key": "ota", "color": "#2ecc71", "hurdle": 35.0, "ota": True, "grp": False},
+    {"label": "3. GROUPS / MICE / TOURS", "key": "grp", "color": "#34495e", "hurdle": 25.0, "ota": False, "grp": True}
+]
+
+for seg in segments:
+    if st.checkbox(f"Activate {seg['label']}", value=True, key=f"act_{seg['key']}"):
+        st.markdown(f"<div class='card' style='border-left-color:{seg['color']}'>{seg['label']}</div>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown("<div class='pricing

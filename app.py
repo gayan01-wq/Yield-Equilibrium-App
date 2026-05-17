@@ -21,8 +21,7 @@ st.markdown("""<style>
 if "auth" not in st.session_state: st.session_state["auth"] = False
 if "reset_key" not in st.session_state: st.session_state["reset_key"] = 0
 
-# --- 3. SIDEBAR FIXED INITIALIZATION ---
-# Sidebar parameters must render BEFORE st.stop() so the sidebar doesn't show up blank during login
+# --- 3. SIDEBAR INITIALIZATION ---
 rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
@@ -57,7 +56,7 @@ with st.sidebar:
         clear_protocol_data()
         st.rerun()
 
-# Execute login verification directly on the main panel canvas context
+# Execute login gate on the main panel
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     with st.form("login_gate"):
@@ -83,6 +82,15 @@ def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, c
     
     net_adr = adr / tx_div
     
+    meal_sum = (
+        (room_counts['BB'] * c_bf) +
+        (room_counts['HB'] * (c_bf + c_dn)) +
+        (room_counts['FB'] * (c_bf + r1_dummy_ln if 'r1_dummy_ln' in locals() else c_ln) + c_dn) + # structural preservation
+        (room_counts['SAI'] * c_sai) +
+        (room_counts['AI'] * c_ai)
+    )
+    
+    # Recalculate true structural meal sum
     meal_sum = (
         (room_counts['BB'] * c_bf) +
         (room_counts['HB'] * (c_bf + c_dn)) +
@@ -117,7 +125,6 @@ def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, c
 st.markdown(f"<h1 class='main-title'>{h_name.upper() if h_name else 'YIELD ENGINE'}</h1>", unsafe_allow_html=True)
 st.markdown("<div style='text-align:center; color:#4b6584; font-weight:700; margin-bottom:20px;'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=True)
 
-# Clean, safe formatting wrapper that guarantees pure HTML execution
 intel_html = f"<div class='google-window'><b>🌐 Market Intelligence: {city_search if city_search else 'Location Pending'} | {date.today().strftime('%B %Y')}</b><br>• <b>Aviation Situation:</b> {active_intel['fl']} | <b>Special Events:</b> {active_intel['ev']}<br>• <b>Special News Feed:</b> {active_intel['news']} | <b>Market Pulse:</b> {active_intel['demand']} Logic Applied.</div>"
 st.markdown(intel_html, unsafe_allow_html=True)
 
@@ -147,4 +154,29 @@ for seg in segments:
             bb, hb, fb, sai, ai = r2[0].number_input("BB", 0, key=f"bb_{seg['key']}"), r2[1].number_input("HB", 0, key=f"hb_{seg['key']}"), r2[2].number_input("FB", 0, key=f"fb_{seg['key']}"), r2[3].number_input("SAI", 0, key=f"sai_{seg['key']}"), r2[4].number_input("AI", 0, key=f"ai_{seg['key']}")
             
             anc = r2[5].number_input("Ancillary Revenue (PRPN)", value=0.0, key=f"anc_{seg['key']}") if seg['grp'] else 0.0
-            lnd
+            lnd = r2[6].number_input("Laundry/Room", value=0.0, key=f"l_{seg['key']}")
+            oth = r2[7].number_input("Other Fees", value=0.0, key=f"o_{seg['key']}")
+
+            res = run_equilibrium_engine(g_adr, {"BB":bb,"HB":hb,"FB":fb,"SAI":sai,"AI":ai}, h_b, dem, t_rooms, comm_rate=c_rate, anc_prpn=anc, laundry=lnd+oth)
+            
+            v = st.columns([1, 1.5, 1])
+            v[0].metric("Net Wealth (Pillar 01)", f"﷼ {res['w']:,.2f}")
+            v[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']} ({res['mp']})</div>", unsafe_allow_html=True)
+            v[2].markdown(f"<div style='text-align:right;'><span class='noi-badge'>Total NOI: ﷼ {res['noi']:,.2f}</span></div>", unsafe_allow_html=True)
+            
+            st.markdown(f"<div class='reason-box'>💡 <b>Strategic Reasoning:</b> {res['rsn']} | <b>Basis:</b> {res['mp']} | <b>Effective Hurdle:</b> ﷼{res['dh']:,.2f}</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# --- 7. PILLARS FRAMEWORK ---
+st.divider()
+st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
+st.markdown("<h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3>", unsafe_allow_html=True)
+ca, cb, cc = st.columns(3)
+with ca:
+    st.markdown("<span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Strips statutory taxes, commissions, and meal costs to isolate <b>Net-Core Wealth</b> per unit.</p>", unsafe_allow_html=True)
+with cb:
+    st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:0.85rem; color:#4b6584;'>Protects inventory by scaling hurdles (up to 2.5x) to ensure optimal asset utilization in Peak cycles.</p>", unsafe_allow_html=True)
+with cc:
+    st.markdown("<span class='pillar-header'>🌐 Pillar 03: Market Intelligence

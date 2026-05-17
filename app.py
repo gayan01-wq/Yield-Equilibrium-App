@@ -35,7 +35,6 @@ if not st.session_state["auth"]:
     st.stop()
 
 # --- 3. SIDEBAR INITIALIZATION ---
-# This now runs safely because session state keys are initialized above!
 rk = str(st.session_state["reset_key"])
 with st.sidebar:
     st.markdown("### 🏨 Property Profile")
@@ -128,7 +127,6 @@ st.markdown("<div style='text-align:center; color:#4b6584; font-weight:700; marg
 
 # --- GLOBAL CURRENCY MATRIX ---
 currency_matrix = {
-    # Middle East
     "OMR (Omani Rial - ﷼)": {"symbol": "OMR", "format": "OMR {:,.3f}"},
     "AED (UAE Dirham - د.إ)": {"symbol": "AED", "format": "AED {:,.2f}"},
     "SAR (Saudi Riyal - ﷼)": {"symbol": "SAR", "format": "SAR {:,.2f}"},
@@ -136,11 +134,9 @@ currency_matrix = {
     "KWD (Kuwaiti Dinar - د.ك)": {"symbol": "KWD", "format": "KWD {:,.3f}"},
     "QAR (Qatari Riyal - ﷼)": {"symbol": "QAR", "format": "QAR {:,.2f}"},
     "JOD (Jordanian Dinar - د.ا)": {"symbol": "JOD", "format": "JOD {:,.3f}"},
-    # Europe
     "EUR (Euro - €)": {"symbol": "€", "format": "€{:,.2f}"},
     "GBP (British Pound - £)": {"symbol": "£", "format": "£{:,.2f}"},
     "CHF (Swiss Franc - CHF)": {"symbol": "CHF", "format": "CHF {:,.2f}"},
-    # Asia & International
     "LKR (Sri Lankan Rupee - रू)": {"symbol": "LKR", "format": "Rs {:,.2f}"},
     "USD (US Dollar - $)": {"symbol": "$", "format": "${:,.2f}"},
     "SGD (Singapore Dollar - S$)": {"symbol": "S$", "format": "S${:,.2f}"},
@@ -161,7 +157,7 @@ with c_col1:
 c_symbol = currency_matrix[selected_curr]["symbol"]
 c_format = currency_matrix[selected_curr]["format"]
 
-st.write("") # Layout Spacer
+st.write("") 
 
 intel_html = f"<div class='google-window'><b>🌐 Market Intelligence: {city_search if city_search else 'Location Pending'} | {date.today().strftime('%B %Y')}</b><br>• <b>Aviation Situation:</b> {active_intel['fl']} | <b>Special Events:</b> {active_intel['ev']}<br>• <b>Special News Feed:</b> {active_intel['news']} | <b>Market Pulse:</b> {active_intel['demand']} Logic Applied.</div>"
 st.markdown(intel_html, unsafe_allow_html=True)
@@ -182,4 +178,43 @@ for seg in segments:
             c_rate = st.slider("Commission %", 0, 40, 15, key=f"c_{seg['key']}") if seg['ota'] else 0.0
 
             r1 = st.columns([1, 0.5, 0.5, 0.5, 0.5, 1.2, 1.2])
-            g_adr = r1[0].number_input(f"Gross Rate ({
+            
+            # --- FIX: Clean concatenation completely removes raw f-string parsing risks ---
+            g_adr = r1[0].number_input("Gross Rate: " + c_symbol, value=75.0, key=f"a_{seg['key']}")
+            s, d, t, q = r1[1].number_input("SGL", 0, key=f"s_{seg['key']}"), r1[2].number_input("DBL", 0, key=f"d_{seg['key']}"), r1[3].number_input("TPL", 0, key=f"t_{seg['key']}"), r1[4].number_input("QRPL", 0, key=f"q_{seg['key']}")
+            t_rooms = s + d + t + q
+            dem = r1[5].selectbox("Market Demand", ["Compression (Peak)", "High Flow", "Standard", "Distressed"], key=f"dm_{seg['key']}")
+            h_b = r1[6].number_input("Base Hurdle: " + c_symbol, value=seg['hurdle'], key=f"h_{seg['key']}")
+
+            r2 = st.columns([0.6, 0.6, 0.6, 0.6, 0.6, 1.1, 1.1, 1.1])
+            bb, hb, fb, sai, ai = r2[0].number_input("BB", 0, key=f"bb_{seg['key']}"), r2[1].number_input("HB", 0, key=f"hb_{seg['key']}"), r2[2].number_input("FB", 0, key=f"fb_{seg['key']}"), r2[3].number_input("SAI", 0, key=f"sai_{seg['key']}"), r2[4].number_input("AI", 0, key=f"ai_{seg['key']}")
+            
+            anc = r2[5].number_input("Ancillary PRPN: " + c_symbol, value=0.0, key=f"anc_{seg['key']}") if seg['grp'] else 0.0
+            lnd = r2[6].number_input("Laundry/Room: " + c_symbol, value=0.0, key=f"l_{seg['key']}")
+            oth = r2[7].number_input("Other Fees: " + c_symbol, value=0.0, key=f"o_{seg['key']}")
+
+            res = run_equilibrium_engine(g_adr, {"BB":bb,"HB":hb,"FB":fb,"SAI":sai,"AI":ai}, h_b, dem, t_rooms, comm_rate=c_rate, anc_prpn=anc, laundry=lnd+oth)
+            
+            v = st.columns([1, 1.5, 1])
+            v[0].metric("Net Wealth (Pillar 01)", c_format.format(res['w']))
+            v[1].markdown(f"<div class='status-indicator' style='background:{res['cl']}'>{res['st']} ({res['mp']})</div>", unsafe_allow_html=True)
+            v[2].markdown(f"<div style='text-align:right;'><span class='noi-badge'>Total NOI: {c_format.format(res['noi'])}</span></div>", unsafe_allow_html=True)
+            
+            st.markdown(f"<div class='reason-box'>💡 <b>Strategic Reasoning:</b> {res['rsn']} | <b>Basis:</b> {res['mp']} | <b>Effective Hurdle:</b> {c_format.format(res['dh'])}</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# --- 7. PILLARS FRAMEWORK ---
+st.divider()
+st.markdown("<div class='theory-box'>", unsafe_allow_html=True)
+st.markdown("<h3 style='color:#1e3799; margin-top:0;'>THE YIELD EQUILIBRIUM STRATEGIC FRAMEWORK</h3>", unsafe_allow_html=True)
+ca, cb, cc = st.columns(3)
+with ca:
+    st.markdown("<span class='pillar-header'>🏛️ Pillar 01: Internal Wealth Stripping</span>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; color:#4b6584;'>Strips statutory taxes, commissions, and meal costs to isolate <b>Net-Core Wealth</b> per unit.</p>", unsafe_allow_html=True)
+with cb:
+    st.markdown("<span class='pillar-header'>⚖️ Pillar 02: Dynamic Hurdle Equilibrium</span>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; color:#4b6584;'>Protects inventory by scaling hurdles (up to 2.5x) to ensure optimal asset utilization in Peak cycles.</p>", unsafe_allow_html=True)
+with cc:
+    st.markdown("<span class='pillar-header'>🌐 Pillar 03: Market Intelligence Integration</span>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; color:#4b6584;'>Cross-references aviation flow and special event data with deal profitability to guide acceptance logic.</p>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)

@@ -67,6 +67,65 @@ with st.sidebar:
         st.rerun()
 
 # --- 4. MARKET INTEL ---
-intel_db = {
-    "salalah": {"ev": "Khareef Season", "fl": "OmanAir Peak", "news": "Monsoon Surge.", "demand": "Compression"},
-    "muscat": {"ev": "Business Summit", "fl": "Hub Stable", "news": "MICE demand up.", "demand
+intel_db = {}
+intel_db["salalah"] = {
+    "ev": "Khareef Season",
+    "fl": "OmanAir Peak",
+    "news": "Monsoon Surge.",
+    "demand": "Compression"
+}
+intel_db["muscat"] = {
+    "ev": "Business Summit",
+    "fl": "Hub Stable",
+    "news": "MICE demand up.",
+    "demand": "High Flow"
+}
+active_intel = intel_db.get(city_search.lower(), {"ev": "Stable", "fl": "Normal", "news": "Stable.", "demand": "Standard"})
+
+# --- 5. LOGIC ENGINE (STRATEGIC AUDIT) ---
+def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, comm_rate=0.0, anc_prpn=0.0, laundry=0.0):
+    vm = 1.0 
+    
+    dh = base_hurdle * {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}.get(demand, 1.0)
+    
+    net_adr = adr / tx_div
+    
+    meal_sum = (
+        (room_counts['BB'] * c_bf) +
+        (room_counts['HB'] * (c_bf + c_dn)) +
+        (room_counts['FB'] * (c_bf + c_ln + c_dn)) +
+        (room_counts['SAI'] * c_sai) +
+        (room_counts['AI'] * c_ai)
+    )
+    meal_unit = meal_sum / max(total_rooms, 1)
+    
+    anc_net = anc_prpn / tx_div
+    
+    comm_val = net_adr * (comm_rate / 100)
+    
+    unit_w = (net_adr + anc_net) - (meal_unit + comm_val + p01_fee + laundry)
+    
+    if unit_w < dh: 
+        stt = "REJECT: DILUTIVE"
+        clr = "#e74c3c"
+        rsn = "Wealth below market equilibrium."
+    elif unit_w < (dh + 5.0): 
+        stt = "REVIEW: MARGINAL"
+        clr = "#f39c12"
+        rsn = "At hurdle equilibrium threshold."
+    else: 
+        stt = "ACCEPT: OPTIMIZED"
+        clr = "#27ae60"
+        rsn = "Wealth targets successfully achieved."
+    
+    mp_basis = "RO"
+    for p in ["AI", "SAI", "FB", "HB", "BB"]:
+        if room_counts.get(p, 0) > 0: mp_basis = p; break
+
+    total_noi = unit_w * total_rooms * m_nights
+    
+    return {"w": unit_w, "st": stt, "cl": clr, "dh": dh, "noi": total_noi, "mp": mp_basis, "rsn": rsn}
+
+# --- 6. DASHBOARD MAIN ---
+st.markdown(f"<h1 class='main-title'>{h_name.upper() if h_name else 'YIELD ENGINE'}</h1>", unsafe_allow_html=True)
+st.markdown("<div style='text-align:center; color:#4b6584; font-weight:700; margin-bottom:20px;'>Yield Equilibrium Strategic Intelligence Engine</div>", unsafe_allow_html=

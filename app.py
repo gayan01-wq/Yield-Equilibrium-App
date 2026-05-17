@@ -72,20 +72,4 @@ with st.sidebar:
 # --- 4. MARKET INTEL ---
 intel_db = {
     "salalah": {"ev": "Khareef Season", "fl": "OmanAir Peak", "news": "Monsoon Surge.", "demand": "Compression"},
-    "muscat": {"ev": "Business Summit", "fl": "Hub Stable", "news": "MICE demand up.", "demand": "High Flow"}
-}
-active_intel = intel_db.get(city_search.lower(), {"ev": "Stable", "fl": "Normal", "news": "Stable.", "demand": "Standard"})
-
-# --- 5. LOGIC ENGINE (STRATEGIC AUDIT) ---
-def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, comm_rate=0.0, anc_prpn=0.0, laundry=0.0):
-    vm = 1.0 
-    
-    dh = base_hurdle * {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}.get(demand, 1.0)
-    
-    net_adr = adr / tx_div
-    
-    meal_sum = (
-        (room_counts['BB'] * c_bf) +
-        (room_counts['HB'] * (c_bf + c_dn)) +
-        (room_counts['FB'] * (c_bf + c_ln + c_dn)) +
-        (room_
+    "muscat": {"ev": "Business Summit", "fl

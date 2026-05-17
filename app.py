@@ -51,11 +51,10 @@ with st.sidebar:
     st.info(f"Length of Stay: {m_nights} Night(s)")
     
     st.divider()
-    st.markdown("### 🏛️ Pillars Setup")
+    st.markdown("### ### 🏛️ Pillars Setup")
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
     p01_fee = st.number_input("P01 Fee (Per Room)", value=6.00, step=0.1, key="p01_v_"+rk)
     
-    # Reference: image_d3dbba.png & image_d3d496.png
     st.markdown("### 🍽️ Meal Plan Cost (PP)")
     c_bf = st.number_input("BF Cost (PP)", value=2.00, key="bf_mc_"+rk)
     c_ln = st.number_input("LN Cost (PP)", value=3.00, key="ln_mc_"+rk)
@@ -68,6 +67,47 @@ with st.sidebar:
         st.rerun()
 
 # --- 4. MARKET INTEL ---
+# Cleanly broken down dictionary lines to avoid editor clipping errors
 intel_db = {
-    "salalah": {"ev": "Khareef Season", "fl": "OmanAir Peak", "news": "Monsoon Surge.", "demand": "Compression"},
-    "muscat": {"ev": "Business Summit", "fl": "Hub Stable", "news": "MICE demand up.", "demand": "
+    "salalah": {
+        "ev": "Khareef Season", 
+        "fl": "OmanAir Peak", 
+        "news": "Monsoon Surge.", 
+        "demand": "Compression"
+    },
+    "muscat": {
+        "ev": "Business Summit", 
+        "fl": "Hub Stable", 
+        "news": "MICE demand up.", 
+        "demand": "High Flow"
+    }
+}
+active_intel = intel_db.get(city_search.lower(), {"ev": "Stable", "fl": "Normal", "news": "Stable.", "demand": "Standard"})
+
+# --- 5. LOGIC ENGINE (STRATEGIC AUDIT) ---
+def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, comm_rate=0.0, anc_prpn=0.0, laundry=0.0):
+    vm = 1.0 
+    
+    dh = base_hurdle * {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}.get(demand, 1.0)
+    
+    net_adr = adr / tx_div
+    
+    meal_sum = (
+        (room_counts['BB'] * c_bf) +
+        (room_counts['HB'] * (c_bf + c_dn)) +
+        (room_counts['FB'] * (c_bf + c_ln + c_dn)) +
+        (room_counts['SAI'] * c_sai) +
+        (room_counts['AI'] * c_ai)
+    )
+    meal_unit = meal_sum / max(total_rooms, 1)
+    
+    anc_net = anc_prpn / tx_div
+    
+    comm_val = net_adr * (comm_rate / 100)
+    
+    unit_w = (net_adr + anc_net) - (meal_unit + comm_val + p01_fee + laundry)
+    
+    if unit_w < dh: 
+        stt, clr, rsn = "REJECT: DILUTIVE", "#e74c3c", "Wealth below market equilibrium."
+    elif unit_w < (dh + 5.0): 
+        stt, clr, rsn = "REVIEW: MARGINAL", "#f39c

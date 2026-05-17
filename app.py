@@ -27,7 +27,6 @@ if "reset_key" not in st.session_state:
 if not st.session_state["auth"]:
     st.markdown("<h1 class='main-title'>EQUILIBRIUM ENGINE</h1>", unsafe_allow_html=True)
     
-    # --- PLACED OUTSIDE: Reload helper button accessible on login view ---
     col_l1, col_l2, col_l3 = st.columns([1, 2, 1])
     with col_l2:
         with st.form("login_gate"):
@@ -92,45 +91,4 @@ active_intel = intel_db.get(city_search.lower(), {"ev": "Stable", "fl": "Normal"
 def run_equilibrium_engine(adr, room_counts, base_hurdle, demand, total_rooms, comm_rate=0.0, anc_prpn=0.0, laundry=0.0):
     dh = base_hurdle * {"Compression (Peak)": 2.5, "High Flow": 1.5, "Standard": 1.0, "Distressed": 0.7}.get(demand, 1.0)
     
-    net_adr = adr / tx_div
-    
-    meal_sum = (
-        (room_counts['BB'] * c_bf) +
-        (room_counts['HB'] * (c_bf + c_dn)) +
-        (room_counts['FB'] * (c_bf + c_ln + c_dn)) +
-        (room_counts['SAI'] * c_sai) +
-        (room_counts['AI'] * c_ai)
-    )
-    meal_unit = meal_sum / max(total_rooms, 1)
-    
-    anc_net = anc_prpn / tx_div
-    
-    comm_val = net_adr * (comm_rate / 100)
-    
-    unit_w = (net_adr + anc_net) - (meal_unit + comm_val + p01_fee + laundry)
-    
-    if unit_w < dh: 
-        stt = "REJECT: DILUTIVE"
-        clr = "#e74c3c"
-        rsn = "Wealth below market equilibrium."
-    elif unit_w < (dh + 5.0): 
-        stt = "REVIEW: MARGINAL"
-        clr = "#f39c12"
-        rsn = "At hurdle equilibrium threshold."
-    else: 
-        stt = "ACCEPT: OPTIMIZED"
-        clr = "#27ae60"
-        rsn = "Wealth targets successfully achieved."
-    
-    mp_basis = "RO"
-    for p in ["AI", "SAI", "FB", "HB", "BB"]:
-        if room_counts.get(p, 0) > 0: 
-            mp_basis = p
-            break
-
-    total_noi = unit_w * total_rooms * m_nights
-    
-    return {"w": unit_w, "st": stt, "cl": clr, "dh": dh, "noi": total_noi, "mp": mp_basis, "rsn": rsn}
-
-# --- 6. DASHBOARD MAIN ---
-st.markdown(f"<h1 class='main-title'>{h_name.upper() if h_name else '
+    net_adr

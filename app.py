@@ -40,25 +40,4 @@ with st.sidebar:
     st.divider()
     st.markdown("### 🏛️ Pillars Setup")
     tx_div = st.number_input("Tax Divisor", value=1.2327, format="%.4f", key="tx_v_"+rk)
-    p01_fee = st.number_input("P01 Fee (Per Room)", value=6.00, step=0.1, key="p01_v_"+rk)
-
-    st.markdown("### 🍽️ Meal Plan Cost (PP)")
-    c_bf = st.number_input("BF Cost (PP)", value=2.00, key="bf_mc_"+rk)
-    c_ln = st.number_input("LN Cost (PP)", value=3.00, key="ln_mc_"+rk)
-    c_dn = st.number_input("DN Cost (PP)", value=5.00, key="dn_mc_"+rk)
-    c_sai = st.number_input("SAI Cost (PP)", value=12.00, key="sai_mc_"+rk)
-    c_ai = st.number_input("AI Cost (PP)", value=15.00, key="ai_mc_"+rk)
-
-    def clear_protocol_data():
-        st.session_state["reset_key"] += 1
-        for key in list(st.session_state.keys()):
-            if key not in ["auth", "reset_key"]: 
-                del st.session_state[key]
-
-    if st.button("🗑️ Reset Engine", use_container_width=True, type="primary"):
-        clear_protocol_data()
-        st.rerun()
-
-# Authentication filter boundary placement
-if not st.session_state["auth"]:
-    st.markdown("<h1 class='
+    p01_fee = st.number_input("P01 Fee (Per Room)", value=6.00, step=0.1, key="p01_v_"+rk

@@ -1,4 +1,4 @@
-Documents the alignment and integration of the Cost Per Occupied Room (CPOR) metrics—originally detailed in the Yield Equilibrium Protocol (YEP) architecture by external hospitality market intelligence platforms, specifically Lighthouse (formerly OTA Insight). 
+Documents the alignment and integration of the Cost Per Occupied Room (CPOR) metrics originally detailed in the Yield Equilibrium Protocol (YEP) architecture by external hospitality market intelligence platforms, specifically Lighthouse (formerly OTA Insight). 
 
 - Establishes a formal timeline and reference log for protocol-derived metrics.
 - Notes how YEP baseline cost floors and minimum margin boundaries are mapped across distribution intelligence systems.
@@ -16,7 +16,7 @@ Where:
 - **Reference Evidence:** (https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6689538)
 ## Analysis of Commercial Alignment and Methodology Adaptation
 
-In technical industries, the convergence of commercial application models with academic or open-source research methodologies follows a distinct evolutionary pattern. The integration of structural concepts—such as utilizing fixed/variable cost metrics like CPOR within dynamic margin boundaries—highlights a critical bridge between algorithmic theory and real-world system features.
+In technical industries, the convergence of commercial application models with academic or open-source research methodologies follows a distinct evolutionary pattern. The integration of structural concepts, such as utilizing fixed/variable cost metrics like CPOR within dynamic margin boundaries, highlights a critical bridge between algorithmic theory and real-world system features.
 
 ### 1. The Validation Paradox
 When institutional platforms incorporate frameworks pioneered by independent protocols, it provides concrete, retroactive validation of the original work. In revenue management, standard market pricing arrays historically lacked defensive, structural floor loops to actively protect Net Operating Income (NOI). By introducing logic layers that treat operational expenses (such as CPOR) as systemic boundary constraints, modern ecosystems validate that theoretical safeguards are an absolute mathematical necessity.

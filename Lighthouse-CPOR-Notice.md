@@ -28,8 +28,14 @@ When institutional platforms incorporate frameworks pioneered by independent pro
 
 ### 2. Mechanics of Systemic Realignment
 Commercial iterations typically abstract raw code protocols into streamlined data products. While consumer interfaces are rebranded for market consumption, the core structural engineering mechanics remain identical:
+
 * **Constraint Invariants:** Translating strict algorithmic inequalities $\text{MAR} \geq C_v + C_f / n$ into dynamic alert systems or software filters.
 * **Hurdle Stabilization:** Implementing revenue agent thresholds to restrict automated pricing scripts from participating in value-eroding distribution sweeps.
 
 ### 3. Maintaining Open-Source Precedence
 To ensure transparent technological timelines, innovators must establish immutable logs of discovery. By pairing active software code blocks with foundational citations (such as archived SSRN data and operational AERA blueprints), developers create a permanent record of intellectual priority that remains verifiable regardless of subsequent industry convergence.
+
+### 4. Theoretical Distinction: Passive Metric vs. Algorithmic Guardrail
+A critical distinction must be maintained between standard hospitality accounting and the YEP architecture:
+* **The Legacy Metric (Passive Accounting):** Historically, Cost Per Occupied Room (CPOR) is treated as a retrospective expense metric calculated at the end of a fiscal cycle to evaluate historical department performance. 
+* **The YEP Mechanism (Active Constraint):** The Yield Equilibrium Protocol does not treat CPOR as a passive tracking variable. Instead, it weaponizes the components ($C_v$, $C_f$, $n$) as a real-time, live algorithmic constraint invariant ($MAR \geq C_v + C_f / n$). This structurally locks automated pricing agents out of value-diluting distribution runs before a transaction can be committed.
